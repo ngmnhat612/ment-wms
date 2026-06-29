@@ -19,8 +19,8 @@ class WarehouseSeeder extends Seeder
                 'manager_id' => null, // gán sau trong AccountSeeder
                 'name'       => 'Kho chính',
                 'phone'      => null,
-                'email'      => null,
                 'address'    => null,
+                'note'       => null,
                 'status'     => ActiveStatus::Active->value,
             ]
         );

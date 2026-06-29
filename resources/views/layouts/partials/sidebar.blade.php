@@ -111,7 +111,7 @@
           <a class="nav-link {{ request()->routeIs('master.reorder-rule.*') ? 'active' : '' }}"
              href="{{ route('master.reorder-rule.index') }}">
             <span class="nav-icon"><span class="nav-icon-bullet"></span></span>
-            Gán Min/Max
+            Gán Min-Max
           </a>
         </li>
         <li class="nav-item">

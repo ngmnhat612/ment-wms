@@ -1,76 +1,82 @@
 @extends('layouts.app')
 
-@section('title', 'Kho hàng — Ment WMS')
+@section('title', 'Kho hàng')
 
 @section('breadcrumb')
-  <li class="breadcrumb-item">Danh mục</li>
+  <li class="breadcrumb-item">Admin</li>
   <li class="breadcrumb-item active">Kho hàng</li>
 @endsection
 
 @section('content')
 
+  {{-- SORT HELPER --}}
+  @php
+    $sort = request('sort', '');
+    $dir  = request('dir', '');
+    $nextDir = function($col) use ($sort, $dir) {
+      if ($sort !== $col) return 'asc';
+      if ($dir === 'asc')  return 'desc';
+      return '';
+    };
+    $sortUrl = function($col) use ($sort, $dir, $nextDir) {
+      $nd = $nextDir($col);
+      if ($nd === '') return request()->fullUrlWithQuery(['sort' => '', 'dir' => '', 'page' => 1]);
+      return request()->fullUrlWithQuery(['sort' => $col, 'dir' => $nd, 'page' => 1]);
+    };
+    $sortIcon = function($col) use ($sort, $dir) {
+      if ($sort !== $col || $dir === '') {
+        $icon = 'cil-swap-vertical';
+      } elseif ($dir === 'asc') {
+        $icon = 'cil-sort-alpha-up';
+      } else {
+        $icon = 'cil-sort-alpha-down';
+      }
+      return "<svg class=\"icon icon-sm ms-1\"><use xlink:href=\"" . asset('vendor/coreui/icons/sprites/free.svg#' . $icon) . "\"></use></svg>";
+    };
+  @endphp
+
   {{-- HEADER --}}
-  <div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
-      <h4 class="mb-0 fw-semibold">Kho hàng</h4>
-      <small class="text-body-secondary">Quản lý danh sách kho và phân công nhân viên</small>
-    </div>
+  <div class="d-flex justify-content-end mb-4">
     <button class="btn btn-primary" onclick="openModal()">
       <svg class="icon me-1"><use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-plus') }}"></use></svg>
-      Thêm kho
+      Thêm mới
     </button>
-  </div>
-
-  {{-- THỐNG KÊ --}}
-  <div class="row g-3 mb-4">
-    <div class="col-sm-6 col-lg-3">
-      <div class="card border-start border-start-4 border-start-primary">
-        <div class="card-body d-flex align-items-center gap-3">
-          <svg class="icon icon-2xl text-primary">
-            <use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-factory') }}"></use>
-          </svg>
-          <div>
-            <div class="fs-5 fw-semibold">{{ $totalCount }}</div>
-            <div class="text-body-secondary small">Tổng số kho</div>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="col-sm-6 col-lg-3">
-      <div class="card border-start border-start-4 border-start-success">
-        <div class="card-body d-flex align-items-center gap-3">
-          <svg class="icon icon-2xl text-success">
-            <use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-check-circle') }}"></use>
-          </svg>
-          <div>
-            <div class="fs-5 fw-semibold">{{ $activeCount }}</div>
-            <div class="text-body-secondary small">Đang hoạt động</div>
-          </div>
-        </div>
-      </div>
-    </div>
   </div>
 
   {{-- BẢNG DANH SÁCH --}}
   <div class="card">
-    <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
-      <span class="fw-semibold">Danh sách kho hàng</span>
-      <form method="GET" action="{{ route('master.warehouse.index') }}" class="d-flex gap-2 flex-wrap">
-        <div class="input-group" style="width:240px">
+    <div class="card-header d-flex align-items-center gap-2">
+      <span class="fw-semibold flex-shrink-0">Kho hàng</span>
+      <form method="GET" action="{{ route('master.warehouse.index') }}"
+            class="d-flex gap-2 flex-wrap align-items-center flex-grow-1 justify-content-end">
+        <div class="input-group" style="min-width:260px;flex:2">
           <span class="input-group-text">
             <svg class="icon"><use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-search') }}"></use></svg>
           </span>
           <input type="text" class="form-control" name="search"
-                 value="{{ request('search') }}" placeholder="Mã, tên kho...">
+                 value="{{ request('search') }}" placeholder="Tìm theo mã hoặc tên kho hàng">
         </div>
-        <select class="form-select" name="status" style="width:130px">
-          <option value="">Tất cả</option>
-          <option value="1" {{ request('status') == '1' ? 'selected' : '' }}>Hoạt động</option>
-          <option value="0" {{ request('status') == '0' ? 'selected' : '' }}>Ngừng</option>
+
+        <select class="form-select" name="status" style="min-width:150px;flex:1" onchange="this.form.submit()">
+          <option value="">Trạng thái</option>
+          @foreach (\App\Enums\ActiveStatus::options() as $val => $label)
+            <option value="{{ $val }}" {{ request('status') === (string) $val ? 'selected' : '' }}>
+              {{ $label }}
+            </option>
+          @endforeach
         </select>
-        <button type="submit" class="btn btn-outline-primary">Lọc</button>
-        @if(request('search') || (request('status') !== null && request('status') !== ''))
-          <a href="{{ route('master.warehouse.index') }}" class="btn btn-outline-secondary">Xóa lọc</a>
+
+        @php
+          $hasFilter = request('search') || (request('status') !== null && request('status') !== '');
+        @endphp
+        @if ($hasFilter)
+          <a href="{{ route('master.warehouse.index') }}" class="btn btn-outline-secondary">
+            <svg class="icon"><use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-filter-x') }}"></use></svg>
+          </a>
+        @else
+          <button type="submit" class="btn btn-primary">
+            <svg class="icon"><use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-filter') }}"></use></svg>
+          </button>
         @endif
       </form>
     </div>
@@ -80,15 +86,23 @@
         <table class="table table-hover align-middle mb-0">
           <thead class="table-light">
             <tr>
-              <th class="text-center" style="width:55px">#</th>
-              <th style="width:110px">Mã kho</th>
-              <th>Tên kho</th>
-              <th style="width:160px">Quản lý kho</th>
-              <th style="width:130px">Số điện thoại</th>
-              <th style="width:180px">Địa chỉ</th>
-              <th class="text-center" style="width:100px">Nhân viên</th>
-              <th class="text-center" style="width:120px">Trạng thái</th>
-              <th class="text-center" style="width:110px">Thao tác</th>
+              <th class="text-center" style="width:4%">#</th>
+              <th style="width:8%">
+                <a href="{{ $sortUrl('code') }}" class="text-decoration-none text-body d-inline-flex align-items-center">
+                  Mã {!! $sortIcon('code') !!}
+                </a>
+              </th>
+              <th>
+                <a href="{{ $sortUrl('name') }}" class="text-decoration-none text-body d-inline-flex align-items-center">
+                  Tên {!! $sortIcon('name') !!}
+                </a>
+              </th>
+              <th style="width:12%">Quản lý</th>
+              <th style="width:12%">Số điện thoại</th>
+              <th style="width:14%">Địa chỉ</th>
+              <th style="width:14%">Ghi chú</th>
+              <th class="text-center" style="width:8%">Trạng thái</th>
+              <th class="text-center" style="width:8%">Thao tác</th>
             </tr>
           </thead>
           <tbody>
@@ -97,44 +111,34 @@
                 <td class="text-center text-body-secondary">
                   {{ ($warehouses->currentPage() - 1) * $warehouses->perPage() + $index + 1 }}
                 </td>
-                <td><code class="text-primary fw-medium">{{ $wh->code }}</code></td>
                 <td>
-                  <div class="fw-medium">{{ $wh->name }}</div>
-                  @if ($wh->email)
-                    <div class="small text-body-secondary">
-                      <svg class="icon icon-sm me-1"><use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-envelope-closed') }}"></use></svg>
-                      {{ $wh->email }}
-                    </div>
-                  @endif
+                  <code class="text-primary fw-medium">{{ $wh->code ?? '-' }}</code>
                 </td>
+                <td class="fw-medium">{{ $wh->name ?? '-' }}</td>
                 <td>
                   @if ($wh->manager)
                     <div class="fw-medium">{{ $wh->manager->name }}</div>
                     <div class="small text-body-secondary font-monospace">{{ $wh->manager->code }}</div>
                   @else
-                    <span class="text-body-secondary small">— Chưa phân công</span>
+                    <span class="text-body-secondary small">-</span>
                   @endif
                 </td>
-                <td class="small text-body-secondary">
+                <td class="small">
                   @if ($wh->phone)
                     <a href="tel:{{ $wh->phone }}" class="text-body text-decoration-none">
                       <svg class="icon icon-sm me-1"><use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-phone') }}"></use></svg>
                       {{ $wh->phone }}
                     </a>
                   @else
-                    —
+                    -
                   @endif
                 </td>
-                <td class="small text-body-secondary text-truncate" style="max-width:180px">
-                  {{ $wh->address ?: '—' }}
+                <td class="small text-truncate" style="max-width:200px">
+                  {{ $wh->address ?: '-' }}
                 </td>
+                <td class="small">{{ $wh->note ?: '-' }}</td>
                 <td class="text-center">
-                  <span class="badge bg-info-subtle text-info border border-info-subtle">
-                    {{ $wh->employees_count ?? $wh->employees->count() }} NV
-                  </span>
-                </td>
-                <td class="text-center">
-                  @if ($wh->status == 1)
+                  @if ($wh->status === \App\Enums\ActiveStatus::Active)
                     <span class="badge bg-success-subtle text-success border border-success-subtle">Hoạt động</span>
                   @else
                     <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle">Ngừng</span>
@@ -142,16 +146,16 @@
                 </td>
                 <td class="text-center">
                   <button class="btn btn-sm btn-outline-primary me-1"
-                          onclick="openModal(
-                            {{ $wh->id }},
-                            '{{ addslashes($wh->code) }}',
-                            '{{ addslashes($wh->name) }}',
-                            {{ $wh->manager_id ?? 'null' }},
-                            '{{ addslashes($wh->phone ?? '') }}',
-                            '{{ addslashes($wh->email ?? '') }}',
-                            '{{ addslashes($wh->address ?? '') }}',
-                            {{ $wh->status }}
-                          )"
+                    onclick="openModal(
+                        {{ $wh->id }},
+                        '{{ addslashes($wh->code) }}',
+                        '{{ addslashes($wh->name) }}',
+                        {{ $wh->manager_id ?? 'null' }},
+                        '{{ addslashes($wh->phone ?? '') }}',
+                        '{{ addslashes($wh->address ?? '') }}',
+                        '{{ addslashes($wh->note ?? '') }}',
+                        {{ $wh->status->value }}
+                    )"
                           title="Chỉnh sửa">
                     <svg class="icon"><use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-pencil') }}"></use></svg>
                   </button>
@@ -164,14 +168,11 @@
               </tr>
             @empty
               <tr>
-                <td colspan="9" class="text-center text-body-secondary py-5">
+                <td colspan="8" class="text-center text-body-secondary py-5">
                   <svg class="icon icon-3xl d-block mx-auto mb-2 opacity-25">
-                    <use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-factory') }}"></use>
+                    <use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-storage') }}"></use>
                   </svg>
                   Chưa có kho nào
-                  @if(request('search'))
-                    <div class="small mt-1">Không tìm thấy kết quả cho "<strong>{{ request('search') }}</strong>"</div>
-                  @endif
                 </td>
               </tr>
             @endforelse
@@ -180,116 +181,146 @@
       </div>
     </div>
 
-    @if ($warehouses->hasPages())
-      <div class="card-footer d-flex justify-content-between align-items-center">
-        <small class="text-body-secondary">
-          Hiển thị {{ $warehouses->firstItem() }}–{{ $warehouses->lastItem() }}
-          trong tổng số {{ $warehouses->total() }} kho
-        </small>
-        {{ $warehouses->appends(request()->query())->links('pagination::bootstrap-5') }}
+    <div class="card-footer d-flex justify-content-between align-items-center py-2">
+      <small class="text-body-secondary">
+        Hiển thị <strong>{{ $warehouses->firstItem() }}</strong>-<strong>{{ $warehouses->lastItem() }}</strong>
+        trong tổng số <strong>{{ $warehouses->total() }}</strong> kho
+      </small>
+      {{ $warehouses->appends(request()->query())->links('pagination::bootstrap-5') }}
+      <style>.card-footer .pagination { margin-bottom: 0; }</style>
+    </div>
+  </div>
+
+  {{-- ===== MODAL TẠO / SỬA ===== --}}
+  <div class="modal fade" id="warehouseModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <form id="warehouseForm" method="POST">
+          @csrf
+          <input type="hidden" name="_method" id="formMethod" value="POST">
+
+          <div class="modal-header">
+            <h5 class="modal-title" id="warehouseModalLabel">Thêm kho hàng</h5>
+            <button type="button" class="btn-close" data-coreui-dismiss="modal"></button>
+          </div>
+
+          <div class="modal-body">
+            <div class="mb-3">
+                <label class="form-label fw-medium">Mã</label>
+                <input type="text"
+                      class="form-control text-uppercase {{ $errors->has('code') ? 'is-invalid' : '' }}"
+                      id="wCode" name="code"
+                      value="{{ old('code') }}"
+                      placeholder="Tự động" maxlength="50" style="letter-spacing:1px">
+                @error('code')
+                    <div class="invalid-feedback">{{ $message }}</div>
+                @enderror
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-medium">Tên <span class="text-danger">*</span></label>
+                <input type="text"
+                      class="form-control {{ $errors->has('name') ? 'is-invalid' : '' }}"
+                      id="wName" name="name"
+                      value="{{ old('name') }}"
+                      placeholder="Tên kho" required maxlength="200">
+                @error('name')
+                    <div class="invalid-feedback">{{ $message }}</div>
+                @enderror
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label fw-medium">Quản lý kho <span class="text-danger">*</span></label>
+              <select class="form-select {{ $errors->has('manager_id') ? 'is-invalid' : '' }}"
+                      id="wManager" name="manager_id">
+                <option value="">- Chưa phân công -</option>
+                @foreach ($employees as $emp)
+                  <option value="{{ $emp->id }}" {{ old('manager_id') == $emp->id ? 'selected' : '' }}>
+                    {{ $emp->name }} ({{ $emp->code }})
+                  </option>
+                @endforeach
+              </select>
+              @error('manager_id')
+                <div class="invalid-feedback">{{ $message }}</div>
+              @enderror
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label fw-medium">Số điện thoại</label>
+              <div class="input-group">
+                <span class="input-group-text">
+                  <svg class="icon"><use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-phone') }}"></use></svg>
+                </span>
+                <input type="text"
+                       class="form-control {{ $errors->has('phone') ? 'is-invalid' : '' }}"
+                       id="wPhone" name="phone"
+                       value="{{ old('phone') }}"
+                       placeholder="Nhập số điện thoại" maxlength="20">
+                @error('phone')
+                  <div class="invalid-feedback">{{ $message }}</div>
+                @enderror
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label fw-medium">Địa chỉ</label>
+              <div class="input-group">
+                <span class="input-group-text">
+                  <svg class="icon"><use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-location-pin') }}"></use></svg>
+                </span>
+                <textarea class="form-control {{ $errors->has('address') ? 'is-invalid' : '' }}"
+                          id="wAddress" name="address"
+                          rows="1" maxlength="500"
+                          placeholder="Nhập địa chỉ">{{ old('address') }}</textarea>
+                @error('address')
+                  <div class="invalid-feedback">{{ $message }}</div>
+                @enderror
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label fw-medium">Ghi chú</label>
+              <textarea class="form-control {{ $errors->has('note') ? 'is-invalid' : '' }}"
+                        id="wNote" name="note"
+                        rows="2" maxlength="500"></textarea>
+              @error('note')
+                  <div class="invalid-feedback">{{ $message }}</div>
+              @enderror
+          </div>
+
+            {{-- Trạng thái --}}
+            <div>
+              <label class="form-label fw-medium">Trạng thái</label>
+              <div class="d-flex gap-3">
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="status"
+                         id="wStatusActive" value="1" checked>
+                  <label class="form-check-label text-success" for="wStatusActive">Hoạt động</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="status"
+                         id="wStatusInactive" value="0">
+                  <label class="form-check-label text-secondary" for="wStatusInactive">Ngừng hoạt động</label>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" class="btn btn-outline-secondary" data-coreui-dismiss="modal">Hủy</button>
+            <button type="submit" id="wSubmitBtn" class="btn btn-primary">
+              <span id="wSubmitSpinner" class="spinner-border spinner-border-sm me-1 d-none" role="status" aria-hidden="true"></span>
+              <svg id="wSubmitIcon" class="icon me-1"><use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-save') }}"></use></svg>
+              <span id="wSubmitLabel">Lưu</span>
+            </button>
+          </div>
+        </form>
       </div>
-    @endif
-  </div>
-
-  {{-- OFFCANVAS FORM --}}
-  <div class="offcanvas offcanvas-end" style="width:480px" tabindex="-1" id="warehouseOffcanvas">
-    <div class="offcanvas-header border-bottom">
-      <h5 class="offcanvas-title" id="warehouseOffcanvasTitle">Thêm kho hàng</h5>
-      <button type="button" class="btn-close" data-coreui-dismiss="offcanvas"></button>
-    </div>
-    <div class="offcanvas-body">
-      <form id="warehouseForm" method="POST">
-        @csrf
-        <input type="hidden" name="_method" id="formMethod" value="POST">
-
-        <div class="mb-3 fw-semibold text-primary border-bottom pb-1">Thông tin kho</div>
-
-        <div class="row g-3 mb-3">
-          <div class="col-5">
-            <label class="form-label">Mã kho <span class="text-danger">*</span></label>
-            <input type="text" class="form-control text-uppercase font-monospace"
-                   id="wCode" name="code" placeholder="VD: WH001" required maxlength="50">
-          </div>
-          <div class="col-7">
-            <label class="form-label">Tên kho <span class="text-danger">*</span></label>
-            <input type="text" class="form-control"
-                   id="wName" name="name" placeholder="VD: Kho chính HCM" required maxlength="200">
-          </div>
-        </div>
-
-        <div class="mb-3">
-          <label class="form-label">Quản lý kho</label>
-          <select class="form-select" id="wManager" name="manager_id">
-            <option value="">— Chưa phân công —</option>
-            @foreach ($employees as $emp)
-              <option value="{{ $emp->id }}">{{ $emp->name }} ({{ $emp->code }})</option>
-            @endforeach
-          </select>
-        </div>
-
-        <div class="mb-3 fw-semibold text-primary border-bottom pb-1 mt-4">Thông tin liên hệ</div>
-
-        <div class="mb-3">
-          <label class="form-label">Số điện thoại</label>
-          <div class="input-group">
-            <span class="input-group-text">
-              <svg class="icon"><use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-phone') }}"></use></svg>
-            </span>
-            <input type="text" class="form-control" id="wPhone" name="phone"
-                   placeholder="VD: 0901234567" maxlength="20">
-          </div>
-        </div>
-
-        <div class="mb-3">
-          <label class="form-label">Email</label>
-          <div class="input-group">
-            <span class="input-group-text">
-              <svg class="icon"><use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-envelope-closed') }}"></use></svg>
-            </span>
-            <input type="email" class="form-control" id="wEmail" name="email"
-                   placeholder="VD: warehouse@company.com" maxlength="200">
-          </div>
-        </div>
-
-        <div class="mb-3">
-          <label class="form-label">Địa chỉ</label>
-          <div class="input-group">
-            <span class="input-group-text">
-              <svg class="icon"><use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-location-pin') }}"></use></svg>
-            </span>
-            <textarea class="form-control" id="wAddress" name="address"
-                      rows="2" maxlength="500" placeholder="Địa chỉ đầy đủ..."></textarea>
-          </div>
-        </div>
-
-        <div class="mb-4">
-          <label class="form-label fw-medium">Trạng thái</label>
-          <div class="d-flex gap-3">
-            <div class="form-check">
-              <input class="form-check-input" type="radio" name="status"
-                     id="wStatusActive" value="1" checked>
-              <label class="form-check-label text-success" for="wStatusActive">Hoạt động</label>
-            </div>
-            <div class="form-check">
-              <input class="form-check-input" type="radio" name="status"
-                     id="wStatusInactive" value="0">
-              <label class="form-check-label text-secondary" for="wStatusInactive">Ngừng hoạt động</label>
-            </div>
-          </div>
-        </div>
-
-        <div class="d-flex gap-2">
-          <button type="submit" class="btn btn-primary flex-grow-1">
-            <svg class="icon me-1"><use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-save') }}"></use></svg>
-            Lưu kho
-          </button>
-          <button type="button" class="btn btn-outline-secondary" data-coreui-dismiss="offcanvas">Hủy</button>
-        </div>
-      </form>
     </div>
   </div>
 
-  {{-- MODAL XÁC NHẬN XÓA --}}
+  {{-- ===== MODAL XÁC NHẬN XÓA ===== --}}
   <div class="modal fade" id="deleteModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered modal-sm">
       <div class="modal-content">
@@ -305,7 +336,7 @@
             Bạn có chắc muốn xóa kho<br>
             <strong id="deleteWarehouseName" class="text-body"></strong>?
           </p>
-          <p class="text-danger small mt-1">Không thể xóa nếu còn nhân viên hoặc tồn kho liên quan.</p>
+          <p class="text-danger small mt-1">Không thể xóa nếu còn tồn kho liên quan.</p>
         </div>
         <div class="modal-footer border-0 pt-0 justify-content-center gap-2">
           <button type="button" class="btn btn-outline-secondary btn-sm" data-coreui-dismiss="modal">Hủy</button>
@@ -326,35 +357,40 @@
   const routeStore = '{{ route('master.warehouse.store') }}';
   const routeBase  = '{{ url('master/warehouse') }}';
 
-  function openModal(id = null, code = '', name = '', managerId = null,
-                     phone = '', email = '', address = '', status = 1) {
-    const offcanvas = new coreui.OffCanvas(document.getElementById('warehouseOffcanvas'));
-    const form      = document.getElementById('warehouseForm');
-    const title     = document.getElementById('warehouseOffcanvasTitle');
-    const method    = document.getElementById('formMethod');
-
-    form.reset();
-    document.getElementById('wStatusActive').checked = true;
+  function openModal(id = null, code = '', name = '', managerId = null, phone = '', address = '', note = '', status = 1) {
+    const modal  = new coreui.Modal(document.getElementById('warehouseModal'));
+    const form   = document.getElementById('warehouseForm');
+    const title  = document.getElementById('warehouseModalLabel');
+    const method = document.getElementById('formMethod');
+    const codeEl = document.getElementById('wCode');
 
     if (id) {
-      title.textContent = 'Chỉnh sửa kho hàng';
-      form.action       = `${routeBase}/${id}`;
-      method.value      = 'PUT';
-      document.getElementById('wCode').value    = code;
-      document.getElementById('wName').value    = name;
-      document.getElementById('wManager').value = managerId ?? '';
-      document.getElementById('wPhone').value   = phone;
-      document.getElementById('wEmail').value   = email;
-      document.getElementById('wAddress').value = address;
-      document.getElementById(status == 1 ? 'wStatusActive' : 'wStatusInactive').checked = true;
+        title.textContent = 'Chỉnh sửa kho hàng';
+        form.action       = `${routeBase}/${id}`;
+        method.value      = 'PUT';
+        codeEl.value      = code;
+        codeEl.readOnly   = true;
+        codeEl.classList.add('bg-body-secondary');
     } else {
-      title.textContent = 'Thêm kho hàng';
-      form.action       = routeStore;
-      method.value      = 'POST';
+        title.textContent = 'Thêm kho hàng';
+        form.action       = routeStore;
+        method.value      = 'POST';
+        form.reset();
+        codeEl.readOnly   = false;
+        codeEl.classList.remove('bg-body-secondary');
     }
 
-    offcanvas.show();
-    setTimeout(() => document.getElementById('wCode').focus(), 400);
+    // Gán giá trị SAU if/else — không bị reset ghi đè nữa
+    codeEl.value = code;
+    document.getElementById('wName').value    = name;
+    document.getElementById('wManager').value = managerId ?? '';
+    document.getElementById('wPhone').value   = phone;
+    document.getElementById('wAddress').value = address;
+    document.getElementById('wNote').value    = note;
+    document.getElementById(status == 1 ? 'wStatusActive' : 'wStatusInactive').checked = true;
+
+    modal.show();
+    setTimeout(() => (id ? document.getElementById('wName') : codeEl).focus(), 300);
   }
 
   function confirmDelete(id, name) {
@@ -363,11 +399,49 @@
     new coreui.Modal(document.getElementById('deleteModal')).show();
   }
 
-  // Auto viết hoa mã kho
   document.getElementById('wCode').addEventListener('input', function () {
     const pos = this.selectionStart;
     this.value = this.value.toUpperCase();
     this.setSelectionRange(pos, pos);
+  });
+
+  @if ($errors->any())
+      openModal(
+          null,
+          '{{ old("code") }}',
+          '{{ addslashes(old("name")) }}',
+          {{ old("manager_id") ? old("manager_id") : 'null' }},
+          '{{ addslashes(old("phone")) }}',
+          '{{ addslashes(old("address")) }}',
+          '{{ addslashes(old("note")) }}',
+          {{ old("status", 1) }}
+      );
+  @endif
+
+  // ===== CHẶN SUBMIT LIÊN TỤC =====
+  document.getElementById('warehouseForm').addEventListener('submit', function () {
+    const btn     = document.getElementById('wSubmitBtn');
+    const spinner = document.getElementById('wSubmitSpinner');
+    const icon    = document.getElementById('wSubmitIcon');
+    const label   = document.getElementById('wSubmitLabel');
+
+    btn.disabled = true;
+    spinner.classList.remove('d-none');
+    icon.classList.add('d-none');
+    label.textContent = 'Đang lưu...';
+  });
+
+  // Reset khi đóng modal
+  document.getElementById('warehouseModal').addEventListener('hidden.coreui.modal', function () {
+    const btn     = document.getElementById('wSubmitBtn');
+    const spinner = document.getElementById('wSubmitSpinner');
+    const icon    = document.getElementById('wSubmitIcon');
+    const label   = document.getElementById('wSubmitLabel');
+
+    btn.disabled = false;
+    spinner.classList.add('d-none');
+    icon.classList.remove('d-none');
+    label.textContent = 'Lưu';
   });
 </script>
 @endpush

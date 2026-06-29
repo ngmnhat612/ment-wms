@@ -4,9 +4,12 @@ namespace App\Models;
 
 use App\Enums\ActiveStatus;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Warehouse extends Model
 {
+    use SoftDeletes;
+
     protected $table = 'warehouses';
 
     protected $fillable = [
@@ -16,8 +19,8 @@ class Warehouse extends Model
         'code',
         'name',
         'phone',
-        'email',
         'address',
+        'note',
         'status',
     ];
 
