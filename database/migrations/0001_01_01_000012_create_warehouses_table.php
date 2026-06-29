@@ -18,8 +18,8 @@ return new class extends Migration
             $table->string('code', 50)->unique()->comment('Mã kho, tự sinh');
             $table->string('name', 200);
             $table->string('phone', 20)->nullable();
-            $table->string('email', 200)->nullable();
             $table->string('address', 500)->nullable();
+            $table->string('note', 500)->nullable()->comment('Ghi chú');
             $table->tinyInteger('status')->default(1)->comment('1=Active, 0=Inactive');
             $table->timestamps();
 

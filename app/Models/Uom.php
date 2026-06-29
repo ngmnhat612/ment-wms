@@ -15,6 +15,7 @@ class Uom extends Model
     protected $fillable = [
         'code',
         'name',
+        'note',
         'status',
     ];
 

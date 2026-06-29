@@ -15,6 +15,7 @@ return new class extends Migration
             $table->unsignedBigInteger('employee_id')->nullable()->comment('Người phụ trách theo dõi');
             $table->decimal('min_qty', 18, 3)->default(0)->comment('Ngưỡng tồn tối thiểu — cảnh báo khi tồn < min_qty');
             $table->decimal('max_qty', 18, 3)->default(0)->comment('Ngưỡng tồn tối đa mong muốn');
+            $table->string('note', 500)->nullable();
             $table->tinyInteger('status')->default(1)->comment('1=Active, 0=Inactive');
             $table->timestamps();
 

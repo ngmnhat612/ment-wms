@@ -83,17 +83,17 @@ Route::middleware('auth')->group(function () {
         Route::resource('product', ProductController::class)
             ->only(['index', 'store', 'update', 'destroy']);
 
-        // // Quy tắc tái đặt hàng
-        // Route::resource('reorder-rule', ReorderRuleController::class)
-        //     ->only(['index', 'store', 'update', 'destroy']);
+        // Quy tắc tái đặt hàng
+        Route::resource('reorder-rule', ReorderRuleController::class)
+            ->only(['index', 'store', 'update', 'destroy']);
 
         // Thương hiệu
         Route::resource('brand', BrandController::class)
             ->only(['index', 'store', 'update', 'destroy']);
 
-        // // Kho
-        // Route::resource('warehouse', WarehouseController::class)
-        //     ->only(['index', 'store', 'update', 'destroy']);
+        // Kho
+        Route::resource('warehouse', WarehouseController::class)
+            ->only(['index', 'store', 'update', 'destroy']);
     });
 
     Route::get('under-construction', fn() => view('under-construction'))
@@ -118,10 +118,10 @@ Route::middleware('auth')->group(function () {
         'master.supplier.index'     => 'master/supplier',
         'master.employee.index'     => 'master/employee',
         'master.location.index'     => 'master/location',
-        'master.reorder-rule.index' => 'master/reorder-rule',
+        // 'master.reorder-rule.index' => 'master/reorder-rule',
         'master.putaway-rule.index' => 'master/putaway-rule',
         // 'master.brand.index'        => 'master/brand',
-        'master.warehouse.index'    => 'master/warehouse',
+        // 'master.warehouse.index'    => 'master/warehouse',
 
 
         // Báo cáo

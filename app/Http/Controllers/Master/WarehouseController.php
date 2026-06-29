@@ -5,89 +5,82 @@ namespace App\Http\Controllers\Master;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Master\Warehouse\StoreWarehouseRequest;
 use App\Http\Requests\Master\Warehouse\UpdateWarehouseRequest;
+use App\Models\Employee;
 use App\Models\Warehouse;
+use App\Services\WarehouseService;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
+use Illuminate\View\View;
 
 class WarehouseController extends Controller
 {
-    public function index(Request $request)
+    public function __construct(
+        private readonly WarehouseService $warehouseService,
+    ) {}
+
+    // ===== INDEX =====
+
+    public function index(Request $request): View
     {
-        $query = Warehouse::with('rootLocation');
+        Gate::authorize('viewAny', Warehouse::class);
 
-        if ($search = $request->search) {
-            $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('code', 'like', "%{$search}%");
-            });
-        }
+        $filters = $request->only(['search', 'status', 'sort', 'dir']);
 
-        if ($request->status !== null && $request->status !== '') {
-            $query->where('status', $request->status);
-        }
+        $warehouses  = $this->warehouseService->search($filters);
+        $totalCount  = $this->warehouseService->totalCount();
+        $activeCount = $this->warehouseService->activeCount();
+        $employees   = Employee::where('status', 1)->orderBy('name')->get();
 
-        $warehouses  = $query->orderBy('code')->paginate(15)->withQueryString();
-        $totalCount  = Warehouse::count();
-        $activeCount = Warehouse::where('status', 1)->count();
-
-        return view('master.warehouse.index', compact('warehouses', 'totalCount', 'activeCount'));
+        return view('master.warehouse.index', compact(
+            'warehouses', 'totalCount', 'activeCount', 'employees'
+        ));
     }
 
-    public function store(StoreWarehouseRequest $request)
+    // ===== STORE =====
+
+    public function store(StoreWarehouseRequest $request): RedirectResponse
     {
-        $this->authorize('create', Warehouse::class);
+        Gate::authorize('create', Warehouse::class);
 
-        DB::transaction(function () use ($request) {
-            $warehouse = Warehouse::create([
-                'code'   => strtoupper(trim($request->code)),
-                'name'   => $request->name,
-                'note'   => $request->note,
-                'status' => $request->status,
-            ]);
+        $this->warehouseService->create($request->validated());
 
-            // Tự động tạo root location cho kho (Vị trí ảo)
-            $rootLocation = $warehouse->locations()->create([
-                'code'   => 'VIR-' . $warehouse->code,
-                'name'   => 'Vị trí ảo — ' . $warehouse->name,
-                'type'   => 2, // Virtual
-                'status' => 1,
-            ]);
-
-            $warehouse->update(['root_location_id' => $rootLocation->id]);
-        });
-
-        return redirect()->route('master.warehouse.index')
+        return redirect()
+            ->route('master.warehouse.index')
             ->with('success', "Đã thêm kho \"{$request->name}\" thành công.");
     }
 
-    public function update(UpdateWarehouseRequest $request, Warehouse $warehouse)
+    // ===== UPDATE =====
+
+    public function update(UpdateWarehouseRequest $request, Warehouse $warehouse): RedirectResponse
     {
-        $this->authorize('update', $warehouse);
+        Gate::authorize('update', $warehouse);
 
-        $warehouse->update([
-            'code'   => strtoupper(trim($request->code)),
-            'name'   => $request->name,
-            'note'   => $request->note,
-            'status' => $request->status,
-        ]);
+        $this->warehouseService->update($warehouse, $request->validated());
 
-        return redirect()->route('master.warehouse.index')
+        return redirect()
+            ->route('master.warehouse.index')
             ->with('success', "Đã cập nhật kho \"{$warehouse->name}\" thành công.");
     }
 
-    public function destroy(Warehouse $warehouse)
-    {
-        $this->authorize('delete', $warehouse);
+    // ===== DESTROY =====
 
-        if ($warehouse->locations()->where('type', 1)->whereHas('stocks')->exists()) {
-            return redirect()->route('master.warehouse.index')
-                ->with('error', "Không thể xóa kho \"{$warehouse->name}\" vì đang có tồn kho.");
-        }
+    public function destroy(Warehouse $warehouse): RedirectResponse
+    {
+        Gate::authorize('delete', $warehouse);
 
         $name = $warehouse->name;
-        $warehouse->delete();
 
-        return redirect()->route('master.warehouse.index')
+        try {
+            $this->warehouseService->delete($warehouse);
+        } catch (\RuntimeException $e) {
+            return redirect()
+                ->route('master.warehouse.index')
+                ->with('error', $e->getMessage());
+        }
+
+        return redirect()
+            ->route('master.warehouse.index')
             ->with('success', "Đã xóa kho \"{$name}\" thành công.");
     }
 }

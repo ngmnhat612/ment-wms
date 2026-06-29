@@ -18,6 +18,7 @@ class UpdateUomRequest extends FormRequest
         return [
             'name'   => "required|string|max:50",
             'code'   => "required|string|max:20|unique:uoms,code,{$uomId}",
+            'note'   => 'nullable|string|max:500',
             'status' => 'required|in:0,1',
         ];
     }

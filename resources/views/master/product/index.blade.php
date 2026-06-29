@@ -109,104 +109,94 @@ return "<svg class=\"icon icon-sm ms-1\">
     </div>
 
     <div class="card-body p-0">
-        <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-                <thead class="table-light">
-                    <tr>
-                        <th class="text-center" style="width:4%">#</th>
-                        <th style="width:6%">Ảnh</th>
-                        <th style="width:8%">
-                            <a href="{{ $sortUrl('code') }}"
-                                class="text-decoration-none text-body d-inline-flex align-items-center">
-                                Mã MenT {!! $sortIcon('code') !!}
-                            </a>
-                        </th>
-                        <th>
-                            <a href="{{ $sortUrl('name') }}"
-                                class="text-decoration-none text-body d-inline-flex align-items-center">
-                                Tên {!! $sortIcon('name') !!}
-                            </a>
-                        </th>
-                        <th style="width:14%">
-                            <a href="{{ $sortUrl('specification') }}"
-                                class="text-decoration-none text-body d-inline-flex align-items-center">
-                                Thông số kỹ thuật {!! $sortIcon('specification') !!}
-                            </a>
-                        </th>
-                        <th style="width:8%">Danh mục</th>
-                        <th style="width:8%">ĐVT</th>
-                        <th style="width:8%">Theo dõi</th>
-                        <th class="text-center" style="width:8%">Trạng thái</th>
-                        <th class="text-center" style="width:8%">Thao tác</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse ($products as $index => $product)
-                    <tr>
-                        <td class="text-center text-body-secondary">
-                            {{ ($products->currentPage() - 1) * $products->perPage() + $index + 1 }}
-                        </td>
-                        <td>
-                            @if ($product->image_path)
-                            <img src="{{ Storage::url($product->image_path) }}"
-                                style="width:50px; height:50px; object-fit:contain; cursor:zoom-in;"
-                                alt="{{ $product->name }}" data-preview="{{ Storage::url($product->image_path) }}">
-                            @else
-                            <div class="rounded bg-body-secondary d-flex align-items-center justify-content-center"
-                                style="width:50px; height:50px">
-                                <svg class="icon icon-sm text-body-tertiary">
-                                    <use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-image') }}">
-                                    </use>
-                                </svg>
-                            </div>
-                            @endif
-                        </td>
-                        <td><code class="text-primary fw-medium">{{ $product->code ?? '-' }}</code></td>
-                        <td class="fw-medium">{{ $product->name ?? '-' }}</td>
-                        <td class="small">{{ $product->specification ?? '-' }}</td>
-                        <td class="small">{{ $product->category?->code ?? '-' }}</td>
-                        <td class="small">{{ $product->uom?->name ?? '-' }}</td>
-                        <td class="small">{{ $product->tracking_type?->label() ?? '-' }}</td>
-                        <td class="text-center">
-                            @if ($product->status === \App\Enums\ActiveStatus::Active)
-                            <span class="badge bg-success-subtle text-success border border-success-subtle">Hoạt
-                                động</span>
-                            @else
-                            <span
-                                class="badge bg-secondary-subtle text-secondary border border-secondary-subtle">Ngừng</span>
-                            @endif
-                        </td>
-                        <td class="text-center">
-                            <button class="btn btn-sm btn-outline-primary me-1" onclick="openForm({{ $product->id }})"
-                                title="Chỉnh sửa">
-                                <svg class="icon">
-                                    <use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-pencil') }}">
-                                    </use>
-                                </svg>
-                            </button>
-                            <button class="btn btn-sm btn-outline-danger"
-                                onclick="confirmDelete({{ $product->id }}, '{{ addslashes($product->name) }}')"
-                                title="Xóa">
-                                <svg class="icon">
-                                    <use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-trash') }}">
-                                    </use>
-                                </svg>
-                            </button>
-                        </td>
-                    </tr>
-                    @empty
-                    <tr>
-                        <td colspan="10" class="text-center text-body-secondary py-5">
-                            <svg class="icon icon-3xl d-block mx-auto mb-2 opacity-25">
-                                <use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-storage') }}"></use>
-                            </svg>
-                            Chưa có vật tư nào
-                        </td>
-                    </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th class="text-center" style="width:4%">#</th>
+              <th style="width:6%">Ảnh</th>
+              <th style="width:8%">
+                <a href="{{ $sortUrl('code') }}" class="text-decoration-none text-body d-inline-flex align-items-center">
+                  Mã MenT {!! $sortIcon('code') !!}
+                </a>
+              </th>
+              <th>
+                <a href="{{ $sortUrl('name') }}" class="text-decoration-none text-body d-inline-flex align-items-center">
+                  Tên {!! $sortIcon('name') !!}
+                </a>
+              </th>
+              <th style="width:14%">
+                <a href="{{ $sortUrl('specification') }}" class="text-decoration-none text-body d-inline-flex align-items-center">
+                  TSKT {!! $sortIcon('specification') !!}
+                </a>
+              </th>
+              <th style="width:8%">Danh mục</th>
+              <th style="width:8%">ĐVT</th>
+              <th style="width:8%">Theo dõi</th>
+              <th class="text-center" style="width:8%">Trạng thái</th>
+              <th class="text-center" style="width:8%">Thao tác</th>
+            </tr>
+          </thead>
+          <tbody>
+            @forelse ($products as $index => $product)
+              <tr>
+                <td class="text-center text-body-secondary">
+                  {{ ($products->currentPage() - 1) * $products->perPage() + $index + 1 }}
+                </td>
+                <td>
+                  @if ($product->image_path)
+                    <img src="{{ Storage::url($product->image_path) }}"
+                        style="width:50px; height:50px; object-fit:contain; cursor:zoom-in;"
+                        alt="{{ $product->name }}"
+                        data-preview="{{ Storage::url($product->image_path) }}">
+                  @else
+                    <div class="rounded bg-body-secondary d-flex align-items-center justify-content-center"
+                         style="width:50px; height:50px">
+                      <svg class="icon icon-sm text-body-tertiary">
+                        <use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-image') }}"></use>
+                      </svg>
+                    </div>
+                  @endif
+                </td>
+                <td><code class="text-primary fw-medium">{{ $product->code ?? '-' }}</code></td>
+                <td class="fw-medium">{{ $product->name ?? '-' }}</td>
+                <td class="small">{{ $product->specification ?? '-' }}</td>
+                <td class="small">{{ $product->category?->code ?? '-' }}</td>
+                <td class="small">{{ $product->uom?->name ?? '-' }}</td>
+                <td class="small">{{ $product->tracking_type?->label() ?? '-' }}</td>
+                <td class="text-center">
+                  @if ($product->status === \App\Enums\ActiveStatus::Active)
+                    <span class="badge bg-success-subtle text-success border border-success-subtle">Hoạt động</span>
+                  @else
+                    <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle">Ngừng</span>
+                  @endif
+                </td>
+                <td class="text-center">
+                  <button class="btn btn-sm btn-outline-primary me-1"
+                          onclick="openForm({{ $product->id }})"
+                          title="Chỉnh sửa">
+                    <svg class="icon"><use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-pencil') }}"></use></svg>
+                  </button>
+                  <button class="btn btn-sm btn-outline-danger"
+                          onclick="confirmDelete({{ $product->id }}, '{{ addslashes($product->name) }}')"
+                          title="Xóa">
+                    <svg class="icon"><use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-trash') }}"></use></svg>
+                  </button>
+                </td>
+              </tr>
+            @empty
+              <tr>
+                <td colspan="10" class="text-center text-body-secondary py-5">
+                  <svg class="icon icon-3xl d-block mx-auto mb-2 opacity-25">
+                    <use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-storage') }}"></use>
+                  </svg>
+                  Chưa có vật tư nào
+                </td>
+              </tr>
+            @endforelse
+          </tbody>
+        </table>
+      </div>
     </div>
 
     <div class="card-footer d-flex justify-content-between align-items-center py-2">

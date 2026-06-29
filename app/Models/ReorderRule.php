@@ -17,6 +17,7 @@ class ReorderRule extends Model
         'min_qty',
         'max_qty',
         'status',
+        'note',
     ];
 
     protected function casts(): array

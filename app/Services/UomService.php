@@ -54,6 +54,7 @@ class UomService
         return $this->uomRepository->create([
             'code'   => $code,
             'name'   => $data['name'],
+            'note'   => $data['note'] ?? null,
             'status' => $data['status'],
         ]);
     }
@@ -66,6 +67,7 @@ class UomService
         $this->uomRepository->update($uom, [
             'code'   => strtoupper(trim($data['code'])),
             'name'   => $data['name'],
+            'note'   => $data['note'] ?? null,
             'status' => $data['status'],
         ]);
 

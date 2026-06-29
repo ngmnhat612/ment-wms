@@ -14,6 +14,7 @@ return new class extends Migration
             $table->unsignedBigInteger('employee_id');
             $table->boolean('is_primary')->default(false)
                   ->comment('Kho chính của nhân viên — dùng làm mặc định khi login');
+                  
             $table->timestamps();
 
             $table->foreign('warehouse_id')
