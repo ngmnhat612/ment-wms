@@ -24,6 +24,7 @@ Homestead.yaml
 Thumbs.db
 .repomixignore
 repomix-output.xml
+docker-compose.yml
 
 # Storage (uploads, cache, sessions — nặng & nhạy cảm)
 /storage/app/public/*

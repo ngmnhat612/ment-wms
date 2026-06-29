@@ -16,6 +16,7 @@ class StoreUomRequest extends FormRequest
         return [
             'code'   => 'nullable|string|max:20|unique:uoms,code',
             'name'   => 'required|string|max:50',
+            'note'   => 'nullable|string|max:500',
             'status' => 'required|in:0,1',
         ];
     }

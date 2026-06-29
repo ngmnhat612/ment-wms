@@ -3,7 +3,7 @@
 @section('title', 'Thương hiệu')
 
 @section('breadcrumb')
-  <li class="breadcrumb-item">Danh mục</li>
+  <li class="breadcrumb-item">Admin</li>
   <li class="breadcrumb-item active">Thương hiệu</li>
 @endsection
 

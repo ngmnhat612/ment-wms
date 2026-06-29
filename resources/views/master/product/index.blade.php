@@ -115,7 +115,7 @@
               </th>
               <th style="width:14%">
                 <a href="{{ $sortUrl('specification') }}" class="text-decoration-none text-body d-inline-flex align-items-center">
-                  Thông số kỹ thuật {!! $sortIcon('specification') !!}
+                  TSKT {!! $sortIcon('specification') !!}
                 </a>
               </th>
               <th style="width:8%">Danh mục</th>

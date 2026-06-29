@@ -3,7 +3,7 @@
 @section('title', 'Đơn vị tính')
 
 @section('breadcrumb')
-  <li class="breadcrumb-item">Danh mục</li>
+  <li class="breadcrumb-item">Admin</li>
   <li class="breadcrumb-item active">Đơn vị tính</li>
 @endsection
 
@@ -87,7 +87,7 @@
           <thead class="table-light">
             <tr>
               <th class="text-center" style="width:4%">#</th>
-              <th style="width:10%">
+              <th style="width:8%">
                 <a href="{{ $sortUrl('code') }}" class="text-decoration-none text-body d-inline-flex align-items-center">
                   Mã {!! $sortIcon('code') !!}
                 </a>
@@ -97,7 +97,8 @@
                   Tên {!! $sortIcon('name') !!}
                 </a>
               </th>
-              <th class="text-center" style="width:10%">Trạng thái</th>
+              <th style="width:32%">Ghi chú</th>
+              <th class="text-center" style="width:8%">Trạng thái</th>
               <th class="text-center" style="width:8%">Thao tác</th>
             </tr>
           </thead>
@@ -111,6 +112,7 @@
                   <code class="text-primary fw-medium">{{ $uom->code ?? '-' }}</code>
                 </td>
                 <td class="fw-medium">{{ $uom->name ?? '-' }}</td>
+                <td class="small">{{ $uom->note ?? '-' }}</td>
                 <td class="text-center">
                   @if ($uom->status === \App\Enums\ActiveStatus::Active)
                     <span class="badge bg-success-subtle text-success border border-success-subtle">Hoạt động</span>
@@ -121,13 +123,14 @@
                 <td class="text-center">
                   <button class="btn btn-sm btn-outline-primary me-1"
                           onclick="openModal(
-                            {{ $uom->id }},
-                            '{{ addslashes($uom->code) }}',
-                            '{{ addslashes($uom->name) }}',
-                            {{ $uom->status->value }}
+                              {{ $uom->id }},
+                              '{{ addslashes($uom->code) }}',
+                              '{{ addslashes($uom->name) }}',
+                              '{{ addslashes($uom->note ?? '') }}',
+                              {{ $uom->status->value }}
                           )"
                           title="Chỉnh sửa">
-                    <svg class="icon"><use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-pencil') }}"></use></svg>
+                      <svg class="icon"><use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-pencil') }}"></use></svg>
                   </button>
                   <button class="btn btn-sm btn-outline-danger"
                           onclick="confirmDelete({{ $uom->id }}, '{{ addslashes($uom->name) }}')"
@@ -201,6 +204,16 @@
               @enderror
             </div>
 
+            <div class="mb-3">
+              <label class="form-label fw-medium">Ghi chú</label>
+              <textarea class="form-control {{ $errors->has('note') ? 'is-invalid' : '' }}"
+                        id="uomNote" name="note"
+                        rows="2" maxlength="500"></textarea>
+              @error('note')
+                  <div class="invalid-feedback">{{ $message }}</div>
+              @enderror
+          </div>
+
             <div>
               <label class="form-label fw-medium">Trạng thái</label>
               <div class="d-flex gap-3">
@@ -268,15 +281,17 @@
   const routeStore = '{{ route('master.uom.store') }}';
   const routeBase  = '{{ url('master/uom') }}';
 
-  function openModal(id = null, code = '', name = '', status = 1) {
-    const modal   = new coreui.Modal(document.getElementById('uomModal'));
-    const form    = document.getElementById('uomForm');
-    const title   = document.getElementById('uomModalLabel');
-    const method  = document.getElementById('formMethod');
-    const codeEl  = document.getElementById('uomCode');
+  function openModal(id = null, code = '', name = '', note = '', status = 1) {
+    const modal  = new coreui.Modal(document.getElementById('uomModal'));
+    const form   = document.getElementById('uomForm');
+    const title  = document.getElementById('uomModalLabel');
+    const method = document.getElementById('formMethod');
+    const codeEl = document.getElementById('uomCode');
 
     document.getElementById('uomName').value = name;
+    document.getElementById('uomNote').value = note;
     document.getElementById(status == 1 ? 'uomStatusActive' : 'uomStatusInactive').checked = true;
+
 
     if (id) {
       title.textContent = 'Chỉnh sửa đơn vị tính';
@@ -313,12 +328,13 @@
   });
 
   @if ($errors->any())
-    openModal(
-      null,
-      '{{ old("code") }}',
-      '{{ addslashes(old("name")) }}',
-      {{ old("status", 1) }}
-    );
+      openModal(
+          null,
+          '{{ old("code") }}',
+          '{{ addslashes(old("name")) }}',
+          '{{ addslashes(old("note")) }}',
+          {{ old("status", 1) }}
+      );
   @endif
 
   // ===== CHẶN SUBMIT LIÊN TỤC =====

@@ -13,6 +13,7 @@ return new class extends Migration
             $table->id();
             $table->string('code', 50)->unique()->comment('Mã đơn vị tính, tự sinh (VD: DVT0001)');
             $table->string('name', 200);
+            $table->string('note', 500)->nullable()->comment('Ghi chú');
             $table->tinyInteger('status')->default(1)->comment('1=Active, 0=Inactive');
             $table->timestamps();
         });

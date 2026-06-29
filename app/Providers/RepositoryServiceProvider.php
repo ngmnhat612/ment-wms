@@ -5,11 +5,15 @@ namespace App\Providers;
 use App\Repositories\Contracts\CategoryRepositoryInterface;
 use App\Repositories\Contracts\ProductRepositoryInterface;
 use App\Repositories\Contracts\UomRepositoryInterface;
+use App\Repositories\Contracts\BrandRepositoryInterface;
+use App\Repositories\Contracts\WarehouseRepositoryInterface;
+use App\Repositories\Contracts\ReorderRuleRepositoryInterface;
 use App\Repositories\Eloquent\CategoryRepository;
 use App\Repositories\Eloquent\ProductRepository;
 use App\Repositories\Eloquent\UomRepository;
-use App\Repositories\Contracts\BrandRepositoryInterface;
 use App\Repositories\Eloquent\BrandRepository;
+use App\Repositories\Eloquent\WarehouseRepository;
+use App\Repositories\Eloquent\ReorderRuleRepository;
 use Illuminate\Support\ServiceProvider;
 
 class RepositoryServiceProvider extends ServiceProvider
@@ -36,6 +40,15 @@ class RepositoryServiceProvider extends ServiceProvider
             BrandRepository::class,
         );
 
+        $this->app->bind(
+            WarehouseRepositoryInterface::class,
+            WarehouseRepository::class,
+        );
+
+        $this->app->bind(
+            ReorderRuleRepositoryInterface::class,
+            ReorderRuleRepository::class,
+        );
         // --- Thêm binding cho các repository khác tại đây ---
         // $this->app->bind(StockRepositoryInterface::class, StockRepository::class);
     }

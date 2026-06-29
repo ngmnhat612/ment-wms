@@ -44,9 +44,9 @@ class AuthServiceProvider extends ServiceProvider
         Category::class     => CategoryPolicy::class,
         Product::class      => ProductPolicy::class,
         Uom::class          => UomPolicy::class,
-        Brand::class => BrandPolicy::class,
-        // Warehouse::class    => WarehousePolicy::class,
-        // ReorderRule::class  => ReorderRulePolicy::class,
+        Brand::class        => BrandPolicy::class,
+        Warehouse::class    => WarehousePolicy::class,
+        ReorderRule::class  => ReorderRulePolicy::class,
         // PutawayRule::class  => PutawayRulePolicy::class,
 
         // Inbound / Outbound
