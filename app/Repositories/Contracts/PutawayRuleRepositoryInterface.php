@@ -20,6 +20,6 @@ interface PutawayRuleRepositoryInterface
     public function delete(PutawayRule $rule): bool;
 
     public function findTrashed(int $warehouseId, ?int $productId, ?int $categoryId): ?PutawayRule;
-    
+
     public function restoreAndUpdate(PutawayRule $rule, array $data): PutawayRule;
 }
