@@ -218,13 +218,13 @@
             Thương hiệu
           </a>
         </li>
-        <li class="nav-item">
+        <!-- <li class="nav-item">
           <a class="nav-link {{ request()->routeIs('master.warehouse.*') ? 'active' : '' }}"
              href="{{ route('master.warehouse.index') }}">
             <span class="nav-icon"><span class="nav-icon-bullet"></span></span>
             Kho hàng
           </a>
-        </li>
+        </li> -->
         <li class="nav-item">
           <a class="nav-link {{ request()->routeIs('master.employee.*') ? 'active' : '' }}"
              href="{{ route('master.employee.index') }}">

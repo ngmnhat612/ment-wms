@@ -28,11 +28,11 @@ class WarehouseSeeder extends Seeder
         // Tạo virtual root location nếu kho chưa có
         if (! $warehouse->root_location_id) {
             $rootLocation = Location::firstOrCreate(
-                ['code' => 'VIR-WH0001'],
+                ['code' => 'VIR-K0001'],
                 [
                     'warehouse_id' => $warehouse->id,
                     'parent_id'    => null,
-                    'name'         => 'Vị trí ảo - Kho chính',
+                    'name'         => 'Kho chính',
                     'type'         => LocationType::Virtual->value,
                     'status'       => ActiveStatus::Active->value,
                 ]
