@@ -10,6 +10,7 @@ use App\Repositories\Contracts\WarehouseRepositoryInterface;
 use App\Repositories\Contracts\ReorderRuleRepositoryInterface;
 use App\Repositories\Contracts\PutawayRuleRepositoryInterface;
 use App\Repositories\Contracts\LocationRepositoryInterface;
+use App\Repositories\Contracts\SupplierRepositoryInterface;
 use App\Repositories\Eloquent\CategoryRepository;
 use App\Repositories\Eloquent\ProductRepository;
 use App\Repositories\Eloquent\UomRepository;
@@ -18,6 +19,7 @@ use App\Repositories\Eloquent\WarehouseRepository;
 use App\Repositories\Eloquent\ReorderRuleRepository;
 use App\Repositories\Eloquent\PutawayRuleRepository;
 use App\Repositories\Eloquent\LocationRepository;
+use App\Repositories\Eloquent\SupplierRepository;
 use Illuminate\Support\ServiceProvider;
 
 class RepositoryServiceProvider extends ServiceProvider
@@ -62,6 +64,11 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->bind(
             LocationRepositoryInterface::class,
             LocationRepository::class
+        );
+
+        $this->app->bind(
+            SupplierRepositoryInterface::class,
+            SupplierRepository::class,
         );
         
         // --- Thêm binding cho các repository khác tại đây ---

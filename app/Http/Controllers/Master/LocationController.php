@@ -24,7 +24,7 @@ class LocationController extends Controller
     {
         Gate::authorize('viewAny', Location::class);
 
-        $filters = $request->only(['search', 'parent_id', 'status']);
+        $filters = $request->only(['search', 'status', 'sort', 'dir']);
 
         $locations     = $this->locationService->search($filters);
         $totalCount    = $this->locationService->totalCount();
