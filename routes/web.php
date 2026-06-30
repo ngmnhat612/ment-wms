@@ -26,6 +26,7 @@ use App\Http\Controllers\Master\WarehouseEmployeeController;
 use App\Http\Controllers\Master\LocationController;
 use App\Http\Controllers\Master\ProductController;
 use App\Http\Controllers\Master\ReorderRuleController;
+use App\Http\Controllers\Master\PutawayRuleController;
 
 // ── INBOUND ───────────────────────────────────────────────────────────────────
 use App\Http\Controllers\Inbound\StockReceiptController;
@@ -87,6 +88,10 @@ Route::middleware('auth')->group(function () {
         Route::resource('reorder-rule', ReorderRuleController::class)
             ->only(['index', 'store', 'update', 'destroy']);
 
+        // Quy tắc tái đặt hàng
+        Route::resource('putaway-rule', PutawayRuleController::class)
+            ->only(['index', 'store', 'update', 'destroy']);
+
         // Thương hiệu
         Route::resource('brand', BrandController::class)
             ->only(['index', 'store', 'update', 'destroy']);
@@ -119,7 +124,7 @@ Route::middleware('auth')->group(function () {
         'master.employee.index'     => 'master/employee',
         'master.location.index'     => 'master/location',
         // 'master.reorder-rule.index' => 'master/reorder-rule',
-        'master.putaway-rule.index' => 'master/putaway-rule',
+        // 'master.putaway-rule.index' => 'master/putaway-rule',
         // 'master.brand.index'        => 'master/brand',
         // 'master.warehouse.index'    => 'master/warehouse',
 
