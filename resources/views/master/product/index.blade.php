@@ -9,33 +9,31 @@
 
 @section('content')
 
-{{-- SORT HELPER --}}
-@php
-$sort = request('sort', '');
-$dir = request('dir', '');
-$nextDir = function($col) use ($sort, $dir) {
-if ($sort !== $col) return 'asc'; // lần 1: chưa sort col này → asc
-if ($dir === 'asc') return 'desc'; // lần 2: đang asc → desc
-return ''; // lần 3: đang desc → reset
-};
-$sortUrl = function($col) use ($sort, $dir, $nextDir) {
-$nd = $nextDir($col);
-if ($nd === '') return request()->fullUrlWithQuery(['sort' => '', 'dir' => '', 'page' => 1]);
-return request()->fullUrlWithQuery(['sort' => $col, 'dir' => $nd, 'page' => 1]);
-};
-$sortIcon = function($col) use ($sort, $dir) {
-if ($sort !== $col || $dir === '') {
-$icon = 'cil-swap-vertical';
-} elseif ($dir === 'asc') {
-$icon = 'cil-sort-alpha-up';
-} else {
-$icon = 'cil-sort-alpha-down';
-}
-return "<svg class=\"icon icon-sm ms-1\">
-    <use xlink:href=\"" . asset('vendor/coreui/icons/sprites/free.svg#' . $icon) . "\"></use>
-</svg>";
-};
-@endphp
+  {{-- SORT HELPER --}}
+  @php
+    $sort = request('sort', '');
+    $dir  = request('dir', '');
+    $nextDir = function($col) use ($sort, $dir) {
+      if ($sort !== $col) return 'asc';        // lần 1: chưa sort col này → asc
+      if ($dir === 'asc')  return 'desc';      // lần 2: đang asc → desc
+      return '';                                // lần 3: đang desc → reset
+    };
+    $sortUrl = function($col) use ($sort, $dir, $nextDir) {
+      $nd = $nextDir($col);
+      if ($nd === '') return request()->fullUrlWithQuery(['sort' => '', 'dir' => '', 'page' => 1]);
+      return request()->fullUrlWithQuery(['sort' => $col, 'dir' => $nd, 'page' => 1]);
+    };
+    $sortIcon = function($col) use ($sort, $dir) {
+      if ($sort !== $col || $dir === '') {
+        $icon = 'cil-swap-vertical';
+      } elseif ($dir === 'asc') {
+        $icon = 'cil-sort-alpha-down';
+      } else {
+        $icon = 'cil-sort-alpha-up';
+      }
+      return "<svg class=\"icon icon-sm ms-1\"><use xlink:href=\"" . asset('vendor/coreui/icons/sprites/free.svg#' . $icon) . "\"></use></svg>";
+    };
+  @endphp
 
 {{-- HEADER --}}
 <div class="d-flex justify-content-end mb-4">

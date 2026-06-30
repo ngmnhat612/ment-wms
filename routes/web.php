@@ -56,25 +56,21 @@ Route::middleware('auth')->group(function () {
         Route::resource('uom', UomController::class)
             ->only(['index', 'store', 'update', 'destroy']);
 
-        // // Quy đổi đơn vị
-        // Route::resource('uom-conversion', UomConversionController::class)
-        //     ->only(['index', 'store', 'update', 'destroy']);
-
         // Danh mục vật tư
         Route::resource('category', CategoryController::class)
             ->only(['index', 'store', 'update', 'destroy']);
 
-        // // Nhà cung cấp
-        // Route::resource('supplier', SupplierController::class)
-        //     ->only(['index', 'store', 'update', 'destroy']);
+        // Nhà cung cấp
+        Route::resource('supplier', SupplierController::class)
+            ->only(['index', 'store', 'update', 'destroy']);
 
         // // Nhân viên
         // Route::resource('employee', EmployeeController::class)
         //     ->only(['index', 'store', 'update', 'destroy']);
 
-        // // Vị trí
-        // Route::resource('location', LocationController::class)
-        //     ->only(['index', 'store', 'update', 'destroy']);
+        // Vị trí
+        Route::resource('location', LocationController::class)
+            ->only(['index', 'store', 'update', 'destroy']);
 
         // Vật tư
         Route::get('product/find', [ProductController::class, 'find'])
@@ -99,6 +95,10 @@ Route::middleware('auth')->group(function () {
         // Kho
         Route::resource('warehouse', WarehouseController::class)
             ->only(['index', 'store', 'update', 'destroy']);
+
+        // // Quy đổi đơn vị
+        // Route::resource('uom-conversion', UomConversionController::class)
+        //     ->only(['index', 'store', 'update', 'destroy']);
     });
 
     Route::get('under-construction', fn() => view('under-construction'))
@@ -114,19 +114,19 @@ Route::middleware('auth')->group(function () {
 
         // Tồn kho
         'inventory.index'       => 'inventory',
-        'inventory.locations'   => 'inventory/locations',
 
         // Master data
         // 'master.uom.index'          => 'master/uom',
         'master.uom-conversion.index' => 'master/uom-conversion',
         // 'master.category.index'     => 'master/category',
-        'master.supplier.index'     => 'master/supplier',
+        // 'master.supplier.index'     => 'master/supplier',
         'master.employee.index'     => 'master/employee',
-        'master.location.index'     => 'master/location',
+        // 'master.location.index'     => 'master/location',
         // 'master.reorder-rule.index' => 'master/reorder-rule',
         // 'master.putaway-rule.index' => 'master/putaway-rule',
         // 'master.brand.index'        => 'master/brand',
         // 'master.warehouse.index'    => 'master/warehouse',
+        // 'master.locations'          => 'master/locations',
 
 
         // Báo cáo

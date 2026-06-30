@@ -12,11 +12,12 @@ return new class extends Migration
             $table->id();
             $table->string('code', 50)->unique()->comment('Mã nhà cung cấp, tự sinh');
             $table->string('name', 200);
-            $table->string('tax_code', 20)->nullable()->unique()->comment('Mã số thuế');
+            $table->string('tax_code', 20)->nullable()->comment('Mã số thuế');
             $table->string('phone', 20)->nullable();
             $table->string('email', 200)->nullable();
             $table->string('address', 500)->nullable();
             $table->tinyInteger('status')->default(1)->comment('1=Active, 0=Inactive');
+            $table->string('note', 500)->nullable()->comment('Ghi chú');
             $table->timestamps();
         });
     }

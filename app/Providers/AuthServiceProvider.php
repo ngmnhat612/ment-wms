@@ -16,6 +16,8 @@ use App\Models\StockRequest;
 use App\Models\Uom;
 use App\Models\Warehouse;
 use App\Models\Brand;
+use App\Models\Location;
+use App\Models\Supplier;
 
 use App\Policies\AccountPolicy;
 use App\Policies\CategoryPolicy;
@@ -32,6 +34,8 @@ use App\Policies\StockRequestPolicy;
 use App\Policies\UomPolicy;
 use App\Policies\WarehousePolicy;
 use App\Policies\BrandPolicy;
+use App\Policies\LocationPolicy;
+use App\Policies\SupplierPolicy;
 
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
 
@@ -48,6 +52,8 @@ class AuthServiceProvider extends ServiceProvider
         Warehouse::class    => WarehousePolicy::class,
         ReorderRule::class  => ReorderRulePolicy::class,
         PutawayRule::class  => PutawayRulePolicy::class,
+        Location::class     => LocationPolicy::class,
+        Supplier::class     => SupplierPolicy::class,
 
         // Inbound / Outbound
         // StockReceipt::class => StockReceiptPolicy::class,

@@ -228,4 +228,29 @@ class ProductService
     // {
     //     return (float) $product->stocks()->sum('quantity');
     // }
+
+    /**
+     * Chuyển toàn bộ mã trong cùng gia đình (mã gốc + mọi biến thể) sang Ngưng hoạt động,
+     * ngoại trừ biến thể vừa được tạo.
+     */
+    private function deactivateFamily(Product $parent, int $excludeId): void
+    {
+        // Tìm về mã gốc cao nhất của gia đình (đi ngược parent_id)
+        $root = $parent;
+        while ($root->parent_id) {
+            $root = Product::find($root->parent_id);
+        }
+
+        $familyIds = Product::where(function ($q) use ($root) {
+                $q->where('id', $root->id)
+                  ->orWhere('code', 'like', $root->code . '.%');
+            })
+            ->where('id', '!=', $excludeId)
+            ->pluck('id');
+
+        if ($familyIds->isNotEmpty()) {
+            Product::whereIn('id', $familyIds)
+                ->update(['status' => ActiveStatus::Inactive->value]);
+        }
+    }
 }

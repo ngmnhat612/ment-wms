@@ -5,11 +5,13 @@ namespace App\Models;
 use App\Enums\ActiveStatus;
 use App\Enums\LocationType;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Location extends Model
 {
+    use SoftDeletes;
+
     protected $table = 'locations';
-    public $timestamps = false;
 
     protected $fillable = [
         'parent_id',
@@ -18,6 +20,7 @@ class Location extends Model
         'name',
         'type',
         'status',
+        'note',
     ];
 
     protected function casts(): array
@@ -62,7 +65,7 @@ class Location extends Model
     }
 
     /**
-     * Tồn kho hiện tại tại vị trí này (dùng current_location_id theo schema mới).
+     * Tồn kho hiện tại tại vị trí này.
      */
     public function stocks()
     {
@@ -128,16 +131,27 @@ class Location extends Model
         return $this->stocks()->where('quantity', '>', 0)->exists();
     }
 
+    public function isRootLocation(): bool
+    {
+        return $this->warehouseAsRoot()->exists();
+    }
+
     /**
      * Lấy toàn bộ ID con cháu (đệ quy) — dùng cho query tồn kho theo khu vực.
      */
     public function getDescendantIds(): array
     {
-        $ids = [];
-        foreach ($this->children as $child) {
+        $ids      = [];
+        $children = $this->children()->select('id')->get();
+
+        foreach ($children as $child) {
             $ids[] = $child->id;
-            $ids   = array_merge($ids, $child->getDescendantIds());
+            $childFull = static::with('children')->find($child->id);
+            if ($childFull) {
+                $ids = array_merge($ids, $childFull->getDescendantIds());
+            }
         }
+
         return $ids;
     }
 }
