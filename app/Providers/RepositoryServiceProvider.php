@@ -8,12 +8,14 @@ use App\Repositories\Contracts\UomRepositoryInterface;
 use App\Repositories\Contracts\BrandRepositoryInterface;
 use App\Repositories\Contracts\WarehouseRepositoryInterface;
 use App\Repositories\Contracts\ReorderRuleRepositoryInterface;
+use App\Repositories\Contracts\PutawayRuleRepositoryInterface;
 use App\Repositories\Eloquent\CategoryRepository;
 use App\Repositories\Eloquent\ProductRepository;
 use App\Repositories\Eloquent\UomRepository;
 use App\Repositories\Eloquent\BrandRepository;
 use App\Repositories\Eloquent\WarehouseRepository;
 use App\Repositories\Eloquent\ReorderRuleRepository;
+use App\Repositories\Eloquent\PutawayRuleRepository;
 use Illuminate\Support\ServiceProvider;
 
 class RepositoryServiceProvider extends ServiceProvider
@@ -48,6 +50,11 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->bind(
             ReorderRuleRepositoryInterface::class,
             ReorderRuleRepository::class,
+        );
+
+        $this->app->bind(
+            PutawayRuleRepositoryInterface::class,
+            PutawayRuleRepository::class,
         );
         // --- Thêm binding cho các repository khác tại đây ---
         // $this->app->bind(StockRepositoryInterface::class, StockRepository::class);

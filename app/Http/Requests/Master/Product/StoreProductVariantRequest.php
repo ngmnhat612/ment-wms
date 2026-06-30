@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Master\Product;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use App\Models\Product;
@@ -18,7 +19,10 @@ class StoreProductVariantRequest extends FormRequest
     {
         return [
             'parent_code' => 'required|string|exists:products,code',
-            'code'        => 'nullable|string|max:50|unique:products,code',
+            'code' => [
+                'nullable', 'string', 'max:50',
+                Rule::unique('products', 'code')->whereNull('deleted_at'),
+            ],
             'name'        => 'required|string|max:200',
             'specification' => 'nullable|string|max:500',
             'status'      => 'required|in:0,1',

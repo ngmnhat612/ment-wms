@@ -47,7 +47,7 @@ class AuthServiceProvider extends ServiceProvider
         Brand::class        => BrandPolicy::class,
         Warehouse::class    => WarehousePolicy::class,
         ReorderRule::class  => ReorderRulePolicy::class,
-        // PutawayRule::class  => PutawayRulePolicy::class,
+        PutawayRule::class  => PutawayRulePolicy::class,
 
         // Inbound / Outbound
         // StockReceipt::class => StockReceiptPolicy::class,

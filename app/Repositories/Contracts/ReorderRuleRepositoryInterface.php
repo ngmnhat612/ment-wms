@@ -18,4 +18,8 @@ interface ReorderRuleRepositoryInterface
     public function update(ReorderRule $rule, array $data): bool;
 
     public function delete(ReorderRule $rule): bool;
+
+    public function findTrashed(int $productId, int $warehouseId): ?ReorderRule;
+
+    public function restoreAndUpdate(ReorderRule $rule, array $data): ReorderRule;
 }

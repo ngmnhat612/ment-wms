@@ -27,7 +27,7 @@ class ReorderRuleRepository implements ReorderRuleRepositoryInterface
         }
 
         if (isset($filters['status']) && $filters['status'] !== '') {
-            $query->where('status', $filters['status']);
+            $query->where('reorder_rules.status', $filters['status']);
         }
 
         $sortDir = in_array($filters['dir'] ?? '', ['asc', 'desc']) ? $filters['dir'] : 'desc';
@@ -68,5 +68,21 @@ class ReorderRuleRepository implements ReorderRuleRepositoryInterface
     public function delete(ReorderRule $rule): bool
     {
         return $rule->delete();
+    }
+
+    public function findTrashed(int $productId, int $warehouseId): ?ReorderRule
+    {
+        return ReorderRule::withTrashed()
+            ->where('product_id',   $productId)
+            ->where('warehouse_id', $warehouseId)
+            ->whereNotNull('deleted_at')
+            ->first();
+    }
+
+    public function restoreAndUpdate(ReorderRule $rule, array $data): ReorderRule
+    {
+        $rule->restore();
+        $rule->update($data);
+        return $rule->fresh();
     }
 }
