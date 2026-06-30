@@ -459,7 +459,7 @@ return "<svg class=\"icon icon-sm ms-1\">
 
 @endsection
 
-@push('scripts')
+<!-- @push('scripts') -->
 <script>
  const routeStore        = '{{ route('master.product.store') }}';
   const routeStoreVariant = '{{ route('master.product.storeVariant') }}';
@@ -632,8 +632,9 @@ document.getElementById('pRotation').addEventListener('change', function() {
 });
 
 // ===== VALIDATION ERROR - MỞ LẠI OFFCANVAS =====
-document.addEventListener('DOMContentLoaded', function() {
-    const pfa = (document.body.dataset.pfa || '').trim();
+function reopenProductFormOnValidationError() {
+    const mainContent = document.getElementById('main-content');
+    const pfa = (mainContent?.dataset.pfa || '').trim();
     if (!pfa) return;
 
     const alertHtml = `
@@ -707,9 +708,14 @@ document.addEventListener('DOMContentLoaded', function() {
         ).checked = true;
     }
 
-    document.body.dataset.pfa = '';
+    // document.body.dataset.pfa = '';
+     mainContent.dataset.pfa = '';
     new coreui.OffCanvas(document.getElementById('productOffcanvas')).show();
-});
+}
+
+// Đăng ký chạy cả lần load đầu lẫn sau mỗi lần htmx swap
+    document.addEventListener('DOMContentLoaded', reopenProductFormOnValidationError);
+    document.body.addEventListener('htmx:afterSwap', reopenProductFormOnValidationError);
 
 function toggleVariantMode(isVariant) {
     const form = document.getElementById('productForm');

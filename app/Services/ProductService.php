@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Collection;
 use App\Models\Category;
+use App\Enums\ActiveStatus;
 
 class ProductService
 {
@@ -85,7 +86,12 @@ class ProductService
 
         unset($data['parent_code']);
 
-        return $this->productRepository->create($data);
+        $variant = $this->productRepository->create($data);
+
+        // Toàn bộ mã trong cùng gia đình (gốc + mọi biến thể) tự động chuyển sang Ngưng hoạt động
+        $this->deactivateFamily($parent, $variant->id);
+
+        return $variant;
     }
 
     /**
@@ -153,6 +159,31 @@ class ProductService
     {
         if ($imagePath) {
             Storage::disk('public')->delete($imagePath);
+        }
+    }
+
+    /**
+     * Chuyển toàn bộ mã trong cùng gia đình (mã gốc + mọi biến thể) sang Ngưng hoạt động,
+     * ngoại trừ biến thể vừa được tạo.
+     */
+    private function deactivateFamily(Product $parent, int $excludeId): void
+    {
+        // Tìm về mã gốc cao nhất của gia đình (đi ngược parent_id)
+        $root = $parent;
+        while ($root->parent_id) {
+            $root = Product::find($root->parent_id);
+        }
+
+        $familyIds = Product::where(function ($q) use ($root) {
+                $q->where('id', $root->id)
+                  ->orWhere('code', 'like', $root->code . '.%');
+            })
+            ->where('id', '!=', $excludeId)
+            ->pluck('id');
+
+        if ($familyIds->isNotEmpty()) {
+            Product::whereIn('id', $familyIds)
+                ->update(['status' => ActiveStatus::Inactive->value]);
         }
     }
 

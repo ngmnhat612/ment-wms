@@ -90,7 +90,7 @@ class ProductRepository implements ProductRepositoryInterface
     public function allRootActive(): Collection
     {
         return Product::select('id', 'code', 'name')
-            ->where('status', ActiveStatus::Active)
+            // ->where('status', ActiveStatus::Active)
             ->whereNull('parent_id')
             ->orderBy('code')
             ->get();
