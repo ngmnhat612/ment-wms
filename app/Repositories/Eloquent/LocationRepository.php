@@ -40,11 +40,18 @@ class LocationRepository implements LocationRepositoryInterface
         }
 
         if (isset($filters['status']) && $filters['status'] !== '') {
-            $query->where('status', $filters['status']);
+            $query->where('locations.status', $filters['status']);
         }
 
-        return $query->orderBy('type')->orderBy('code')
-                     ->paginate($perPage)->withQueryString();
+        $sortDir = in_array($filters['dir'] ?? '', ['asc', 'desc']) ? $filters['dir'] : 'desc';
+
+        if (in_array($filters['sort'] ?? '', ['code', 'name'])) {
+            $query->orderBy('locations.' . $filters['sort'], $sortDir);
+        } else {
+            $query->orderByDesc('locations.created_at');
+        }
+
+        return $query->paginate($perPage)->withQueryString();
     }
 
     public function totalCount(): int

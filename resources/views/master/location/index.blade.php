@@ -9,6 +9,31 @@
 
 @section('content')
 
+  @php
+    $sort = request('sort', '');
+    $dir  = request('dir', '');
+    $nextDir = function($col) use ($sort, $dir) {
+      if ($sort !== $col) return 'asc';
+      if ($dir === 'asc')  return 'desc';
+      return '';
+    };
+    $sortUrl = function($col) use ($sort, $dir, $nextDir) {
+      $nd = $nextDir($col);
+      if ($nd === '') return request()->fullUrlWithQuery(['sort' => '', 'dir' => '', 'page' => 1]);
+      return request()->fullUrlWithQuery(['sort' => $col, 'dir' => $nd, 'page' => 1]);
+    };
+    $sortIcon = function($col) use ($sort, $dir) {
+      if ($sort !== $col || $dir === '') {
+        $icon = 'cil-swap-vertical';
+      } elseif ($dir === 'asc') {
+        $icon = 'cil-sort-alpha-down';
+      } else {
+        $icon = 'cil-sort-alpha-up';
+      }
+      return "<svg class=\"icon icon-sm ms-1\"><use xlink:href=\"" . asset('vendor/coreui/icons/sprites/free.svg#' . $icon) . "\"></use></svg>";
+    };
+  @endphp
+
   {{-- HEADER --}}
   <div class="d-flex justify-content-end mb-4">
     <button class="btn btn-primary" onclick="openModal()">
@@ -61,8 +86,16 @@
               <thead class="table-light">
                 <tr>
                   <th class="text-center" style="width:4%">#</th>
-                  <th style="width:8%">Mã</th>
-                  <th>Tên</th>
+                  <th style="width:8%">
+                    <a href="{{ $sortUrl('code') }}" class="text-decoration-none text-body d-inline-flex align-items-center">
+                      Mã {!! $sortIcon('code') !!}
+                    </a>
+                  </th>
+                  <th>
+                    <a href="{{ $sortUrl('name') }}" class="text-decoration-none text-body d-inline-flex align-items-center">
+                      Tên {!! $sortIcon('name') !!}
+                    </a>
+                  </th>
                   <th style="width:15%">Vị trí cha</th>
                   <th style="width:20%">Ghi chú</th>
                   <th class="text-center" style="width:8%">Trạng thái</th>
@@ -121,7 +154,7 @@
                   <tr>
                     <td colspan="7" class="text-center text-body-secondary py-5">
                       <svg class="icon icon-3xl d-block mx-auto mb-2 opacity-25">
-                        <use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-map') }}"></use>
+                        <use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-storage') }}"></use>
                       </svg>
                       Chưa có vị trí nào
                     </td>
@@ -149,6 +182,8 @@
         <form id="locationForm" method="POST">
           @csrf
           <input type="hidden" name="_method" id="formMethod" value="POST">
+          <input type="hidden" name="warehouse_id" id="lWarehouseId" value="{{ $warehouses->first()?->id }}">
+          <input type="hidden" name="type" id="lType" value="1">
 
           <div class="modal-header">
             <h5 class="modal-title" id="locationModalLabel">Thêm vị trí kho</h5>
@@ -262,9 +297,6 @@
       </div>
     </div>
   </div>
-
-  <input type="hidden" name="warehouse_id" id="lWarehouseId" value="{{ $warehouses->first()?->id }}">
-  <input type="hidden" name="type" id="lType" value="1">
 
 @endsection
 

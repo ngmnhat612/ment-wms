@@ -6,84 +6,77 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Master\Supplier\StoreSupplierRequest;
 use App\Http\Requests\Master\Supplier\UpdateSupplierRequest;
 use App\Models\Supplier;
+use App\Services\SupplierService;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
+use Illuminate\View\View;
 
 class SupplierController extends Controller
 {
-    public function index(Request $request)
+    public function __construct(
+        private readonly SupplierService $supplierService,
+    ) {}
+
+    // ===== INDEX =====
+
+    public function index(Request $request): View
     {
-        $query = Supplier::query();
+        Gate::authorize('viewAny', Supplier::class);
 
-        if ($search = $request->search) {
-            $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('code', 'like', "%{$search}%")
-                  ->orWhere('tax_code', 'like', "%{$search}%")
-                  ->orWhere('phone', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%");
-            });
-        }
+        $filters = $request->only(['search', 'status', 'sort', 'dir']);
 
-        if ($request->status !== null && $request->status !== '') {
-            $query->where('status', $request->status);
-        }
-
-        $suppliers   = $query->orderBy('code')->paginate(15)->withQueryString();
-        $totalCount  = Supplier::count();
-        $activeCount = Supplier::where('status', 1)->count();
+        $suppliers   = $this->supplierService->search($filters);
+        $totalCount  = $this->supplierService->totalCount();
+        $activeCount = $this->supplierService->activeCount();
 
         return view('master.supplier.index', compact('suppliers', 'totalCount', 'activeCount'));
     }
 
-    public function store(StoreSupplierRequest $request)
+    // ===== STORE =====
+
+    public function store(StoreSupplierRequest $request): RedirectResponse
     {
-        $this->authorize('create', Supplier::class);
+        Gate::authorize('create', Supplier::class);
 
-        Supplier::create([
-            'code'     => strtoupper(trim($request->code)),
-            'name'     => $request->name,
-            'tax_code' => $request->tax_code,
-            'phone'    => $request->phone,
-            'email'    => $request->email,
-            'address'  => $request->address,
-            'status'   => $request->status,
-        ]);
+        $supplier = $this->supplierService->create($request->validated());
 
-        return redirect()->route('master.supplier.index')
-            ->with('success', "Đã thêm nhà cung cấp \"{$request->name}\" thành công.");
+        return redirect()
+            ->route('master.supplier.index')
+            ->with('success', "Đã thêm nhà cung cấp \"{$supplier->name}\" thành công.");
     }
 
-    public function update(UpdateSupplierRequest $request, Supplier $supplier)
+    // ===== UPDATE =====
+
+    public function update(UpdateSupplierRequest $request, Supplier $supplier): RedirectResponse
     {
-        $this->authorize('update', $supplier);
+        Gate::authorize('update', $supplier);
 
-        $supplier->update([
-            'code'     => strtoupper(trim($request->code)),
-            'name'     => $request->name,
-            'tax_code' => $request->tax_code,
-            'phone'    => $request->phone,
-            'email'    => $request->email,
-            'address'  => $request->address,
-            'status'   => $request->status,
-        ]);
+        $this->supplierService->update($supplier, $request->validated());
 
-        return redirect()->route('master.supplier.index')
+        return redirect()
+            ->route('master.supplier.index')
             ->with('success', "Đã cập nhật nhà cung cấp \"{$supplier->name}\" thành công.");
     }
 
-    public function destroy(Supplier $supplier)
-    {
-        $this->authorize('delete', $supplier);
+    // ===== DESTROY =====
 
-        if ($supplier->stockReceipts()->exists()) {
-            return redirect()->route('master.supplier.index')
-                ->with('error', "Không thể xóa \"{$supplier->name}\" vì đang có phiếu nhập kho liên quan.");
-        }
+    public function destroy(Supplier $supplier): RedirectResponse
+    {
+        Gate::authorize('delete', $supplier);
 
         $name = $supplier->name;
-        $supplier->delete();
 
-        return redirect()->route('master.supplier.index')
+        try {
+            $this->supplierService->delete($supplier);
+        } catch (\RuntimeException $e) {
+            return redirect()
+                ->route('master.supplier.index')
+                ->with('error', $e->getMessage());
+        }
+
+        return redirect()
+            ->route('master.supplier.index')
             ->with('success', "Đã xóa nhà cung cấp \"{$name}\" thành công.");
     }
 }
