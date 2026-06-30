@@ -20,6 +20,7 @@ return new class extends Migration
             'locations',
             'brands',
             'reorder_rules',
+            'putaway_rules'
         ];
 
         foreach ($tables as $table) {
@@ -43,6 +44,7 @@ return new class extends Migration
             'locations',
             'brands',
             'reorder_rules',
+            'putaway_rules'
         ];
 
         foreach ($tables as $table) {

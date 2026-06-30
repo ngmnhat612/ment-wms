@@ -4,9 +4,12 @@ namespace App\Models;
 
 use App\Enums\ActiveStatus;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class PutawayRule extends Model
 {
+    use SoftDeletes;
+
     protected $table = 'putaway_rules';
 
     protected $fillable = [
@@ -15,6 +18,7 @@ class PutawayRule extends Model
         'category_id',
         'location_id',
         'status',
+        'note',
     ];
 
     protected function casts(): array

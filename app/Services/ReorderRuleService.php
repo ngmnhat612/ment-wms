@@ -33,6 +33,21 @@ class ReorderRuleService
 
     public function create(array $data): ReorderRule
     {
+        $trashed = $this->reorderRuleRepository->findTrashed(
+            $data['product_id'],
+            $data['warehouse_id']
+        );
+
+        if ($trashed) {
+            return $this->reorderRuleRepository->restoreAndUpdate($trashed, [
+                'employee_id' => $data['employee_id'],
+                'min_qty'     => $data['min_qty'],
+                'max_qty'     => $data['max_qty'],
+                'note'        => $data['note'] ?? null,
+                'status'      => $data['status'],
+            ]);
+        }
+
         return $this->reorderRuleRepository->create($data);
     }
 
