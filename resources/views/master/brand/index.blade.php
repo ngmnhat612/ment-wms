@@ -27,9 +27,9 @@
       if ($sort !== $col || $dir === '') {
         $icon = 'cil-swap-vertical';
       } elseif ($dir === 'asc') {
-        $icon = 'cil-sort-alpha-up';
-      } else {
         $icon = 'cil-sort-alpha-down';
+      } else {
+        $icon = 'cil-sort-alpha-up';
       }
       return "<svg class=\"icon icon-sm ms-1\"><use xlink:href=\"" . asset('vendor/coreui/icons/sprites/free.svg#' . $icon) . "\"></use></svg>";
     };

@@ -16,23 +16,24 @@ class UpdateLocationRequest extends FormRequest
         $locationId = $this->route('location')?->id;
 
         return [
+            'parent_id'    => 'nullable|exists:locations,id',
+            'warehouse_id' => 'nullable|exists:warehouses,id',
             'code'         => "required|string|max:50|unique:locations,code,{$locationId}",
             'name'         => 'required|string|max:100',
-            'warehouse_id' => 'nullable|exists:warehouses,id',
-            'type'         => 'required|in:1,2',
-            'parent_id'    => 'nullable|exists:locations,id',
+            'type'         => 'nullable|in:1,2',
             'status'       => 'required|in:0,1',
+            'note'         => 'nullable|string|max:500',
         ];
     }
 
     public function messages(): array
     {
         return [
-            'code.required'         => 'Vui lòng nhập mã vị trí.',
-            'code.unique'           => 'Mã vị trí đã tồn tại.',
-            'name.required'         => 'Vui lòng nhập tên vị trí.',
-            'warehouse_id.required' => 'Vui lòng chọn kho.',
-            'type.required'         => 'Vui lòng chọn loại vị trí.',
+            'code.required'  => 'Vui lòng nhập mã vị trí.',
+            'code.unique'    => 'Mã vị trí đã tồn tại.',
+            'code.max'       => 'Mã vị trí không quá 50 ký tự.',
+            'name.required'  => 'Vui lòng nhập tên vị trí.',
+            'name.max'       => 'Tên vị trí không quá 100 ký tự.',
         ];
     }
 }

@@ -65,7 +65,7 @@ class WarehouseService
             // Tự động tạo vị trí ảo root cho kho
             $rootLocation = $warehouse->locations()->create([
                 'code'   => 'VIR-' . $warehouse->code,
-                'name'   => 'Vị trí ảo — ' . $warehouse->name,
+                'name'   => $warehouse->name,
                 'type'   => 2, // Virtual
                 'status' => 1,
             ]);

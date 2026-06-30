@@ -27,9 +27,9 @@
       if ($sort !== $col || $dir === '') {
         $icon = 'cil-swap-vertical';
       } elseif ($dir === 'asc') {
-        $icon = 'cil-sort-alpha-up';
-      } else {
         $icon = 'cil-sort-alpha-down';
+      } else {
+        $icon = 'cil-sort-alpha-up';
       }
       return "<svg class=\"icon icon-sm ms-1\"><use xlink:href=\"" . asset('vendor/coreui/icons/sprites/free.svg#' . $icon) . "\"></use></svg>";
     };
@@ -227,7 +227,7 @@
             <div class="row g-3 mb-3">
               <div class="col-6">
                 <label class="form-label fw-medium">Min <span class="text-danger">*</span></label>
-                <input type="number" step="10" min="0" max="9999"
+                <input type="number" step="10" min="0" max="99999"
                        class="form-control {{ $errors->has('min_qty') ? 'is-invalid' : '' }}"
                        id="rMinQty" name="min_qty"
                        value="{{ old('min_qty', 0) }}" required>
@@ -237,7 +237,7 @@
               </div>
               <div class="col-6">
                 <label class="form-label fw-medium">Max <span class="text-danger">*</span></label>
-                <input type="number" step="10" min="0" max="9999"
+                <input type="number" step="10" min="0" max="99999"
                        class="form-control {{ $errors->has('max_qty') ? 'is-invalid' : '' }}"
                        id="rMaxQty" name="max_qty"
                        value="{{ old('max_qty', 0) }}" required>

@@ -12,12 +12,13 @@ return new class extends Migration
             $table->id();
             $table->unsignedBigInteger('parent_id')->nullable()->comment('Vị trí cha, phân cấp');
             $table->unsignedBigInteger('warehouse_id')->nullable()
-                  ->comment('Thuộc kho nào. NULL chỉ dùng cho vị trí ảo hệ thống cấp cao (không thuộc kho cụ thể)');
-            $table->string('code', 50)->unique();
+                  ->comment('Thuộc kho nào. NULL chỉ dùng cho vị trí ảo hệ thống cấp cao');
+            $table->string('code', 50)->unique()->comment('Mã vị trí, tự sinh');
             $table->string('name', 100);
             $table->tinyInteger('type')->default(1)
                   ->comment('1=Internal (vị trí thực trong kho), 2=Virtual (vị trí ảo)');
             $table->tinyInteger('status')->default(1)->comment('1=Active, 0=Inactive');
+            $table->string('note', 500)->nullable()->comment('Ghi chú');
             $table->timestamps();
 
             $table->foreign('parent_id')
