@@ -85,6 +85,16 @@
     {{-- DANH MỤC --}}
     <li class="nav-title">Danh mục</li>
 
+    <li class="nav-item">
+      <a class="nav-link {{ request()->routeIs('master.sn.*') ? 'active' : '' }}"
+        href="{{ route('master.sn.index') }}">
+        <svg class="nav-icon">
+          <use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-briefcase') }}"></use>
+        </svg>
+        Dự án
+      </a>
+    </li>
+
     <li class="nav-group {{ request()->routeIs('master.product.*', 'master.category.*', 'master.uom*', 'master.brand.*') ? 'show' : '' }}">
       <a class="nav-link nav-group-toggle" href="#">
         <svg class="nav-icon">
@@ -218,6 +228,13 @@
             Thương hiệu
           </a>
         </li>
+        <li class="nav-item">
+          <a class="nav-link {{ request()->routeIs('master.department.*') ? 'active' : '' }}"
+             href="{{ route('master.department.index') }}">
+            <span class="nav-icon"><span class="nav-icon-bullet"></span></span>
+            Bộ phận
+          </a>
+        </li>
         <!-- <li class="nav-item">
           <a class="nav-link {{ request()->routeIs('master.warehouse.*') ? 'active' : '' }}"
              href="{{ route('master.warehouse.index') }}">
@@ -229,7 +246,7 @@
           <a class="nav-link {{ request()->routeIs('master.employee.*') ? 'active' : '' }}"
              href="{{ route('master.employee.index') }}">
             <span class="nav-icon"><span class="nav-icon-bullet"></span></span>
-            Người dùng
+            Nhân viên
           </a>
         </li>
       </ul>

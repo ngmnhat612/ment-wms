@@ -8,18 +8,18 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('departments', function (Blueprint $table) {
+        Schema::create('sns', function (Blueprint $table) {
             $table->id();
-            $table->string('code', 50)->unique()->comment('Mã bộ phận, tự sinh');
-            $table->string('name', 200)->comment('Tên bộ phận');
+            $table->string('code', 50)->unique()->comment('Mã dự án, tự sinh');
+            $table->string('name', 200);
+            $table->string('note', 500)->nullable();
             $table->tinyInteger('status')->default(1)->comment('1=Active, 0=Inactive');
-            $table->string('note', 500)->nullable()->comment('Ghi chú');
             $table->timestamps();
         });
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('departments');
+        Schema::dropIfExists('sns');
     }
 };

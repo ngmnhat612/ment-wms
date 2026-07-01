@@ -4,9 +4,12 @@ namespace App\Models;
 
 use App\Enums\ActiveStatus;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Employee extends Model
 {
+    use SoftDeletes;
+
     protected $table = 'employees';
 
     protected $fillable = [
@@ -16,6 +19,7 @@ class Employee extends Model
         'phone_number',
         'department_id',
         'status',
+        'note',
     ];
 
     protected function casts(): array

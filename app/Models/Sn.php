@@ -6,17 +6,17 @@ use App\Enums\ActiveStatus;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class Department extends Model
+class Sn extends Model
 {
     use SoftDeletes;
 
-    protected $table = 'departments';
+    protected $table = 'sns';
 
     protected $fillable = [
         'code',
         'name',
-        'status',
         'note',
+        'status',
     ];
 
     protected function casts(): array
@@ -28,22 +28,10 @@ class Department extends Model
 
     // ===== RELATIONSHIPS =====
 
-    public function employees()
-    {
-        return $this->hasMany(Employee::class, 'department_id');
-    }
-
     // ===== SCOPES =====
 
     public function scopeActive($query)
     {
         return $query->where('status', ActiveStatus::Active->value);
-    }
-
-    // ===== HELPERS =====
-
-    public function isActive(): bool
-    {
-        return $this->status === ActiveStatus::Active;
     }
 }

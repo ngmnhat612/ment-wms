@@ -211,15 +211,16 @@
               <label class="form-label fw-medium">Quy tắc áp dụng <span class="text-danger">*</span></label>
               <div class="d-flex gap-3">
                 <div class="form-check">
-                  <input class="form-check-input" type="radio" name="apply_on" id="applyProduct"
-                         value="product" checked onchange="toggleApplyOn('product')">
+                  <input class="form-check-input" type="radio" id="applyProduct"
+                        value="product" checked onchange="toggleApplyOn('product')">
                   <label class="form-check-label" for="applyProduct">Theo vật tư</label>
                 </div>
                 <div class="form-check">
-                  <input class="form-check-input" type="radio" name="apply_on" id="applyCategory"
-                         value="category" onchange="toggleApplyOn('category')">
+                  <input class="form-check-input" type="radio" id="applyCategory"
+                        value="category" onchange="toggleApplyOn('category')">
                   <label class="form-check-label" for="applyCategory">Theo danh mục</label>
                 </div>
+                <input type="hidden" id="rApplyOn" name="apply_on" value="product">
               </div>
             </div>
 
@@ -245,15 +246,13 @@
             {{-- Nhóm hàng --}}
             <div class="mb-3 d-none" id="categoryField">
               <label class="form-label fw-medium">Danh mục <span class="text-danger">*</span></label>
-              <select class="form-select {{ $errors->has('category_id') ? 'is-invalid' : '' }}"
-                      id="rCategory" name="category_id">
-                <option value="">- Chọn nhóm -</option>
-                @foreach ($categories as $c)
-                  <option value="{{ $c->id }}" {{ old('category_id') == $c->id ? 'selected' : '' }}>
-                    {{ $c->name }}
-                  </option>
-                @endforeach
-              </select>
+                <select class="form-select {{ $errors->has('category_id') ? 'is-invalid' : '' }}" id="rCategory">
+                  <option value="">- Chọn nhóm -</option>
+                  @foreach ($categories as $c)
+                    <option value="{{ $c->id }}" {{ old('category_id') == $c->id ? 'selected' : '' }}>{{ $c->name }}</option>
+                  @endforeach
+                </select>
+                <input type="hidden" id="rCategoryHidden" name="category_id" value="{{ old('category_id') }}">
               @error('category_id')
                 <div class="invalid-feedback">{{ $message }}</div>
               @enderror
@@ -364,6 +363,7 @@
   function toggleApplyOn(type) {
     document.getElementById('productField').classList.toggle('d-none',  type !== 'product');
     document.getElementById('categoryField').classList.toggle('d-none', type !== 'category');
+    document.getElementById('rApplyOn').value = type;
   }
 
   // ─── Resolve product datalist ──────────────────────────────────────────────
@@ -402,6 +402,7 @@
 
   document.getElementById('rCategory').addEventListener('change', function () {
     this.classList.remove('is-invalid');
+    document.getElementById('rCategoryHidden').value = this.value;
     document.querySelectorAll('#categoryField .invalid-feedback.d-block').forEach(el => el.remove());
   });
 
@@ -454,6 +455,7 @@
 
     // Danh mục
     document.getElementById('rCategory').value = categoryId ?? '';
+    document.getElementById('rCategoryHidden').value = categoryId ?? '';
 
     // Vị trí, ghi chú & trạng thái
     document.getElementById('rLocation').value = locationId ?? '';
@@ -475,7 +477,7 @@
 
   // ─── Submit validation ─────────────────────────────────────────────────────
   document.getElementById('ruleForm').addEventListener('submit', function (e) {
-    const type = document.querySelector('input[name="apply_on"]:checked')?.value;
+    const type = document.getElementById('rApplyOn').value;
 
     if (type === 'product') {
       resolveProduct();
@@ -508,7 +510,7 @@
     spinner.classList.remove('d-none');
     icon.classList.add('d-none');
     label.textContent = 'Đang lưu...';
-  });
+});
 
   // ─── Mở lại modal nếu có lỗi server ──────────────────────────────────────
   @if ($errors->any())
