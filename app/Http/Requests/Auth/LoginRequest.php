@@ -42,7 +42,7 @@ class LoginRequest extends FormRequest
             RateLimiter::hit($this->throttleKey());
 
             throw ValidationException::withMessages([
-                'username' => 'Tài khoản của bạn đã bị vô hiệu hóa. Vui lòng liên hệ quản trị viên.',
+                'username' => 'Tài khoản của bạn đã bị vô hiệu hóa.',
             ]);
         }
 

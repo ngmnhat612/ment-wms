@@ -16,6 +16,7 @@ return new class extends Migration
             $table->string('phone_number', 20)->nullable();
             $table->unsignedBigInteger('department_id')->nullable();
             $table->tinyInteger('status')->default(1)->comment('1=Active, 0=Inactive');
+            $table->string('note', 500)->nullable()->comment('Ghi chú');
             $table->timestamps();
 
             $table->foreign('department_id')

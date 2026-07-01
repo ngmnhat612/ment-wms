@@ -1,10 +1,10 @@
 @extends('layouts.app')
 
-@section('title', 'Nhà cung cấp')
+@section('title', 'Bộ phận')
 
 @section('breadcrumb')
-  <li class="breadcrumb-item">Danh mục</li>
-  <li class="breadcrumb-item active">Nhà cung cấp</li>
+  <li class="breadcrumb-item">Admin</li>
+  <li class="breadcrumb-item active">Bộ phận</li>
 @endsection
 
 @section('content')
@@ -46,15 +46,15 @@
   {{-- BẢNG DANH SÁCH --}}
   <div class="card">
     <div class="card-header d-flex align-items-center gap-2">
-      <span class="fw-semibold flex-shrink-0">Nhà cung cấp</span>
-      <form method="GET" action="{{ route('master.supplier.index') }}"
+      <span class="fw-semibold flex-shrink-0">Bộ phận</span>
+      <form method="GET" action="{{ route('master.department.index') }}"
             class="d-flex gap-2 flex-wrap align-items-center flex-grow-1 justify-content-end">
         <div class="input-group" style="min-width:260px;flex:2">
           <span class="input-group-text">
             <svg class="icon"><use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-search') }}"></use></svg>
           </span>
           <input type="text" class="form-control" name="search"
-                 value="{{ request('search') }}" placeholder="Tìm theo mã, tên, MST, SĐT hoặc email">
+                 value="{{ request('search') }}" placeholder="Tìm theo mã hoặc tên bộ phận">
         </div>
 
         <select class="form-select" name="status" style="min-width:150px;flex:1" onchange="this.form.submit()">
@@ -70,7 +70,7 @@
           $hasFilter = request('search') || (request('status') !== null && request('status') !== '');
         @endphp
         @if ($hasFilter)
-          <a href="{{ route('master.supplier.index') }}" class="btn btn-outline-secondary">
+          <a href="{{ route('master.department.index') }}" class="btn btn-outline-secondary">
             <svg class="icon"><use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-filter-x') }}"></use></svg>
           </a>
         @else
@@ -97,56 +97,24 @@
                   Tên {!! $sortIcon('name') !!}
                 </a>
               </th>
-              <th style="width:12%">Mã số thuế</th>
-              <th style="width:12%">Số điện thoại</th>
-              <th style="width:16%">Email</th>
-              <th style="width:16%">Ghi chú</th>
+              <th style="width:32%">Ghi chú</th>
               <th class="text-center" style="width:8%">Trạng thái</th>
               <th class="text-center" style="width:8%">Thao tác</th>
             </tr>
           </thead>
           <tbody>
-            @forelse ($suppliers as $index => $supplier)
+            @forelse ($departments as $index => $department)
               <tr>
                 <td class="text-center text-body-secondary">
-                  {{ ($suppliers->currentPage() - 1) * $suppliers->perPage() + $index + 1 }}
+                  {{ ($departments->currentPage() - 1) * $departments->perPage() + $index + 1 }}
                 </td>
                 <td>
-                  <code class="text-primary fw-medium">{{ $supplier->code ?? '-' }}</code>
+                  <code class="text-primary fw-medium">{{ $department->code ?? '-' }}</code>
                 </td>
-                <td>
-                  <div class="fw-medium">{{ $supplier->name ?? '-' }}</div>
-                  @if ($supplier->address)
-                    <div class="small text-body-secondary text-truncate" style="max-width:280px">
-                      <svg class="icon icon-sm"><use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-location-pin') }}"></use></svg>
-                      {{ $supplier->address }}
-                    </div>
-                  @endif
-                </td>
-                <td class="small">{{ $supplier->tax_code ?? '-' }}</td>
-                <td class="small">
-                  @if ($supplier->phone)
-                    <span class="text-body text-decoration-none">
-                      <svg class="icon icon-sm me-1"><use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-phone') }}"></use></svg>
-                      {{ $supplier->phone }}
-                    </span>
-                  @else
-                    -
-                  @endif
-                </td>
-                <td class="small">
-                  @if ($supplier->email)
-                    <span class="text-body text-decoration-none">
-                      <svg class="icon icon-sm me-1"><use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-envelope-closed') }}"></use></svg>
-                      {{ $supplier->email }}
-                    </span>
-                  @else
-                    -
-                  @endif
-                </td>
-                <td class="small">{{ $supplier->note ?? '-' }}</td>
+                <td class="fw-medium">{{ $department->name ?? '-' }}</td>
+                <td class="small">{{ $department->note ?? '-' }}</td>
                 <td class="text-center">
-                  @if ($supplier->status === \App\Enums\ActiveStatus::Active)
+                  @if ($department->status === \App\Enums\ActiveStatus::Active)
                     <span class="badge bg-success-subtle text-success border border-success-subtle">Hoạt động</span>
                   @else
                     <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle">Ngừng</span>
@@ -155,21 +123,17 @@
                 <td class="text-center">
                   <button class="btn btn-sm btn-outline-primary me-1"
                     onclick="openModal(
-                      {{ $supplier->id }},
-                      '{{ addslashes($supplier->code) }}',
-                      '{{ addslashes($supplier->name) }}',
-                      '{{ addslashes($supplier->tax_code ?? '') }}',
-                      '{{ addslashes($supplier->phone ?? '') }}',
-                      '{{ addslashes($supplier->email ?? '') }}',
-                      '{{ addslashes($supplier->address ?? '') }}',
-                      '{{ addslashes($supplier->note ?? '') }}',
-                      {{ $supplier->status->value }}
+                      {{ $department->id }},
+                      '{{ addslashes($department->code) }}',
+                      '{{ addslashes($department->name) }}',
+                      '{{ addslashes($department->note ?? '') }}',
+                      {{ $department->status->value }}
                     )"
                           title="Chỉnh sửa">
                     <svg class="icon"><use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-pencil') }}"></use></svg>
                   </button>
                   <button class="btn btn-sm btn-outline-danger"
-                          onclick="confirmDelete({{ $supplier->id }}, '{{ addslashes($supplier->name) }}')"
+                          onclick="confirmDelete({{ $department->id }}, '{{ addslashes($department->name) }}')"
                           title="Xóa">
                     <svg class="icon"><use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-trash') }}"></use></svg>
                   </button>
@@ -177,11 +141,11 @@
               </tr>
             @empty
               <tr>
-                <td colspan="9" class="text-center text-body-secondary py-5">
+                <td colspan="6" class="text-center text-body-secondary py-5">
                   <svg class="icon icon-3xl d-block mx-auto mb-2 opacity-25">
                     <use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-storage') }}"></use>
                   </svg>
-                  Chưa có nhà cung cấp nào
+                  Chưa có bộ phận nào
                 </td>
               </tr>
             @endforelse
@@ -192,24 +156,24 @@
 
     <div class="card-footer d-flex justify-content-between align-items-center py-2">
       <small class="text-body-secondary">
-        Hiển thị <strong>{{ $suppliers->firstItem() }}</strong>-<strong>{{ $suppliers->lastItem() }}</strong>
-        trong tổng số <strong>{{ $suppliers->total() }}</strong> nhà cung cấp
+        Hiển thị <strong>{{ $departments->firstItem() }}</strong>-<strong>{{ $departments->lastItem() }}</strong>
+        trong tổng số <strong>{{ $departments->total() }}</strong> bộ phận
       </small>
-      {{ $suppliers->appends(request()->query())->links('pagination::bootstrap-5') }}
+      {{ $departments->appends(request()->query())->links('pagination::bootstrap-5') }}
       <style>.card-footer .pagination { margin-bottom: 0; }</style>
     </div>
   </div>
 
   {{-- ===== MODAL TẠO / SỬA ===== --}}
-  <div class="modal fade" id="supplierModal" tabindex="-1">
+  <div class="modal fade" id="departmentModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content">
-        <form id="supplierForm" method="POST">
+        <form id="departmentForm" method="POST">
           @csrf
           <input type="hidden" name="_method" id="formMethod" value="POST">
 
           <div class="modal-header">
-            <h5 class="modal-title" id="supplierModalLabel">Thêm nhà cung cấp</h5>
+            <h5 class="modal-title" id="departmentModalLabel">Thêm bộ phận</h5>
             <button type="button" class="btn-close" data-coreui-dismiss="modal"></button>
           </div>
 
@@ -220,7 +184,7 @@
               </label>
               <input type="text"
                     class="form-control text-uppercase {{ $errors->has('code') ? 'is-invalid' : '' }}"
-                    id="sCode" name="code"
+                    id="dCode" name="code"
                     value="{{ old('code') }}"
                     placeholder="Tự động" maxlength="50" style="letter-spacing:1px">
               @error('code')
@@ -234,60 +198,17 @@
               </label>
               <input type="text"
                     class="form-control {{ $errors->has('name') ? 'is-invalid' : '' }}"
-                    id="sName" name="name"
+                    id="dName" name="name"
                     value="{{ old('name') }}"
-                    placeholder="Tên công ty / cá nhân" required maxlength="200">
+                    placeholder="Tên bộ phận" required maxlength="200">
               @error('name')
                 <div class="invalid-feedback">{{ $message }}</div>
               @enderror
             </div>
 
-            <div class="mb-3">
-              <label class="form-label fw-medium">Mã số thuế</label>
-              <input type="text"
-                    class="form-control {{ $errors->has('tax_code') ? 'is-invalid' : '' }}"
-                    id="sTaxCode" name="tax_code"
-                    value="{{ old('tax_code') }}"
-                    placeholder="Nhập mã số thuế" maxlength="20">
-              @error('tax_code')
-                <div class="invalid-feedback">{{ $message }}</div>
-              @enderror
-            </div>
-
-            <div class="mb-3">
-              <label class="form-label fw-medium">Số điện thoại</label>
-              <input type="text"
-                    class="form-control {{ $errors->has('phone') ? 'is-invalid' : '' }}"
-                    id="sPhone" name="phone"
-                    value="{{ old('phone') }}"
-                    placeholder="Nhập số điện thoại" maxlength="20">
-              @error('phone')
-                <div class="invalid-feedback">{{ $message }}</div>
-              @enderror
-            </div>
-
-            <div class="mb-3">
-              <label class="form-label fw-medium">Email</label>
-              <input type="email"
-                    class="form-control {{ $errors->has('email') ? 'is-invalid' : '' }}"
-                    id="sEmail" name="email"
-                    value="{{ old('email') }}"
-                    placeholder="Nhập email" maxlength="200">
-              @error('email')
-                <div class="invalid-feedback">{{ $message }}</div>
-              @enderror
-            </div>
-
-            <div class="mb-3 mt-3">
-              <label class="form-label fw-medium">Địa chỉ</label>
-              <textarea class="form-control" id="sAddress" name="address"
-                        rows="1" maxlength="500"
-                        placeholder="Nhập địa chỉ">{{ old('address') }}</textarea>
-            </div>
-
             <div class="mb-3 mt-3">
               <label class="form-label fw-medium">Ghi chú</label>
-              <textarea class="form-control" id="sNote" name="note"
+              <textarea class="form-control" id="dNote" name="note"
                         rows="2" maxlength="500">{{ old('note') }}</textarea>
             </div>
 
@@ -296,13 +217,13 @@
               <div class="d-flex gap-3">
                 <div class="form-check">
                   <input class="form-check-input" type="radio" name="status"
-                         id="sStatusActive" value="1" checked>
-                  <label class="form-check-label text-success" for="sStatusActive">Đang hoạt động</label>
+                         id="dStatusActive" value="1" checked>
+                  <label class="form-check-label text-success" for="dStatusActive">Hoạt động</label>
                 </div>
                 <div class="form-check">
                   <input class="form-check-input" type="radio" name="status"
-                         id="sStatusInactive" value="0">
-                  <label class="form-check-label text-secondary" for="sStatusInactive">Ngưng hoạt động</label>
+                         id="dStatusInactive" value="0">
+                  <label class="form-check-label text-secondary" for="dStatusInactive">Ngừng hoạt động</label>
                 </div>
               </div>
             </div>
@@ -310,10 +231,10 @@
 
           <div class="modal-footer">
             <button type="button" class="btn btn-outline-secondary" data-coreui-dismiss="modal">Hủy</button>
-            <button type="submit" id="sSubmitBtn" class="btn btn-primary">
-              <span id="sSubmitSpinner" class="spinner-border spinner-border-sm me-1 d-none" role="status" aria-hidden="true"></span>
-              <svg id="sSubmitIcon" class="icon me-1"><use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-save') }}"></use></svg>
-              <span id="sSubmitLabel">Lưu</span>
+            <button type="submit" id="dSubmitBtn" class="btn btn-primary">
+              <span id="dSubmitSpinner" class="spinner-border spinner-border-sm me-1 d-none" role="status" aria-hidden="true"></span>
+              <svg id="dSubmitIcon" class="icon me-1"><use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-save') }}"></use></svg>
+              <span id="dSubmitLabel">Lưu</span>
             </button>
           </div>
         </form>
@@ -334,10 +255,10 @@
           </svg>
           <h6 class="fw-semibold mb-1">Xác nhận xóa</h6>
           <p class="text-body-secondary small mb-0">
-            Bạn có chắc muốn xóa nhà cung cấp<br>
-            <strong id="deleteSupplierName" class="text-body"></strong>?
+            Bạn có chắc muốn xóa bộ phận<br>
+            <strong id="deleteDepartmentName" class="text-body"></strong>?
           </p>
-          <p class="text-danger small mt-1">Không thể xóa nếu đã có phiếu nhập kho liên quan.</p>
+          <p class="text-danger small mt-1">Không thể xóa nếu đã gán cho nhân viên.</p>
         </div>
         <div class="modal-footer border-0 pt-0 justify-content-center gap-2">
           <button type="button" class="btn btn-outline-secondary btn-sm" data-coreui-dismiss="modal">Hủy</button>
@@ -355,53 +276,49 @@
 
 @push('scripts')
 <script>
-  const routeStore = '{{ route('master.supplier.store') }}';
-  const routeBase  = '{{ url('master/supplier') }}';
+  const routeStore = '{{ route('master.department.store') }}';
+  const routeBase  = '{{ url('master/department') }}';
 
-  function openModal(id = null, code = '', name = '', taxCode = '', phone = '', email = '', address = '', note = '', status = 1) {
-      const modal   = new coreui.Modal(document.getElementById('supplierModal'));
-      const form    = document.getElementById('supplierForm');
-      const title   = document.getElementById('supplierModalLabel');
+  function openModal(id = null, code = '', name = '', note = '', status = 1) {
+      const modal   = new coreui.Modal(document.getElementById('departmentModal'));
+      const form    = document.getElementById('departmentForm');
+      const title   = document.getElementById('departmentModalLabel');
       const method  = document.getElementById('formMethod');
-      const codeEl  = document.getElementById('sCode');
+      const codeEl  = document.getElementById('dCode');
 
-      document.getElementById('sName').value    = name;
-      document.getElementById('sTaxCode').value = taxCode;
-      document.getElementById('sPhone').value   = phone;
-      document.getElementById('sEmail').value   = email;
-      document.getElementById('sAddress').value = address;
-      document.getElementById('sNote').value    = note;
-      document.getElementById(status == 1 ? 'sStatusActive' : 'sStatusInactive').checked = true;
+      document.getElementById('dName').value = name;
+      document.getElementById('dNote').value = note;
+      document.getElementById(status == 1 ? 'dStatusActive' : 'dStatusInactive').checked = true;
 
       if (id) {
-          title.textContent    = 'Chỉnh sửa nhà cung cấp';
+          title.textContent    = 'Chỉnh sửa bộ phận';
           form.action          = `${routeBase}/${id}`;
           method.value         = 'PUT';
           codeEl.value         = code;
           codeEl.readOnly      = true;
           codeEl.classList.add('bg-body-secondary');
       } else {
-          title.textContent    = 'Thêm nhà cung cấp';
+          title.textContent    = 'Thêm bộ phận';
           form.action          = routeStore;
           method.value         = 'POST';
           form.reset();
           codeEl.value         = '';
           codeEl.readOnly      = false;
           codeEl.classList.remove('bg-body-secondary');
-          document.getElementById('sStatusActive').checked = true;
+          document.getElementById('dStatusActive').checked = true;
       }
 
       modal.show();
-      setTimeout(() => (id ? document.getElementById('sName') : codeEl).focus(), 300);
+      setTimeout(() => (id ? document.getElementById('dName') : codeEl).focus(), 300);
   }
 
   function confirmDelete(id, name) {
-    document.getElementById('deleteSupplierName').textContent = name;
+    document.getElementById('deleteDepartmentName').textContent = name;
     document.getElementById('deleteForm').action = `${routeBase}/${id}`;
     new coreui.Modal(document.getElementById('deleteModal')).show();
   }
 
-  document.getElementById('sCode').addEventListener('input', function () {
+  document.getElementById('dCode').addEventListener('input', function () {
     const pos = this.selectionStart;
     this.value = this.value.toUpperCase();
     this.setSelectionRange(pos, pos);
@@ -412,21 +329,17 @@
       null,
       '{{ old("code") }}',
       '{{ addslashes(old("name")) }}',
-      '{{ addslashes(old("tax_code")) }}',
-      '{{ addslashes(old("phone")) }}',
-      '{{ addslashes(old("email")) }}',
-      '{{ addslashes(old("address")) }}',
       '{{ addslashes(old("note")) }}',
       {{ old("status", 1) }}
     );
   @endif
 
   // ===== CHẶN SUBMIT LIÊN TỤC =====
-  document.getElementById('supplierForm').addEventListener('submit', function () {
-    const btn     = document.getElementById('sSubmitBtn');
-    const spinner = document.getElementById('sSubmitSpinner');
-    const icon    = document.getElementById('sSubmitIcon');
-    const label   = document.getElementById('sSubmitLabel');
+  document.getElementById('departmentForm').addEventListener('submit', function () {
+    const btn     = document.getElementById('dSubmitBtn');
+    const spinner = document.getElementById('dSubmitSpinner');
+    const icon    = document.getElementById('dSubmitIcon');
+    const label   = document.getElementById('dSubmitLabel');
 
     btn.disabled = true;
     spinner.classList.remove('d-none');
@@ -434,11 +347,11 @@
     label.textContent = 'Đang lưu...';
   });
 
-  document.getElementById('supplierModal').addEventListener('hidden.coreui.modal', function () {
-    const btn     = document.getElementById('sSubmitBtn');
-    const spinner = document.getElementById('sSubmitSpinner');
-    const icon    = document.getElementById('sSubmitIcon');
-    const label   = document.getElementById('sSubmitLabel');
+  document.getElementById('departmentModal').addEventListener('hidden.coreui.modal', function () {
+    const btn     = document.getElementById('dSubmitBtn');
+    const spinner = document.getElementById('dSubmitSpinner');
+    const icon    = document.getElementById('dSubmitIcon');
+    const label   = document.getElementById('dSubmitLabel');
 
     btn.disabled = false;
     spinner.classList.add('d-none');
