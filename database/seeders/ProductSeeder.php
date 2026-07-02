@@ -126,6 +126,8 @@ class ProductSeeder extends Seeder
                 'status'              => 1,
                 'tracking_type'       => 1,
                 'parent_id'           => null,
+                'created_at'          => now(),
+                'updated_at'          => now(),
             ]);
         }
 

@@ -264,14 +264,14 @@
         <div class="mb-3 d-block" id="nameNormalWrap">
           <label class="form-label">Tên <span class="text-danger">*</span></label>
           <input type="text" class="form-control" id="pName" name="name"
-                placeholder="Tên đầy đủ" required>
+                placeholder="Tên đầy đủ" required maxlength="200">
         </div>
 
         {{-- Chế độ biến thể: Tên --}}
         <div class="mb-3 d-none" id="nameVariantWrap">
           <label class="form-label">Tên <span class="text-danger">*</span></label>
           <input type="text" class="form-control" id="pNameVariant" name="name"
-                placeholder="Tên đầy đủ">
+                placeholder="Tên đầy đủ" maxlength="200">
         </div>
 
         {{-- Danh mục + ĐVT (khoá khi là biến thể) --}}
@@ -495,6 +495,10 @@
     resetImagePreview();
     offcanvasEl.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
     offcanvasEl.querySelectorAll('.invalid-feedback').forEach(el => el.remove());
+
+    // Xoá alert lỗi validate còn sót lại từ lần submit thất bại trước đó
+    const oldAlert = form.querySelector('.alert-danger');
+    if (oldAlert) oldAlert.remove();
 
     // Reset toggle biến thể về chế độ thường mỗi lần mở form
     document.getElementById('pIsVariant').checked = false;

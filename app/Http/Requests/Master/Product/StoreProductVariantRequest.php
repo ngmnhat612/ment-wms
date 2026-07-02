@@ -18,10 +18,13 @@ class StoreProductVariantRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'parent_code' => 'required|string|exists:products,code',
+            'parent_code' => [
+                'required', 'string',
+                Rule::exists('products', 'code')->whereNull('deleted_at'),
+            ],
             'code' => [
                 'nullable', 'string', 'max:50',
-                Rule::unique('products', 'code')->whereNull('deleted_at'),
+                Rule::unique('products', 'code'),
             ],
             'name'        => 'required|string|max:200',
             'specification' => 'nullable|string|max:500',

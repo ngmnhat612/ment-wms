@@ -35,11 +35,12 @@ class ReorderRuleRepository implements ReorderRuleRepositoryInterface
         if (($filters['sort'] ?? '') === 'product_name') {
             $query->join('products', 'reorder_rules.product_id', '=', 'products.id')
                 ->orderBy('products.name', $sortDir)
+                ->orderBy('reorder_rules.id', $sortDir)
                 ->select('reorder_rules.*');
         } else {
             $sortable = ['min_qty', 'max_qty'];
             $sortBy   = in_array($filters['sort'] ?? '', $sortable) ? $filters['sort'] : 'created_at';
-            $query->orderBy($sortBy, $sortDir);
+            $query->orderBy($sortBy, $sortDir)->orderBy('reorder_rules.id', $sortDir);
         }
 
         return $query->paginate($perPage)->withQueryString();
