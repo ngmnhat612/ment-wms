@@ -14,9 +14,9 @@
     $sort = request('sort', '');
     $dir  = request('dir', '');
     $nextDir = function($col) use ($sort, $dir) {
-      if ($sort !== $col) return 'asc';        // lần 1: chưa sort col này → asc
-      if ($dir === 'asc')  return 'desc';      // lần 2: đang asc → desc
-      return '';                                // lần 3: đang desc → reset
+      if ($sort !== $col) return 'asc';
+      if ($dir === 'asc')  return 'desc';
+      return '';
     };
     $sortUrl = function($col) use ($sort, $dir, $nextDir) {
       $nd = $nextDir($col);
@@ -481,6 +481,36 @@
     };
   @endforeach
 
+  // ===== HELPER: KHOÁ / MỞ DANH MỤC =====
+  // Dùng chung cho cả openForm() và nhánh khôi phục lỗi validate (update:)
+  // để tránh 2 nơi bị lệch logic như đã xảy ra trước đó.
+  function lockCategoryForEdit(categoryId) {
+    const catSelect = document.getElementById('pCategory');
+    const catHidden = document.getElementById('pCategoryHidden');
+    catSelect.value    = categoryId ?? '';
+    catSelect.disabled = true;
+    catSelect.classList.add('bg-body-secondary');
+    catHidden.name  = 'category_id';
+    catHidden.value = categoryId ?? '';
+  }
+
+  function unlockCategoryForCreate() {
+    const catSelect = document.getElementById('pCategory');
+    const catHidden = document.getElementById('pCategoryHidden');
+    catSelect.disabled = false;
+    catSelect.classList.remove('bg-body-secondary');
+    catHidden.name  = '';
+    catHidden.value = '';
+  }
+
+  // Set giá trị cho <select>, fallback về '' (option mặc định "- Chọn ... -")
+  // nếu giá trị không khớp option nào tồn tại — tránh hiển thị rỗng "lạ".
+  function setSelectValueSafe(selectId, value) {
+    const select = document.getElementById(selectId);
+    const exists = value !== '' && select.querySelector(`option[value="${value}"]`);
+    select.value = exists ? value : '';
+  }
+
   // ===== MỞ FORM =====
   function openForm(id = null) {
     const offcanvasEl = document.getElementById('productOffcanvas');
@@ -516,13 +546,12 @@
       form.action        = `${routeBase}/${id}`;
       method.value       = 'PUT';
 
-      codeInput.value                                       = p.code;
-      document.getElementById('pName').value               = p.name;
-      document.getElementById('pCategory').value           = p.category_id ?? '';
-      document.getElementById('pUom').value                = p.uom_id ?? '';
-      document.getElementById('pSpec').value               = p.specification;
-      document.getElementById('pTracking').value           = p.tracking_type;
-      document.getElementById('pRotation').value           = p.stock_rotation;
+      codeInput.value                             = p.code;
+      document.getElementById('pName').value     = p.name;
+      setSelectValueSafe('pUom', p.uom_id ?? '');
+      document.getElementById('pSpec').value      = p.specification;
+      document.getElementById('pTracking').value  = p.tracking_type;
+      document.getElementById('pRotation').value  = p.stock_rotation;
       document.getElementById(p.status == 1 ? 'pStatusActive' : 'pStatusInactive').checked = true;
 
       if (p.image_url) {
@@ -534,25 +563,14 @@
       codeInput.classList.add('bg-body-secondary');
 
       // Lock danh mục khi edit
-      const catSelect = document.getElementById('pCategory');
-      catSelect.disabled = true;
-      catSelect.classList.add('bg-body-secondary');
-      const catHidden = document.getElementById('pCategoryHidden');
-      catHidden.name  = 'category_id';
-      catHidden.value = p.category_id ?? '';
+      lockCategoryForEdit(p.category_id);
 
     } else {
       title.textContent = 'Thêm vật tư';
       form.action       = routeStore;
       method.value      = 'POST';
 
-      // Unlock danh mục khi thêm mới
-      const catSelect = document.getElementById('pCategory');
-      catSelect.disabled = false;
-      catSelect.classList.remove('bg-body-secondary');
-      const catHidden = document.getElementById('pCategoryHidden');
-      catHidden.name  = '';
-      catHidden.value = '';
+      unlockCategoryForCreate();
     }
 
     offcanvas.show();
@@ -585,7 +603,7 @@
     document.getElementById('pImage').value = '';
     document.getElementById('removeImage').value = '1';
   }
-  
+
   function previewImage(input) {
       if (input.files && input.files[0]) {
           const reader = new FileReader();
@@ -656,7 +674,16 @@
 
     } else if (pfa.startsWith('update:')) {
       const id = pfa.split(':')[1];
+      const p  = productsMap[id] ?? null;
+
       document.getElementById('productOffcanvasTitle').textContent = 'Chỉnh sửa vật tư';
+
+      // Gọi toggleVariantMode TRƯỚC — nó sẽ tạm set action = routeStore,
+      // nhưng ta ghi đè lại đúng action/method NGAY SAU ĐÓ nên không ảnh hưởng.
+      toggleVariantMode(false);
+      document.getElementById('variantToggleWrap').classList.add('d-none');
+
+      // Set action/method ĐÚNG — phải nằm sau toggleVariantMode()
       document.getElementById('productForm').action = `${routeBase}/${id}`;
       document.getElementById('formMethod').value   = 'PUT';
 
@@ -666,8 +693,6 @@
 
       document.getElementById('pCode').value     = @json(old('code', ''));
       document.getElementById('pName').value     = @json(old('name', ''));
-      document.getElementById('pCategory').value = @json(old('category_id', ''));
-      document.getElementById('pUom').value      = @json(old('uom_id', ''));
       document.getElementById('pSpec').value     = @json(old('specification', ''));
       document.getElementById('pTracking').value = @json(old('tracking_type', 1));
       document.getElementById('pRotation').value = @json(old('stock_rotation', 1));
@@ -675,6 +700,11 @@
         @json(old('status', '1')) == '1' ? 'pStatusActive' : 'pStatusInactive'
       ).checked = true;
 
+      setSelectValueSafe('pUom', @json(old('uom_id', '')));
+
+      const categoryId = p ? (p.category_id ?? '') : @json(old('category_id', ''));
+      lockCategoryForEdit(categoryId);
+      
     } else {
       // store thường fail
       document.getElementById('productOffcanvasTitle').textContent = 'Thêm vật tư';
@@ -682,14 +712,15 @@
       document.getElementById('formMethod').value   = 'POST';
 
       toggleVariantMode(false);
+      unlockCategoryForCreate();
 
-      document.getElementById('pCode').value     = @json(old('code', ''));
-      document.getElementById('pName').value     = @json(old('name', ''));
-      document.getElementById('pCategory').value = @json(old('category_id', ''));
-      document.getElementById('pUom').value      = @json(old('uom_id', ''));
-      document.getElementById('pSpec').value     = @json(old('specification', ''));
-      document.getElementById('pTracking').value = @json(old('tracking_type', 1));
-      document.getElementById('pRotation').value = @json(old('stock_rotation', 1));
+      document.getElementById('pCode').value      = @json(old('code', ''));
+      document.getElementById('pName').value      = @json(old('name', ''));
+      setSelectValueSafe('pCategory', @json(old('category_id', '')));
+      setSelectValueSafe('pUom', @json(old('uom_id', '')));
+      document.getElementById('pSpec').value      = @json(old('specification', ''));
+      document.getElementById('pTracking').value  = @json(old('tracking_type', 1));
+      document.getElementById('pRotation').value  = @json(old('stock_rotation', 1));
       document.getElementById(
         @json(old('status', '1')) == '1' ? 'pStatusActive' : 'pStatusInactive'
       ).checked = true;
@@ -699,7 +730,7 @@
     new coreui.OffCanvas(document.getElementById('productOffcanvas')).show();
   });
 
-function toggleVariantMode(isVariant) {
+  function toggleVariantMode(isVariant) {
     const form = document.getElementById('productForm');
     form.action = isVariant ? routeStoreVariant : routeStore;
 
@@ -709,7 +740,8 @@ function toggleVariantMode(isVariant) {
     document.getElementById('nameNormalWrap').classList.toggle('d-none', isVariant);
     document.getElementById('nameVariantWrap').classList.toggle('d-none', !isVariant);
 
-    // Disable input ẩn để không bị submit
+    // Disable input ẩn để không bị submit (đặc biệt quan trọng vì
+    // pName và pNameVariant dùng chung name="name")
     document.getElementById('pCode').disabled        =  isVariant;
     document.getElementById('pName').disabled        =  isVariant;
     document.getElementById('pVariantCode').disabled = !isVariant;
@@ -743,12 +775,12 @@ function toggleVariantMode(isVariant) {
       const data = await res.json();
       if (!res.ok) return;
 
-      document.getElementById('pCategory').value      = data.category_id;
-      document.getElementById('pUom').value           = data.uom_id;
+      setSelectValueSafe('pCategory', data.category_id ?? '');
+      setSelectValueSafe('pUom', data.uom_id ?? '');
       document.getElementById('pTracking').value      = data.tracking_type;
       document.getElementById('pRotation').value      = data.stock_rotation;
-      document.getElementById('pNameVariant').value   = document.getElementById('pNameVariant').value || data.name;
-      document.getElementById('pSpec').value          = data.specification;
+      document.getElementById('pNameVariant').value    = document.getElementById('pNameVariant').value || data.name;
+      document.getElementById('pSpec').value           = data.specification;
 
       // Preview ảnh từ cha nếu có
       if (data.image_url) {
