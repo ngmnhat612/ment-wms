@@ -20,7 +20,7 @@ class StoreProductRequest extends FormRequest
         return [
             'code' => [
                 'nullable', 'string', 'max:50',
-                Rule::unique('products', 'code')->whereNull('deleted_at'),
+                Rule::unique('products', 'code'),
             ],
             'name'                => 'required|string|max:200',
             'category_id'         => 'required|exists:categories,id',
