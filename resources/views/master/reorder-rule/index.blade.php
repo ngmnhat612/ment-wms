@@ -194,6 +194,7 @@
         <form id="ruleForm" method="POST">
           @csrf
           <input type="hidden" name="_method" id="formMethod" value="POST">
+          <input type="hidden" name="id" id="rId" value="{{ old('id') }}">
 
           {{-- warehouse_id luôn là kho mặc định, ẩn không hiển thị --}}
           <input type="hidden" name="warehouse_id" value="{{ $defaultWarehouse?->id }}">
@@ -407,40 +408,16 @@
     document.getElementById('rEmployeeError').textContent = '';
   }
 
-  // Chặn các phím không hợp lệ khi gõ trực tiếp: e, E, +, -, ., (dấu phẩy nếu có)
-  function blockInvalidNumberKeys(event) {
-    const invalidKeys = ['e', 'E', '+', '-', '.', ','];
-    if (invalidKeys.includes(event.key)) {
-      event.preventDefault();
-    }
-  }
-
-  // Chặn dán chuỗi chứa ký tự không phải số nguyên dương
-  function blockInvalidNumberPaste(event) {
-    const pasted = (event.clipboardData || window.clipboardData).getData('text');
-    if (!/^\d+$/.test(pasted)) {
-      event.preventDefault();
-    }
-  }
-
-  // Dọn dẹp giá trị nếu vẫn lọt qua (ví dụ dùng chuột kéo thả, autofill, ...)
-  function sanitizeNumberInput(el) {
-    let value = el.value;
-    // Loại bỏ mọi ký tự không phải số
-    let cleaned = value.replace(/[^\d]/g, '');
-    if (cleaned !== value) {
-      el.value = cleaned;
-    }
-  }
-
   function openModal(id = null, productId = null, employeeId = null,
-                     minQty = 0, maxQty = 0, note = '', status = 1) {
+                    minQty = 0, maxQty = 0, note = '', status = 1) {
     const modal  = new coreui.Modal(document.getElementById('ruleModal'));
     const form   = document.getElementById('ruleForm');
     const title  = document.getElementById('ruleModalLabel');
     const method = document.getElementById('formMethod');
 
     clearValidation();
+
+    document.getElementById('rId').value = id ?? ''; // <-- thêm dòng này
 
     if (id) {
         title.textContent = 'Chỉnh sửa quy tắc';
@@ -480,7 +457,7 @@
 
   @if ($errors->any())
     openModal(
-      null,
+      {{ old('id') ?? 'null' }},
       {{ old('product_id') ?? 'null' }},
       {{ old('employee_id') ?? 'null' }},
       {{ old('min_qty', 0) }},

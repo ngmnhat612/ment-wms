@@ -369,13 +369,24 @@
           </div>
         </div>
 
-        <div class="alert alert-info py-2 px-3 small d-flex align-items-start gap-2">
-          <svg class="icon icon-sm flex-shrink-0 mt-1 text-info">
-            <use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-info') }}"></use>
-          </svg>
-          <div>
-            Ngưỡng tồn tối thiểu / tối đa được cấu hình theo từng <strong>vị trí kho</strong> tại
-            <a href="{{ route('master.reorder-rule.index') }}" target="_blank">Quy tắc tái đặt hàng</a>.
+        <div class="row g-3 mb-3">
+          <div class="col-6">
+            <label class="form-label">Ngưỡng tồn tối thiểu (Min)</label>
+            <input type="number" step="1" min="0" max="99999"
+                  class="form-control" id="pMinQty" name="min_qty"
+                  value="0"
+                  onkeydown="blockInvalidNumberKeys(event)"
+                  onpaste="blockInvalidNumberPaste(event)"
+                  oninput="sanitizeNumberInput(this)">
+          </div>
+          <div class="col-6">
+            <label class="form-label">Ngưỡng tồn tối đa (Max)</label>
+            <input type="number" step="1" min="0" max="99999"
+                  class="form-control" id="pMaxQty" name="max_qty"
+                  value="0"
+                  onkeydown="blockInvalidNumberKeys(event)"
+                  onpaste="blockInvalidNumberPaste(event)"
+                  oninput="sanitizeNumberInput(this)">
           </div>
         </div>
 
@@ -478,6 +489,8 @@
       status:              {{ $p->status?->value ?? 1 }},
       image_path:          '{{ $p->image_path ?? '' }}',
       image_url:           '{{ $p->image_path ? Storage::url($p->image_path) : '' }}',
+      min_qty: {{ $p->reorderRule->min_qty ?? 0 }},
+      max_qty: {{ $p->reorderRule->max_qty ?? 0 }},
     };
   @endforeach
 
@@ -553,6 +566,8 @@
       document.getElementById('pTracking').value  = p.tracking_type;
       document.getElementById('pRotation').value  = p.stock_rotation;
       document.getElementById(p.status == 1 ? 'pStatusActive' : 'pStatusInactive').checked = true;
+      document.getElementById('pMinQty').value = p.min_qty ?? 0;
+      document.getElementById('pMaxQty').value = p.max_qty ?? 0;
 
       if (p.image_url) {
         showImagePreview(p.image_url);
@@ -571,6 +586,8 @@
       method.value      = 'POST';
 
       unlockCategoryForCreate();
+      document.getElementById('pMinQty').value = 0;
+      document.getElementById('pMaxQty').value = 0;
     }
 
     offcanvas.show();
@@ -699,6 +716,8 @@
       document.getElementById(
         @json(old('status', '1')) == '1' ? 'pStatusActive' : 'pStatusInactive'
       ).checked = true;
+      document.getElementById('pMinQty').value = @json(old('min_qty', 0));
+      document.getElementById('pMaxQty').value = @json(old('max_qty', 0));
 
       setSelectValueSafe('pUom', @json(old('uom_id', '')));
 
@@ -724,6 +743,8 @@
       document.getElementById(
         @json(old('status', '1')) == '1' ? 'pStatusActive' : 'pStatusInactive'
       ).checked = true;
+      document.getElementById('pMinQty').value = @json(old('min_qty', 0));
+      document.getElementById('pMaxQty').value = @json(old('max_qty', 0));
     }
 
     document.body.dataset.pfa = '';

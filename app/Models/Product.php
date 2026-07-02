@@ -7,6 +7,7 @@ use App\Enums\StockRotation;
 use App\Enums\TrackingType;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Product extends Model
 {
@@ -73,6 +74,11 @@ class Product extends Model
     public function reorderRules()
     {
         return $this->hasMany(ReorderRule::class, 'product_id');
+    }
+
+    public function reorderRule(): HasOne
+    {
+        return $this->hasOne(ReorderRule::class);
     }
 
     public function parent()
