@@ -18,6 +18,7 @@ class ProductService
         protected ProductRepositoryInterface $productRepository,
         protected CodeGeneratorService $codeGeneratorService,
         protected ReorderRuleService $reorderRuleService,
+        protected PutawayRuleService $putawayRuleService,
     ) {}
 
     // ===== QUERY =====
@@ -66,6 +67,12 @@ class ProductService
             (int) ($data['max_qty'] ?? 0),
         );
 
+        $this->putawayRuleService->syncForProduct(
+            $product->id,
+            $this->reorderRuleService->defaultWarehouseId(),
+            isset($data['location_id']) ? (int) $data['location_id'] : null,
+        );
+
         return $product;
     }
 
@@ -110,6 +117,12 @@ class ProductService
             (int) ($data['max_qty'] ?? 0),
         );
 
+        $this->putawayRuleService->syncForProduct(
+            $variant->id,
+            $this->reorderRuleService->defaultWarehouseId(),
+            isset($data['location_id']) ? (int) $data['location_id'] : null,
+        );
+
         return $variant;
     }
 
@@ -141,6 +154,12 @@ class ProductService
             (int) ($data['min_qty'] ?? 0),
             (int) ($data['max_qty'] ?? 0),
         );
+
+        $this->putawayRuleService->syncForProduct(
+            $product->id,
+            $this->reorderRuleService->defaultWarehouseId(),
+            isset($data['location_id']) ? (int) $data['location_id'] : null,
+        );
     }
 
     /**
@@ -157,6 +176,7 @@ class ProductService
         }
 
         $this->reorderRuleService->deleteForProduct($product->id);
+        $this->putawayRuleService->deleteForProduct($product->id);
 
         $this->productRepository->delete($product);
     }

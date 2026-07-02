@@ -8,19 +8,19 @@ use App\Models\Employee;
 class EmployeePolicy
 {
     /**
-     * Mọi user đã đăng nhập đều xem được danh sách nhân viên.
+     * Chỉ Admin được xem danh sách nhân viên.
      */
     public function viewAny(Account $account): bool
     {
-        return true;
+        return $account->hasRole('Admin');
     }
 
     /**
-     * Mọi user đã đăng nhập đều xem được chi tiết nhân viên.
+     * Chỉ Admin được xem chi tiết hồ sơ nhân viên.
      */
     public function view(Account $account, Employee $employee): bool
     {
-        return true;
+        return $account->hasRole('Admin');
     }
 
     /**

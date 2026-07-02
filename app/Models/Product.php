@@ -8,6 +8,7 @@ use App\Enums\TrackingType;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Product extends Model
 {
@@ -71,7 +72,7 @@ class Product extends Model
         return $this->hasMany(Stock::class, 'product_id');
     }
 
-    public function reorderRules()
+    public function reorderRules(): HasMany
     {
         return $this->hasMany(ReorderRule::class, 'product_id');
     }
@@ -79,6 +80,11 @@ class Product extends Model
     public function reorderRule(): HasOne
     {
         return $this->hasOne(ReorderRule::class);
+    }
+
+    public function putawayRule(): HasOne
+    {
+        return $this->hasOne(PutawayRule::class, 'product_id');
     }
 
     public function parent()

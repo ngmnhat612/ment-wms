@@ -65,11 +65,19 @@ class AccountService
      */
     public function delete(Account $account): void
     {
+        if ($account->is_protected) {
+            throw new \RuntimeException('Không thể xoá tài khoản được bảo vệ.');
+        }
+
         $this->accountRepository->delete($account);
     }
 
     public function deactivate(Account $account): void
     {
+        if ($account->is_protected) {
+            return; // âm thầm bỏ qua, không throw vì đây là side-effect tự động, không phải hành động trực tiếp của user
+        }
+
         $this->accountRepository->update($account, ['status' => ActiveStatus::Inactive->value]);
     }
 }

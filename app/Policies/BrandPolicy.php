@@ -4,9 +4,12 @@ namespace App\Policies;
 
 use App\Models\Account;
 use App\Models\Brand;
+use App\Policies\Concerns\HasRoleDepartmentAuthorization;
 
 class BrandPolicy
 {
+    use HasRoleDepartmentAuthorization;
+
     /**
      * Mọi user đã đăng nhập đều xem được danh sách thương hiệu.
      */
@@ -28,12 +31,7 @@ class BrandPolicy
      */
     public function create(Account $account): bool
     {
-        if ($account->hasRole('Admin')) {
-            return true;
-        }
-
-        return $account->hasRole('Quản lý')
-            && $account->isInDepartmentNamed('Kho');
+        return $this->allow($account);
     }
 
     /**
@@ -41,12 +39,7 @@ class BrandPolicy
      */
     public function update(Account $account, Brand $brand): bool
     {
-        if ($account->hasRole('Admin')) {
-            return true;
-        }
-
-        return $account->hasRole('Quản lý')
-            && $account->isInDepartmentNamed('Kho');
+        return $this->allow($account);
     }
 
     /**
@@ -54,11 +47,6 @@ class BrandPolicy
      */
     public function delete(Account $account, Brand $brand): bool
     {
-        if ($account->hasRole('Admin')) {
-            return true;
-        }
-
-        return $account->hasRole('Quản lý')
-            && $account->isInDepartmentNamed('Kho');
+        return $this->allow($account);
     }
 }

@@ -87,7 +87,9 @@ class EmployeeService
                 'status'        => $data['status'],
             ]);
 
-            if ((int) $data['status'] === ActiveStatus::Inactive->value && $employee->account) {
+            $becomingInactive = (int) $data['status'] === ActiveStatus::Inactive->value;
+
+            if ($becomingInactive && $employee->account && ! $employee->account->is_protected) {
                 $this->accountService->deactivate($employee->account);
             }
         });
@@ -98,9 +100,17 @@ class EmployeeService
     /**
      * Xóa mềm nhân viên. Nếu có tài khoản đăng nhập, tài khoản cũng
      * sẽ được xóa mềm theo (cascade).
+     *
+     * @throws \RuntimeException nếu tài khoản gắn với nhân viên là is_protected.
      */
     public function delete(Employee $employee): void
     {
+        if ($employee->account?->is_protected) {
+            throw new \RuntimeException(
+                "Không thể xoá nhân viên \"{$employee->name}\" vì tài khoản được bảo vệ."
+            );
+        }
+
         DB::transaction(function () use ($employee) {
             if ($employee->account) {
                 $this->accountService->delete($employee->account);
