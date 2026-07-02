@@ -211,12 +211,12 @@
               <label class="form-label fw-medium">Quy tắc áp dụng <span class="text-danger">*</span></label>
               <div class="d-flex gap-3">
                 <div class="form-check">
-                  <input class="form-check-input" type="radio" id="applyProduct"
+                  <input class="form-check-input" type="radio" id="applyProduct" name="applyOnToggle"
                         value="product" checked onchange="toggleApplyOn('product')">
                   <label class="form-check-label" for="applyProduct">Theo vật tư</label>
                 </div>
                 <div class="form-check">
-                  <input class="form-check-input" type="radio" id="applyCategory"
+                  <input class="form-check-input" type="radio" id="applyCategory" name="applyOnToggle"
                         value="category" onchange="toggleApplyOn('category')">
                   <label class="form-check-label" for="applyCategory">Theo danh mục</label>
                 </div>
@@ -364,6 +364,18 @@
     document.getElementById('productField').classList.toggle('d-none',  type !== 'product');
     document.getElementById('categoryField').classList.toggle('d-none', type !== 'category');
     document.getElementById('rApplyOn').value = type;
+
+    // Xóa dữ liệu của field không còn áp dụng, tránh gửi lẫn product_id/category_id
+    if (type === 'product') {
+      document.getElementById('rCategory').value = '';
+      document.getElementById('rCategoryHidden').value = '';
+      document.getElementById('rCategory').classList.remove('is-invalid');
+    } else {
+      document.getElementById('rProductText').value = '';
+      document.getElementById('rProduct').value = '';
+      document.getElementById('rProductText').classList.remove('is-invalid');
+      document.getElementById('rProductError').textContent = '';
+    }
   }
 
   // ─── Resolve product datalist ──────────────────────────────────────────────

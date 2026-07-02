@@ -227,20 +227,26 @@
             <div class="row g-3 mb-3">
               <div class="col-6">
                 <label class="form-label fw-medium">Min <span class="text-danger">*</span></label>
-                <input type="number" step="10" min="0" max="99999"
-                       class="form-control {{ $errors->has('min_qty') ? 'is-invalid' : '' }}"
-                       id="rMinQty" name="min_qty"
-                       value="{{ old('min_qty', 0) }}" required>
+                <input type="number" step="1" min="0" max="99999"
+                      class="form-control {{ $errors->has('min_qty') ? 'is-invalid' : '' }}"
+                      id="rMinQty" name="min_qty"
+                      onkeydown="blockInvalidNumberKeys(event)"
+                      onpaste="blockInvalidNumberPaste(event)"
+                      oninput="sanitizeNumberInput(this)"
+                      value="{{ old('min_qty', 0) }}" required>
                 @error('min_qty')
                   <div class="invalid-feedback">{{ $message }}</div>
                 @enderror
               </div>
               <div class="col-6">
                 <label class="form-label fw-medium">Max <span class="text-danger">*</span></label>
-                <input type="number" step="10" min="0" max="99999"
-                       class="form-control {{ $errors->has('max_qty') ? 'is-invalid' : '' }}"
-                       id="rMaxQty" name="max_qty"
-                       value="{{ old('max_qty', 0) }}" required>
+                <input type="number" step="1" min="0" max="99999"
+                      class="form-control {{ $errors->has('max_qty') ? 'is-invalid' : '' }}"
+                      id="rMaxQty" name="max_qty"
+                      onkeydown="blockInvalidNumberKeys(event)"
+                      onpaste="blockInvalidNumberPaste(event)"
+                      oninput="sanitizeNumberInput(this)"
+                      value="{{ old('max_qty', 0) }}" required>
                 @error('max_qty')
                   <div class="invalid-feedback">{{ $message }}</div>
                 @enderror
@@ -399,6 +405,32 @@
     });
     document.getElementById('rProductError').textContent  = '';
     document.getElementById('rEmployeeError').textContent = '';
+  }
+
+  // Chặn các phím không hợp lệ khi gõ trực tiếp: e, E, +, -, ., (dấu phẩy nếu có)
+  function blockInvalidNumberKeys(event) {
+    const invalidKeys = ['e', 'E', '+', '-', '.', ','];
+    if (invalidKeys.includes(event.key)) {
+      event.preventDefault();
+    }
+  }
+
+  // Chặn dán chuỗi chứa ký tự không phải số nguyên dương
+  function blockInvalidNumberPaste(event) {
+    const pasted = (event.clipboardData || window.clipboardData).getData('text');
+    if (!/^\d+$/.test(pasted)) {
+      event.preventDefault();
+    }
+  }
+
+  // Dọn dẹp giá trị nếu vẫn lọt qua (ví dụ dùng chuột kéo thả, autofill, ...)
+  function sanitizeNumberInput(el) {
+    let value = el.value;
+    // Loại bỏ mọi ký tự không phải số
+    let cleaned = value.replace(/[^\d]/g, '');
+    if (cleaned !== value) {
+      el.value = cleaned;
+    }
   }
 
   function openModal(id = null, productId = null, employeeId = null,
