@@ -18,24 +18,28 @@ class AccountSeeder extends Seeder
                 'username'      => 'admin@warehouse.local',
                 'password'      => 'Admin@1234',
                 'role'          => 'Admin',
+                'is_protected'  => true,
             ],
             [
                 'employee_code' => 'NV0002',
                 'username'      => 'manager@warehouse.local',
                 'password'      => 'Test@1234',
                 'role'          => 'Quản lý',
+                'is_protected'  => false,
             ],
             [
                 'employee_code' => 'NV0003',
                 'username'      => 'employee@warehouse.local',
                 'password'      => 'Test@1234',
                 'role'          => 'Nhân viên',
+                'is_protected'  => false,
             ],
             [
                 'employee_code' => 'NV0004',
                 'username'      => 'otheremployee@warehouse.local',
                 'password'      => 'Test@1234',
                 'role'          => 'Nhân viên',
+                'is_protected'  => false,
             ],
         ];
 
@@ -45,11 +49,17 @@ class AccountSeeder extends Seeder
             $account = Account::firstOrCreate(
                 ['username' => $data['username']],
                 [
-                    'employee_id' => $employee->id,
-                    'password'    => Hash::make($data['password']),
-                    'status'      => ActiveStatus::Active->value,
+                    'employee_id'  => $employee->id,
+                    'password'     => Hash::make($data['password']),
+                    'status'       => ActiveStatus::Active->value,
+                    'is_protected' => $data['is_protected'],
                 ]
             );
+
+            // Đảm bảo is_protected đúng ngay cả khi account đã tồn tại từ trước
+            if ($account->is_protected !== $data['is_protected']) {
+                $account->update(['is_protected' => $data['is_protected']]);
+            }
 
             // Gán role qua Spatie (syncRoles để tránh trùng khi chạy lại)
             $account->syncRoles([$data['role']]);

@@ -11,6 +11,7 @@ use App\Services\ProductService;
 use App\Services\CategoryService;
 use App\Services\UomService;
 use App\Models\Product;
+use App\Models\Location;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -41,9 +42,13 @@ class ProductController extends Controller
         $allProducts = $this->productService->allRootActive();
         $categories  = $this->categoryService->getActive();
         $uoms        = $this->uomService->getActive();
+        $locations   = Location::where('status', 1)
+            ->internal()
+            ->orderBy('code')
+            ->get(['id', 'code', 'name']);
 
         return view('master.product.index', compact(
-            'products', 'totalCount', 'activeCount', 'categories', 'uoms', 'allProducts'
+            'products', 'totalCount', 'activeCount', 'categories', 'uoms', 'allProducts', 'locations'
         ));
     }
 

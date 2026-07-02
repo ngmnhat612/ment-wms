@@ -93,4 +93,11 @@ class PutawayRuleRepository implements PutawayRuleRepositoryInterface
         $rule->update($data);
         return $rule->fresh();
     }
+
+    public function findByProductAndWarehouse(int $productId, int $warehouseId): ?PutawayRule
+    {
+        return PutawayRule::where('product_id', $productId)
+            ->where('warehouse_id', $warehouseId)
+            ->first();
+    }
 }

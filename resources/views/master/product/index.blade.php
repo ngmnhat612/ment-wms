@@ -367,9 +367,7 @@
             <input type="number" class="form-control" id="pAlertExpiry"
                   name="alert_before_expiry" min="1" placeholder="Ví dụ: 30">
           </div>
-        </div>
 
-        <div class="row g-3 mb-3">
           <div class="col-6">
             <label class="form-label">Ngưỡng tồn tối thiểu (Min)</label>
             <input type="number" step="1" min="0" max="99999"
@@ -387,6 +385,22 @@
                   onkeydown="blockInvalidNumberKeys(event)"
                   onpaste="blockInvalidNumberPaste(event)"
                   oninput="sanitizeNumberInput(this)">
+          </div>
+
+          {{-- ===== Gợi ý vị trí ===== --}}
+          <div class="col-12">
+            <label class="form-label">Gợi ý vị trí</label>
+            <input type="text" class="form-control" id="pLocationText"
+                  placeholder="Nhập hoặc chọn"
+                  list="locationDatalist" autocomplete="off"
+                  oninput="resolveLocation()" onblur="resolveLocation()">
+            <datalist id="locationDatalist">
+              @foreach ($locations as $loc)
+                <option value="[{{ $loc->code }}] {{ $loc->name }}"></option>
+              @endforeach
+            </datalist>
+            <input type="hidden" id="pLocation" name="location_id" value="">
+            <div class="invalid-feedback" id="pLocationError"></div>
           </div>
         </div>
 
@@ -476,6 +490,8 @@
 
   // Map product data for edit mode
   const productsMap = {};
+  const locations = @json($locations->map(fn($l) => ['id' => $l->id, 'code' => $l->code, 'name' => $l->name]));
+
   @foreach ($products as $p)
     productsMap[{{ $p->id }}] = {
       id:                  {{ $p->id }},
@@ -491,6 +507,8 @@
       image_url:           '{{ $p->image_path ? Storage::url($p->image_path) : '' }}',
       min_qty: {{ $p->reorderRule->min_qty ?? 0 }},
       max_qty: {{ $p->reorderRule->max_qty ?? 0 }},
+      location_id:   {{ $p->putawayRule->location_id ?? 'null' }},
+      location_text: '{{ $p->putawayRule && $p->putawayRule->destinationLocation ? "[" . addslashes($p->putawayRule->destinationLocation->code) . "] " . addslashes($p->putawayRule->destinationLocation->name) : "" }}',
     };
   @endforeach
 
@@ -537,7 +555,7 @@
     document.getElementById('pStatusActive').checked = true;
     resetImagePreview();
     offcanvasEl.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
-    offcanvasEl.querySelectorAll('.invalid-feedback').forEach(el => el.remove());
+    offcanvasEl.querySelectorAll('.invalid-feedback').forEach(el => el.textContent = '');
 
     // Xoá alert lỗi validate còn sót lại từ lần submit thất bại trước đó
     const oldAlert = form.querySelector('.alert-danger');
@@ -568,6 +586,8 @@
       document.getElementById(p.status == 1 ? 'pStatusActive' : 'pStatusInactive').checked = true;
       document.getElementById('pMinQty').value = p.min_qty ?? 0;
       document.getElementById('pMaxQty').value = p.max_qty ?? 0;
+      document.getElementById('pLocationText').value = p.location_text ?? '';
+      document.getElementById('pLocation').value     = p.location_id ?? '';
 
       if (p.image_url) {
         showImagePreview(p.image_url);
@@ -588,6 +608,8 @@
       unlockCategoryForCreate();
       document.getElementById('pMinQty').value = 0;
       document.getElementById('pMaxQty').value = 0;
+      document.getElementById('pLocationText').value = '';
+      document.getElementById('pLocation').value     = '';
     }
 
     offcanvas.show();
@@ -688,6 +710,11 @@
       document.getElementById(
         @json(old('status', '1')) == '1' ? 'pStatusActive' : 'pStatusInactive'
       ).checked = true;
+      document.getElementById('pMinQty').value = @json(old('min_qty', 0));
+      document.getElementById('pMaxQty').value = @json(old('max_qty', 0));
+      document.getElementById('pLocation').value = @json(old('location_id', ''));
+      const oldLoc1 = locations.find(l => l.id == @json(old('location_id', 'null')));
+      document.getElementById('pLocationText').value = oldLoc1 ? `[${oldLoc1.code}] ${oldLoc1.name}` : '';
 
     } else if (pfa.startsWith('update:')) {
       const id = pfa.split(':')[1];
@@ -718,6 +745,9 @@
       ).checked = true;
       document.getElementById('pMinQty').value = @json(old('min_qty', 0));
       document.getElementById('pMaxQty').value = @json(old('max_qty', 0));
+      document.getElementById('pLocation').value = @json(old('location_id', ''));
+      const oldLoc2 = locations.find(l => l.id == @json(old('location_id', 'null')));
+      document.getElementById('pLocationText').value = oldLoc2 ? `[${oldLoc2.code}] ${oldLoc2.name}` : '';
 
       setSelectValueSafe('pUom', @json(old('uom_id', '')));
 
@@ -745,6 +775,10 @@
       ).checked = true;
       document.getElementById('pMinQty').value = @json(old('min_qty', 0));
       document.getElementById('pMaxQty').value = @json(old('max_qty', 0));
+
+      document.getElementById('pLocation').value = @json(old('location_id', ''));
+      const oldLoc3 = locations.find(l => l.id == @json(old('location_id', 'null')));
+      document.getElementById('pLocationText').value = oldLoc3 ? `[${oldLoc3.code}] ${oldLoc3.name}` : '';
     }
 
     document.body.dataset.pfa = '';
@@ -814,17 +848,62 @@
   }
 
   // ===== CHẶN SUBMIT LIÊN TỤC =====
-  document.getElementById('productForm').addEventListener('submit', function () {
-    const btn     = document.getElementById('productSubmitBtn');
-    const spinner = document.getElementById('productSubmitSpinner');
-    const icon    = document.getElementById('productSubmitIcon');
-    const label   = document.getElementById('productSubmitLabel');
+  // document.getElementById('productForm').addEventListener('submit', function (e) {
+  //   resolveLocation();
 
-    btn.disabled = true;
-    spinner.classList.remove('d-none');
-    icon.classList.add('d-none');
-    label.textContent = 'Đang lưu...';
-  });
+  //   // Nếu người dùng đã nhập text nhưng không khớp vị trí nào -> chặn submit
+  //   const locationText = document.getElementById('pLocationText').value.trim();
+  //   const locationId    = document.getElementById('pLocation').value;
+  //   if (locationText && !locationId) {
+  //     document.getElementById('pLocationText').classList.add('is-invalid');
+  //     document.getElementById('pLocationError').textContent = 'Vị trí không tồn tại trong hệ thống.';
+  //     document.getElementById('pLocationText').focus();
+  //     e.preventDefault();
+  //     return;
+  //   }
+
+  //   const btn     = document.getElementById('productSubmitBtn');
+  //   const spinner = document.getElementById('productSubmitSpinner');
+  //   const icon    = document.getElementById('productSubmitIcon');
+  //   const label   = document.getElementById('productSubmitLabel');
+
+  //   btn.disabled = true;
+  //   spinner.classList.remove('d-none');
+  //   icon.classList.add('d-none');
+  //   label.textContent = 'Đang lưu...';
+  // });
+
+document.getElementById('productForm').addEventListener('submit', function (e) {
+  resolveLocation();
+
+  const locationText = document.getElementById('pLocationText').value.trim();
+  const locationId    = document.getElementById('pLocation').value;
+
+  console.log('[submit] locationText =', JSON.stringify(locationText));
+  console.log('[submit] locationId =', JSON.stringify(locationId));
+  console.log('[submit] điều kiện chặn (locationText && !locationId) =', !!(locationText && !locationId));
+
+  if (locationText && !locationId) {
+    console.log('[submit] ĐANG CHẶN SUBMIT');
+    document.getElementById('pLocationText').classList.add('is-invalid');
+    document.getElementById('pLocationError').textContent = 'Vị trí không tồn tại trong hệ thống.';
+    document.getElementById('pLocationText').focus();
+    e.preventDefault();
+    return;
+  }
+
+  console.log('[submit] KHÔNG chặn, form sẽ submit bình thường');
+
+  const btn     = document.getElementById('productSubmitBtn');
+  const spinner = document.getElementById('productSubmitSpinner');
+  const icon    = document.getElementById('productSubmitIcon');
+  const label   = document.getElementById('productSubmitLabel');
+
+  btn.disabled = true;
+  spinner.classList.remove('d-none');
+  icon.classList.add('d-none');
+  label.textContent = 'Đang lưu...';
+});
 
   // Reset lại nút khi đóng offcanvas (để lần mở sau vẫn hoạt động bình thường)
   document.getElementById('productOffcanvas').addEventListener('hidden.coreui.offcanvas', function () {
@@ -854,5 +933,57 @@
       document.getElementById('imgPreviewPopup').style.display = 'none';
     });
   });
+
+  // function resolveLocation() {
+  //   const text  = document.getElementById('pLocationText').value.trim();
+  //   const el    = document.getElementById('pLocationText');
+  //   const hid   = document.getElementById('pLocation');
+  //   const err   = document.getElementById('pLocationError');
+  //   const match = locations.find(l => `[${l.code}] ${l.name}` === text);
+
+  //   if (match) {
+  //     hid.value = match.id;
+  //     el.classList.remove('is-invalid');
+  //     err.textContent = '';
+  //   } else {
+  //     hid.value = '';
+  //     if (text) {
+  //       el.classList.add('is-invalid');
+  //       err.textContent = 'Vị trí không tồn tại trong hệ thống.';
+  //     } else {
+  //       el.classList.remove('is-invalid');
+  //       err.textContent = '';
+  //     }
+  //   }
+  // }
+
+function resolveLocation() {
+  const text  = document.getElementById('pLocationText').value.trim();
+  const el    = document.getElementById('pLocationText');
+  const hid   = document.getElementById('pLocation');
+  const err   = document.getElementById('pLocationError');
+  const match = locations.find(l => `[${l.code}] ${l.name}` === text);
+
+  console.log('[resolveLocation] text =', JSON.stringify(text));
+  console.log('[resolveLocation] match =', match);
+  console.log('[resolveLocation] locations sample =', locations.slice(0, 3));
+
+  if (match) {
+    hid.value = match.id;
+    el.classList.remove('is-invalid');
+    err.textContent = '';
+  } else {
+    hid.value = '';
+    if (text) {
+      el.classList.add('is-invalid');
+      err.textContent = 'Vị trí không tồn tại trong hệ thống.';
+    } else {
+      el.classList.remove('is-invalid');
+      err.textContent = '';
+    }
+  }
+
+  console.log('[resolveLocation] hid.value sau cùng =', hid.value);
+}
 </script>
 @endpush

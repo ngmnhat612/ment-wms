@@ -20,6 +20,7 @@ class Account extends Authenticatable
         'username',
         'password',
         'status',
+        'is_protected',
     ];
 
     protected $hidden = [
@@ -32,6 +33,7 @@ class Account extends Authenticatable
         return [
             'password' => 'hashed',
             'status'   => ActiveStatus::class,
+            'is_protected' => 'boolean',
         ];
     }
 
