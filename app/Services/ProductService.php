@@ -15,8 +15,9 @@ use App\Enums\ActiveStatus;
 class ProductService
 {
     public function __construct(
-        private readonly ProductRepositoryInterface $productRepository,
-        private readonly CodeGeneratorService       $codeGeneratorService,
+        protected ProductRepositoryInterface $productRepository,
+        protected CodeGeneratorService $codeGeneratorService,
+        protected ReorderRuleService $reorderRuleService,
     ) {}
 
     // ===== QUERY =====
@@ -40,6 +41,7 @@ class ProductService
 
     /**
      * Tạo vật tư gốc.
+     * Tự động tạo kèm ReorderRule (min=0, max=0 nếu không nhập).
      */
     public function create(array $data, ?UploadedFile $image = null): Product
     {
@@ -55,11 +57,21 @@ class ProductService
             $data['image_path'] = $this->storeImage($image, $data['name'], $data['code']);
         }
 
-        return $this->productRepository->create($data);
+        $product = $this->productRepository->create($data);
+
+        $this->reorderRuleService->syncForProduct(
+            $product->id,
+            $this->reorderRuleService->defaultWarehouseId(),
+            (int) ($data['min_qty'] ?? 0),
+            (int) ($data['max_qty'] ?? 0),
+        );
+
+        return $product;
     }
 
     /**
      * Tạo biến thể — kế thừa category, uom, tracking, rotation, ảnh từ cha.
+     * Min/Max KHÔNG kế thừa từ cha — mỗi biến thể có ReorderRule riêng.
      */
     public function createVariant(array $data, ?UploadedFile $image = null): Product
     {
@@ -91,12 +103,20 @@ class ProductService
         // Toàn bộ mã trong cùng gia đình (gốc + mọi biến thể) tự động chuyển sang Ngưng hoạt động
         $this->deactivateFamily($parent, $variant->id);
 
+        $this->reorderRuleService->syncForProduct(
+            $variant->id,
+            $this->reorderRuleService->defaultWarehouseId(),
+            (int) ($data['min_qty'] ?? 0),
+            (int) ($data['max_qty'] ?? 0),
+        );
+
         return $variant;
     }
 
     /**
      * Cập nhật sản phẩm.
      * code và barcode là readonly sau khi tạo.
+     * Đồng bộ ReorderRule theo min_qty/max_qty gửi lên (kể cả khi về 0/0, không xóa).
      */
     public function update(Product $product, array $data, ?UploadedFile $image = null, bool $removeImage = false): void
     {
@@ -114,11 +134,19 @@ class ProductService
         }
 
         $this->productRepository->update($product, $data);
+
+        $this->reorderRuleService->syncForProduct(
+            $product->id,
+            $this->reorderRuleService->defaultWarehouseId(),
+            (int) ($data['min_qty'] ?? 0),
+            (int) ($data['max_qty'] ?? 0),
+        );
     }
 
     /**
      * Xóa sản phẩm.
      * Ném exception nếu còn tồn kho.
+     * Xóa ReorderRule tương ứng trước khi xóa sản phẩm.
      *
      * @throws \RuntimeException
      */
@@ -127,6 +155,8 @@ class ProductService
         if ($this->productRepository->hasStock($product)) {
             throw new \RuntimeException("Không thể xóa \"{$product->name}\" vì đang có tồn kho.");
         }
+
+        $this->reorderRuleService->deleteForProduct($product->id);
 
         $this->productRepository->delete($product);
     }
@@ -183,26 +213,6 @@ class ProductService
     {
         return $this->productRepository->findRootByCode($code);
     }
-
-    // public function hasNearExpiryStock(Product $product): bool
-    // {
-    //     if (! $product->alert_before_expiry) {
-    //         return false;
-    //     }
-
-    //     $threshold = now()->addDays($product->alert_before_expiry);
-
-    //     return $product->lots()
-    //         ->whereNotNull('expiry_date')
-    //         ->where('expiry_date', '<=', $threshold)
-    //         ->where('status', 1)
-    //         ->exists();
-    // }
-
-    // public function getTotalStock(Product $product): float
-    // {
-    //     return (float) $product->stocks()->sum('quantity');
-    // }
 
     /**
      * Chuyển toàn bộ mã trong cùng gia đình (mã gốc + mọi biến thể) sang Ngưng hoạt động,

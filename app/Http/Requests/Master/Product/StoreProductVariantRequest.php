@@ -32,6 +32,9 @@ class StoreProductVariantRequest extends FormRequest
             'image'       => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
             // category_id, uom_id, tracking_type, stock_rotation,
             // alert_before_expiry — không validate vì kế thừa từ cha ở service
+            'min_qty' => 'nullable|integer|min:0|max:99999',
+            'max_qty' => 'nullable|integer|min:0|max:99999|gte:min_qty',
+
         ];
     }
 
@@ -50,6 +53,8 @@ class StoreProductVariantRequest extends FormRequest
             'image.image'          => 'File không phải là hình ảnh hợp lệ.',
             'image.mimes'          => 'Hình ảnh phải có định dạng jpeg, png, jpg hoặc webp.',
             'image.max'            => 'Hình ảnh không được vượt quá 2MB.',
+            'max_qty.gte'                     => 'Ngưỡng tối đa phải >= ngưỡng tối thiểu.',
+            'min_qty.max'                     => 'Ngưỡng tối thiểu phải < 99999.',
         ];
     }
 

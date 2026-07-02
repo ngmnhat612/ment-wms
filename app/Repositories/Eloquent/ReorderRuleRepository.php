@@ -86,4 +86,16 @@ class ReorderRuleRepository implements ReorderRuleRepositoryInterface
         $rule->update($data);
         return $rule->fresh();
     }
+
+    public function findByProductAndWarehouse(int $productId, int $warehouseId): ?ReorderRule
+    {
+        return ReorderRule::where('product_id', $productId)
+            ->where('warehouse_id', $warehouseId)
+            ->first();
+    }
+
+    public function deleteByProduct(int $productId): void
+    {
+        ReorderRule::where('product_id', $productId)->delete();
+    }
 }
