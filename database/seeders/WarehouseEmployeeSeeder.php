@@ -2,9 +2,9 @@
 
 namespace Database\Seeders;
 
-use App\Models\Employee;
-use App\Models\Warehouse;
-use App\Models\WarehouseEmployee;
+use App\Models\Master\Employee;
+use App\Models\Master\Warehouse;
+use App\Models\Master\WarehouseEmployee;
 use Illuminate\Database\Seeder;
 
 class WarehouseEmployeeSeeder extends Seeder

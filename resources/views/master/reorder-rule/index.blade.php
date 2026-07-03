@@ -1,10 +1,10 @@
 @extends('layouts.app')
 
-@section('title', 'Gán Min-Max')
+@section('title', 'Gán Min - Max')
 
 @section('breadcrumb')
   <li class="breadcrumb-item">Danh mục</li>
-  <li class="breadcrumb-item active">Gán Min-Max</li>
+  <li class="breadcrumb-item active">Gán Min - Max</li>
 @endsection
 
 @section('content')
@@ -46,7 +46,7 @@
   {{-- BẢNG DANH SÁCH --}}
   <div class="card">
     <div class="card-header d-flex align-items-center gap-2">
-      <span class="fw-semibold flex-shrink-0">Gán Min-Max</span>
+      <span class="fw-semibold flex-shrink-0">Gán Min - Max</span>
       <form method="GET" action="{{ route('master.reorder-rule.index') }}"
             class="d-flex gap-2 flex-wrap align-items-center flex-grow-1 justify-content-end">
 

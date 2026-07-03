@@ -310,19 +310,25 @@
             </div>
             <div class="flex-grow-1">
               <div class="d-flex align-items-center gap-2">
-                <input type="file"
-                      class="form-control form-control-sm {{ $errors->has('image') ? 'is-invalid' : '' }}"
-                      id="pImage" name="image"
+                <input type="file" id="pImage" name="image" class="d-none"
                       accept="image/jpeg,image/png,image/webp,image/gif"
                       onchange="previewImage(this)">
-                <button type="button" id="clearImageBtn"
-                        class="btn-close d-none flex-shrink-0"
-                        style="font-size:0.6rem"
-                        onclick="clearImage()">
+
+                <button type="button" class="btn btn-outline-primary btn-sm flex-shrink-0"
+                        onclick="document.getElementById('pImage').click()">
+                  Chọn tệp
                 </button>
+
+                <span class="form-control form-control-sm text-truncate" id="fileNameDisplay"
+                      title="Không tệp nào được chọn">
+                  Không tệp nào được chọn
+                </span>
+
+                <button type="button" id="clearImageBtn" class="btn-close d-none flex-shrink-0"
+                        style="font-size:0.6rem" onclick="clearImage()"></button>
               </div>
               @error('image')
-                <div class="invalid-feedback">{{ $message }}</div>
+                <div class="invalid-feedback d-block">{{ $message }}</div>
               @enderror
               <div class="form-text" id="imageHint">JPEG, PNG, WebP - tối đa 2 MB</div>
               <input type="hidden" name="remove_image" id="removeImage" value="0">
@@ -505,6 +511,7 @@
       status:              {{ $p->status?->value ?? 1 }},
       image_path:          '{{ $p->image_path ?? '' }}',
       image_url:           '{{ $p->image_path ? Storage::url($p->image_path) : '' }}',
+      image_name:          '{{ $p->image_path ? addslashes(basename($p->image_path)) : '' }}',
       min_qty: {{ $p->reorderRule->min_qty ?? 0 }},
       max_qty: {{ $p->reorderRule->max_qty ?? 0 }},
       location_id:   {{ $p->putawayRule->location_id ?? 'null' }},
@@ -590,7 +597,7 @@
       document.getElementById('pLocation').value     = p.location_id ?? '';
 
       if (p.image_url) {
-        showImagePreview(p.image_url);
+        showImagePreview(p.image_url, p.image_name);
       }
 
       // Lock mã khi edit
@@ -617,24 +624,35 @@
   }
 
   // ===== IMAGE PREVIEW =====
-  function showImagePreview(src) {
-      const img  = document.getElementById('imagePreview');
-      const icon = document.getElementById('imageIcon');
-      const btn  = document.getElementById('clearImageBtn');
+  function showImagePreview(src, fileName = '') {
+      const img     = document.getElementById('imagePreview');
+      const icon    = document.getElementById('imageIcon');
+      const btn     = document.getElementById('clearImageBtn');
+      const nameDsp = document.getElementById('fileNameDisplay');
 
       if (img)  { img.src = src; img.classList.remove('d-none'); }
       if (icon) { icon.classList.add('d-none'); }
       if (btn)  { btn.classList.remove('d-none'); }
+      if (nameDsp) {
+          const text = fileName || 'Không tệp nào được chọn';
+          nameDsp.textContent = text;
+          nameDsp.title = text;
+      }
   }
 
   function resetImagePreview() {
-      const img  = document.getElementById('imagePreview');
-      const icon = document.getElementById('imageIcon');
-      const btn  = document.getElementById('clearImageBtn');
+      const img     = document.getElementById('imagePreview');
+      const icon    = document.getElementById('imageIcon');
+      const btn     = document.getElementById('clearImageBtn');
+      const nameDsp = document.getElementById('fileNameDisplay');
 
       if (img)  { img.src = ''; img.classList.add('d-none'); }
       if (icon) { icon.classList.remove('d-none'); }
       if (btn)  { btn.classList.add('d-none'); }
+      if (nameDsp) {
+          nameDsp.textContent = 'Không tệp nào được chọn';
+          nameDsp.title = 'Không tệp nào được chọn';
+      }
   }
 
   function clearImage() {
@@ -646,7 +664,7 @@
   function previewImage(input) {
       if (input.files && input.files[0]) {
           const reader = new FileReader();
-          reader.onload = e => showImagePreview(e.target.result);
+          reader.onload = e => showImagePreview(e.target.result, input.files[0].name);
           reader.readAsDataURL(input.files[0]);
           document.getElementById('removeImage').value = '0';
       }
@@ -750,10 +768,14 @@
       document.getElementById('pLocationText').value = oldLoc2 ? `[${oldLoc2.code}] ${oldLoc2.name}` : '';
 
       setSelectValueSafe('pUom', @json(old('uom_id', '')));
-
+      
       const categoryId = p ? (p.category_id ?? '') : @json(old('category_id', ''));
       lockCategoryForEdit(categoryId);
       
+      if (p && p.image_url) {
+        showImagePreview(p.image_url, p.image_name);
+      }
+
     } else {
       // store thường fail
       document.getElementById('productOffcanvasTitle').textContent = 'Thêm vật tư';
@@ -848,62 +870,30 @@
   }
 
   // ===== CHẶN SUBMIT LIÊN TỤC =====
-  // document.getElementById('productForm').addEventListener('submit', function (e) {
-  //   resolveLocation();
+  document.getElementById('productForm').addEventListener('submit', function (e) {
+    resolveLocation();
 
-  //   // Nếu người dùng đã nhập text nhưng không khớp vị trí nào -> chặn submit
-  //   const locationText = document.getElementById('pLocationText').value.trim();
-  //   const locationId    = document.getElementById('pLocation').value;
-  //   if (locationText && !locationId) {
-  //     document.getElementById('pLocationText').classList.add('is-invalid');
-  //     document.getElementById('pLocationError').textContent = 'Vị trí không tồn tại trong hệ thống.';
-  //     document.getElementById('pLocationText').focus();
-  //     e.preventDefault();
-  //     return;
-  //   }
+    // Nếu người dùng đã nhập text nhưng không khớp vị trí nào -> chặn submit
+    const locationText = document.getElementById('pLocationText').value.trim();
+    const locationId    = document.getElementById('pLocation').value;
+    if (locationText && !locationId) {
+      document.getElementById('pLocationText').classList.add('is-invalid');
+      document.getElementById('pLocationError').textContent = 'Vị trí không tồn tại trong hệ thống.';
+      document.getElementById('pLocationText').focus();
+      e.preventDefault();
+      return;
+    }
 
-  //   const btn     = document.getElementById('productSubmitBtn');
-  //   const spinner = document.getElementById('productSubmitSpinner');
-  //   const icon    = document.getElementById('productSubmitIcon');
-  //   const label   = document.getElementById('productSubmitLabel');
+    const btn     = document.getElementById('productSubmitBtn');
+    const spinner = document.getElementById('productSubmitSpinner');
+    const icon    = document.getElementById('productSubmitIcon');
+    const label   = document.getElementById('productSubmitLabel');
 
-  //   btn.disabled = true;
-  //   spinner.classList.remove('d-none');
-  //   icon.classList.add('d-none');
-  //   label.textContent = 'Đang lưu...';
-  // });
-
-document.getElementById('productForm').addEventListener('submit', function (e) {
-  resolveLocation();
-
-  const locationText = document.getElementById('pLocationText').value.trim();
-  const locationId    = document.getElementById('pLocation').value;
-
-  console.log('[submit] locationText =', JSON.stringify(locationText));
-  console.log('[submit] locationId =', JSON.stringify(locationId));
-  console.log('[submit] điều kiện chặn (locationText && !locationId) =', !!(locationText && !locationId));
-
-  if (locationText && !locationId) {
-    console.log('[submit] ĐANG CHẶN SUBMIT');
-    document.getElementById('pLocationText').classList.add('is-invalid');
-    document.getElementById('pLocationError').textContent = 'Vị trí không tồn tại trong hệ thống.';
-    document.getElementById('pLocationText').focus();
-    e.preventDefault();
-    return;
-  }
-
-  console.log('[submit] KHÔNG chặn, form sẽ submit bình thường');
-
-  const btn     = document.getElementById('productSubmitBtn');
-  const spinner = document.getElementById('productSubmitSpinner');
-  const icon    = document.getElementById('productSubmitIcon');
-  const label   = document.getElementById('productSubmitLabel');
-
-  btn.disabled = true;
-  spinner.classList.remove('d-none');
-  icon.classList.add('d-none');
-  label.textContent = 'Đang lưu...';
-});
+    btn.disabled = true;
+    spinner.classList.remove('d-none');
+    icon.classList.add('d-none');
+    label.textContent = 'Đang lưu...';
+  });
 
   // Reset lại nút khi đóng offcanvas (để lần mở sau vẫn hoạt động bình thường)
   document.getElementById('productOffcanvas').addEventListener('hidden.coreui.offcanvas', function () {
@@ -934,56 +924,27 @@ document.getElementById('productForm').addEventListener('submit', function (e) {
     });
   });
 
-  // function resolveLocation() {
-  //   const text  = document.getElementById('pLocationText').value.trim();
-  //   const el    = document.getElementById('pLocationText');
-  //   const hid   = document.getElementById('pLocation');
-  //   const err   = document.getElementById('pLocationError');
-  //   const match = locations.find(l => `[${l.code}] ${l.name}` === text);
+  function resolveLocation() {
+    const text  = document.getElementById('pLocationText').value.trim();
+    const el    = document.getElementById('pLocationText');
+    const hid   = document.getElementById('pLocation');
+    const err   = document.getElementById('pLocationError');
+    const match = locations.find(l => `[${l.code}] ${l.name}` === text);
 
-  //   if (match) {
-  //     hid.value = match.id;
-  //     el.classList.remove('is-invalid');
-  //     err.textContent = '';
-  //   } else {
-  //     hid.value = '';
-  //     if (text) {
-  //       el.classList.add('is-invalid');
-  //       err.textContent = 'Vị trí không tồn tại trong hệ thống.';
-  //     } else {
-  //       el.classList.remove('is-invalid');
-  //       err.textContent = '';
-  //     }
-  //   }
-  // }
-
-function resolveLocation() {
-  const text  = document.getElementById('pLocationText').value.trim();
-  const el    = document.getElementById('pLocationText');
-  const hid   = document.getElementById('pLocation');
-  const err   = document.getElementById('pLocationError');
-  const match = locations.find(l => `[${l.code}] ${l.name}` === text);
-
-  console.log('[resolveLocation] text =', JSON.stringify(text));
-  console.log('[resolveLocation] match =', match);
-  console.log('[resolveLocation] locations sample =', locations.slice(0, 3));
-
-  if (match) {
-    hid.value = match.id;
-    el.classList.remove('is-invalid');
-    err.textContent = '';
-  } else {
-    hid.value = '';
-    if (text) {
-      el.classList.add('is-invalid');
-      err.textContent = 'Vị trí không tồn tại trong hệ thống.';
-    } else {
+    if (match) {
+      hid.value = match.id;
       el.classList.remove('is-invalid');
       err.textContent = '';
+    } else {
+      hid.value = '';
+      if (text) {
+        el.classList.add('is-invalid');
+        err.textContent = 'Vị trí không tồn tại trong hệ thống.';
+      } else {
+        el.classList.remove('is-invalid');
+        err.textContent = '';
+      }
     }
   }
-
-  console.log('[resolveLocation] hid.value sau cùng =', hid.value);
-}
 </script>
 @endpush

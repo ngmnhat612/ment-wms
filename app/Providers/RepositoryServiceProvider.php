@@ -2,33 +2,33 @@
 
 namespace App\Providers;
 
-use App\Repositories\Contracts\CategoryRepositoryInterface;
-use App\Repositories\Contracts\ProductRepositoryInterface;
-use App\Repositories\Contracts\UomRepositoryInterface;
-use App\Repositories\Contracts\BrandRepositoryInterface;
-use App\Repositories\Contracts\WarehouseRepositoryInterface;
-use App\Repositories\Contracts\ReorderRuleRepositoryInterface;
-use App\Repositories\Contracts\PutawayRuleRepositoryInterface;
-use App\Repositories\Contracts\LocationRepositoryInterface;
-use App\Repositories\Contracts\SupplierRepositoryInterface;
-use App\Repositories\Contracts\DepartmentRepositoryInterface;
-use App\Repositories\Contracts\EmployeeRepositoryInterface;
-use App\Repositories\Contracts\AccountRepositoryInterface;
-use App\Repositories\Contracts\SnRepositoryInterface;
+use App\Repositories\Contracts\Master\CategoryRepositoryInterface;
+use App\Repositories\Contracts\Master\ProductRepositoryInterface;
+use App\Repositories\Contracts\Master\UomRepositoryInterface;
+use App\Repositories\Contracts\Master\BrandRepositoryInterface;
+use App\Repositories\Contracts\Master\WarehouseRepositoryInterface;
+use App\Repositories\Contracts\Master\ReorderRuleRepositoryInterface;
+use App\Repositories\Contracts\Master\PutawayRuleRepositoryInterface;
+use App\Repositories\Contracts\Master\LocationRepositoryInterface;
+use App\Repositories\Contracts\Master\SupplierRepositoryInterface;
+use App\Repositories\Contracts\Master\DepartmentRepositoryInterface;
+use App\Repositories\Contracts\Master\EmployeeRepositoryInterface;
+use App\Repositories\Contracts\Master\AccountRepositoryInterface;
+use App\Repositories\Contracts\Master\SnRepositoryInterface;
 
-use App\Repositories\Eloquent\CategoryRepository;
-use App\Repositories\Eloquent\ProductRepository;
-use App\Repositories\Eloquent\UomRepository;
-use App\Repositories\Eloquent\BrandRepository;
-use App\Repositories\Eloquent\WarehouseRepository;
-use App\Repositories\Eloquent\ReorderRuleRepository;
-use App\Repositories\Eloquent\PutawayRuleRepository;
-use App\Repositories\Eloquent\LocationRepository;
-use App\Repositories\Eloquent\SupplierRepository;
-use App\Repositories\Eloquent\DepartmentRepository;
-use App\Repositories\Eloquent\EmployeeRepository;
-use App\Repositories\Eloquent\AccountRepository;
-use App\Repositories\Eloquent\SnRepository;
+use App\Repositories\Eloquent\Master\CategoryRepository;
+use App\Repositories\Eloquent\Master\ProductRepository;
+use App\Repositories\Eloquent\Master\UomRepository;
+use App\Repositories\Eloquent\Master\BrandRepository;
+use App\Repositories\Eloquent\Master\WarehouseRepository;
+use App\Repositories\Eloquent\Master\ReorderRuleRepository;
+use App\Repositories\Eloquent\Master\PutawayRuleRepository;
+use App\Repositories\Eloquent\Master\LocationRepository;
+use App\Repositories\Eloquent\Master\SupplierRepository;
+use App\Repositories\Eloquent\Master\DepartmentRepository;
+use App\Repositories\Eloquent\Master\EmployeeRepository;
+use App\Repositories\Eloquent\Master\AccountRepository;
+use App\Repositories\Eloquent\Master\SnRepository;
 
 use Illuminate\Support\ServiceProvider;
 
