@@ -230,7 +230,7 @@
                 <div class="form-check">
                   <input class="form-check-input" type="radio" name="status"
                          id="uomStatusInactive" value="0">
-                  <label class="form-check-label text-secondary" for="uomStatusInactive">Ngưng hoạt động</label> {{-- UPDATE --}}
+                  <label class="form-check-label text-secondary" for="uomStatusInactive">Ngưng hoạt động</label> 
                 </div> 
               </div>
             </div>
@@ -328,7 +328,7 @@
 
   document.getElementById('uomCode').addEventListener('input', function () {
     const pos = this.selectionStart;
-    this.value = this.value.toUpperCase();
+    this.value = this.value.toUpperCase().replace(/[^A-Z0-9]/g, ''); //UPDATE
     this.setSelectionRange(pos, pos);
   });
 
