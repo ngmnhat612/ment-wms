@@ -563,7 +563,7 @@
   @if ($errors->hasAny(['username', 'password', 'password_confirmation', 'new_password', 'new_password_confirmation', 'role', 'account_status']))
     @php
       $errEmployeeId = old('employee_id') ?? request()->route('employee')?->id;
-      $errEmployee   = $errEmployeeId ? \App\Models\Employee::with('account.roles')->find($errEmployeeId) : null;
+      $errEmployee   = $errEmployeeId ? \App\Models\Master\Employee::with('account.roles')->find($errEmployeeId) : null; // UPDATE
       $errAccount    = $errEmployee?->account;
     @endphp
     openAccountModal(
