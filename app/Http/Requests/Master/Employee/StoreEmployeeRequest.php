@@ -16,7 +16,7 @@ class StoreEmployeeRequest extends FormRequest
         return [
             'code'          => 'nullable|string|max:20|regex:/^[A-Za-z0-9]+$/|unique:employees,code', //UPDATE
             'name'          => 'required|string|max:200',
-            'phone_number'  => 'nullable|string|max:20',
+            'phone_number'  => 'nullable|string|max:20|regex:/^[A-Za-z0-9]+$/', //UPDATE
             'department_id' => 'required|integer|exists:departments,id',
             'note'          => 'nullable|string|max:500',
             'status'        => 'required|in:0,1',
@@ -28,6 +28,7 @@ class StoreEmployeeRequest extends FormRequest
         return [
             'code.unique'            => 'Mã nhân viên đã tồn tại.',
             'code.regex'             => 'Mã nhân viên chỉ được phép chứa chữ cái và số, không chứa ký tự đặc biệt.', // UPDATE
+            'phone_number.regex'     => 'Số điện thoại chỉ được phép chứa chữ cái và số, không chứa ký tự đặc biệt.', // UPDATE
             'name.required'          => 'Vui lòng nhập họ tên.',
             'department_id.required' => 'Vui lòng chọn bộ phận.',
             'department_id.exists'   => 'Bộ phận không hợp lệ.',

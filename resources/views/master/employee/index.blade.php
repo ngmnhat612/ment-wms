@@ -318,7 +318,11 @@
                       class="form-control {{ $errors->has('phone_number') ? 'is-invalid' : '' }}"
                       name="phone_number" id="empPhone"
                       value="{{ old('phone_number') }}"
-                      placeholder="Nhập số điện thoại" maxlength="20">
+                      placeholder="Nhập số điện thoại" maxlength="20"
+                      {{-- UPDATE --}}
+                      inputmode="numeric"
+                      oninput="this.value = this.value.replace(/[^0-9]/g, '')"
+                      {{-- UPDATE --}}>
                 @error('phone_number')
                   <div class="invalid-feedback">{{ $message }}</div>
                 @enderror
