@@ -19,6 +19,7 @@ class StoreSupplierRequest extends FormRequest
                 'nullable',
                 'string',
                 'max:20',
+                'regex:/^[A-Za-z0-9]+$/', // UPDATE
                 Rule::unique('suppliers', 'code'),
             ],
             'name'     => 'required|string|max:200',
@@ -39,6 +40,7 @@ class StoreSupplierRequest extends FormRequest
     {
         return [
             'code.unique'      => 'Mã nhà cung cấp đã tồn tại.',
+            'code.regex'       => 'Mã nhà cung cấp chỉ được phép chứa chữ cái và số, không chứa ký tự đặc biệt.', // UPDATE
             'name.required'    => 'Vui lòng nhập tên nhà cung cấp.',
             'email.email'      => 'Email không hợp lệ.',
         ];

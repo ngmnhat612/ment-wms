@@ -147,7 +147,7 @@
                 {{-- <td class="small">{{ $supplier->note ?? '-' }}</td> --}}
                 {{-- UPDATE --}}
                 <td class="small" title="{{ $supplier->note }}">
-                  {{ \Illuminate\Support\Str::limit($supplier->note ?? '-', 25) }}
+                  {{ \Illuminate\Support\Str::limit($supplier->note ?? '-', 15) }}
                 </td>
                 {{-- UPDATE --}}
                 <td class="text-center">
@@ -408,7 +408,7 @@
 
   document.getElementById('sCode').addEventListener('input', function () {
     const pos = this.selectionStart;
-    this.value = this.value.toUpperCase();
+    this.value = this.value.toUpperCase().replace(/[^A-Z0-9]/g, ''); // UPDATE
     this.setSelectionRange(pos, pos);
   });
 
