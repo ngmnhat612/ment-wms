@@ -18,7 +18,7 @@ class UpdateLocationRequest extends FormRequest
         return [
             'parent_id'    => 'nullable|exists:locations,id',
             'warehouse_id' => 'nullable|exists:warehouses,id',
-            'code'         => "required|string|max:50|unique:locations,code,{$locationId}",
+            'code'         => "required|string|max:50|regex:/^[A-Za-z0-9]+$/|unique:locations,code,{$locationId}", //UPDATE
             'name'         => 'required|string|max:100',
             'type'         => 'nullable|in:1,2',
             'status'       => 'required|in:0,1',
@@ -31,6 +31,7 @@ class UpdateLocationRequest extends FormRequest
         return [
             'code.required'  => 'Vui lòng nhập mã vị trí.',
             'code.unique'    => 'Mã vị trí đã tồn tại.',
+            'code.regex'     => 'Mã vị trí chỉ được phép chứa chữ cái và số, không chứa ký tự đặc biệt.', // UPDATE
             'code.max'       => 'Mã vị trí không quá 50 ký tự.',
             'name.required'  => 'Vui lòng nhập tên vị trí.',
             'name.max'       => 'Tên vị trí không quá 100 ký tự.',
