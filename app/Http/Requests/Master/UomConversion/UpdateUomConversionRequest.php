@@ -2,7 +2,7 @@
 
 namespace App\Http\Requests\Master\UomConversion;
 
-use App\Models\UomConversion;
+use App\Models\Master\UomConversion;
 use Illuminate\Foundation\Http\FormRequest;
 
 class UpdateUomConversionRequest extends FormRequest

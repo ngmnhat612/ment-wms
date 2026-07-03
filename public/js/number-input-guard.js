@@ -9,6 +9,10 @@ function blockInvalidNumberPaste(event) {
 }
 
 function sanitizeNumberInput(el) {
-    const cleaned = el.value.replace(/[^\d]/g, '');
+    let cleaned = el.value.replace(/[^\d]/g, '');
+
+    // Xoá số 0 thừa ở đầu (nhưng giữ lại 1 số 0 nếu người dùng chỉ gõ "0")
+    cleaned = cleaned.replace(/^0+(?=\d)/, '');
+
     if (cleaned !== el.value) el.value = cleaned;
 }

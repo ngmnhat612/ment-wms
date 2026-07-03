@@ -5,8 +5,8 @@ namespace App\Http\Controllers\Master;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Master\WarehouseEmployee\StoreWarehouseEmployeeRequest;
 use App\Http\Requests\Master\WarehouseEmployee\UpdateWarehouseEmployeeRequest;
-use App\Models\Warehouse;
-use App\Models\WarehouseEmployee;
+use App\Models\Master\Warehouse;
+use App\Models\Master\WarehouseEmployee;
 use Illuminate\Support\Facades\DB;
 
 class WarehouseEmployeeController extends Controller

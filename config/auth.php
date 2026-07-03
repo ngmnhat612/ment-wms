@@ -1,6 +1,6 @@
 <?php
 
-use App\Models\Account;
+use App\Models\Master\Account;
 
 return [
 

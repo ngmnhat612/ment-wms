@@ -189,7 +189,7 @@
 
                   {{-- Tài khoản --}}
                   @if ($emp->account)
-                    <button class="btn btn-sm btn-outline-info me-1"
+                    <button class="btn btn-sm btn-outline-primary me-1"
                             onclick="openAccountModal(
                               {{ $emp->id }},
                               '{{ addslashes($emp->name) }}',
@@ -204,7 +204,7 @@
                       <svg class="icon"><use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-settings') }}"></use></svg>
                     </button>
                   @else
-                    <button class="btn btn-sm btn-outline-success me-1"
+                    <button class="btn btn-sm btn-outline-primary me-1"
                             onclick="openAccountModal(
                               {{ $emp->id }},
                               '{{ addslashes($emp->name) }}',
