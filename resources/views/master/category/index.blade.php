@@ -334,7 +334,7 @@
 
   document.getElementById('catCode').addEventListener('input', function () {
     const pos = this.selectionStart;
-    this.value = this.value.toUpperCase();
+    this.value = this.value.toUpperCase().replace(/[^A-Z0-9]/g, ''); // UPDATE
     this.setSelectionRange(pos, pos);
   });
 
