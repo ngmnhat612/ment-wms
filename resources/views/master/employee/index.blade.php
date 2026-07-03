@@ -543,7 +543,7 @@
   // Auto viết hoa mã NV
   document.getElementById('empCode').addEventListener('input', function () {
     const pos = this.selectionStart;
-    this.value = this.value.toUpperCase();
+    this.value = this.value.toUpperCase().replace(/[^A-Z0-9]/g, ''); //UPDATE
     this.setSelectionRange(pos, pos);
   });
 
