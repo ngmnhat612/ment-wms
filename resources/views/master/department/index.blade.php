@@ -112,7 +112,12 @@
                   <code class="text-primary fw-medium">{{ $department->code ?? '-' }}</code>
                 </td>
                 <td class="fw-medium">{{ $department->name ?? '-' }}</td>
-                <td class="small">{{ $department->note ?? '-' }}</td>
+                {{-- <td class="small">{{ $department->note ?? '-' }}</td> --}}
+                {{-- UPDATE --}}
+                <td class="small" title="{{ $department->note }}">
+                {{ \Illuminate\Support\Str::limit($department->note ?? '-', 50) }}
+                </td>
+                {{-- UPDATE --}}
                 <td class="text-center">
                   @if ($department->status === \App\Enums\ActiveStatus::Active)
                     <span class="badge bg-success-subtle text-success border border-success-subtle">Hoạt động</span>
@@ -223,7 +228,7 @@
                 <div class="form-check">
                   <input class="form-check-input" type="radio" name="status"
                          id="dStatusInactive" value="0">
-                  <label class="form-check-label text-secondary" for="dStatusInactive">Ngừng hoạt động</label>
+                  <label class="form-check-label text-secondary" for="dStatusInactive">Ngưng hoạt động</label> {{-- UPDATE --}}
                 </div>
               </div>
             </div>

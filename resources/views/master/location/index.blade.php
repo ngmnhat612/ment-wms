@@ -120,7 +120,12 @@
                         <span class="text-body-secondary small">Gốc</span>
                       @endif
                     </td>
-                    <td class="small">{{ $loc->note ?? '-' }}</td>
+                    {{-- <td class="small">{{ $loc->note ?? '-' }}</td> --}}
+                    {{-- UPDATE --}}
+                    <td class="small" title="{{ $loc->note }}">
+                    {{ \Illuminate\Support\Str::limit($loc->note ?? '-', 50) }}
+                    </td>
+                    {{-- UPDATE --}}
                     <td class="text-center">
                       @if ($loc->status === \App\Enums\ActiveStatus::Active)
                         <span class="badge bg-success-subtle text-success border border-success-subtle">Hoạt động</span>
@@ -248,7 +253,7 @@
                 <div class="form-check">
                   <input class="form-check-input" type="radio" name="status"
                          id="lStatusInactive" value="0">
-                  <label class="form-check-label text-secondary" for="lStatusInactive">Ngừng hoạt động</label>
+                  <label class="form-check-label text-secondary" for="lStatusInactive">Ngưng hoạt động</label> {{-- UPDATE --}}
                 </div>
               </div>
             </div>

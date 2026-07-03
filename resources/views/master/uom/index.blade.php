@@ -112,7 +112,12 @@
                   <code class="text-primary fw-medium">{{ $uom->code ?? '-' }}</code>
                 </td>
                 <td class="fw-medium">{{ $uom->name ?? '-' }}</td>
-                <td class="small">{{ $uom->note ?? '-' }}</td>
+                {{-- <td class="small">{{ $uom->note ?? '-' }}</td> --}}
+                {{-- UPDATE --}}
+                <td class="small" title="{{ $uom->note }}">
+                {{ \Illuminate\Support\Str::limit($uom->note ?? '-', 50) }}
+                </td>
+                {{-- UPDATE --}}
                 <td class="text-center">
                   @if ($uom->status === \App\Enums\ActiveStatus::Active)
                     <span class="badge bg-success-subtle text-success border border-success-subtle">Hoạt động</span>
@@ -225,8 +230,8 @@
                 <div class="form-check">
                   <input class="form-check-input" type="radio" name="status"
                          id="uomStatusInactive" value="0">
-                  <label class="form-check-label text-secondary" for="uomStatusInactive">Ngừng hoạt động</label>
-                </div>
+                  <label class="form-check-label text-secondary" for="uomStatusInactive">Ngưng hoạt động</label> {{-- UPDATE --}}
+                </div> 
               </div>
             </div>
           </div>

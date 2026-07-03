@@ -112,7 +112,12 @@
                   <code class="text-primary fw-medium">{{ $sn->code ?? '-' }}</code>
                 </td>
                 <td class="fw-medium">{{ $sn->name ?? '-' }}</td>
-                <td class="small">{{ $sn->note ?? '-' }}</td>
+                {{-- <td class="small">{{ $sn->note ?? '-' }}</td> --}}
+                {{-- UPDATE --}}
+                <td class="small" title="{{ $sn->note }}">
+                {{ \Illuminate\Support\Str::limit($sn->note ?? '-', 50) }}
+                </td>
+                {{-- UPDATE --}}
                 <td class="text-center">
                   @if ($sn->status === \App\Enums\ActiveStatus::Active)
                     <span class="badge bg-success-subtle text-success border border-success-subtle">Hoạt động</span>
@@ -223,7 +228,7 @@
                 <div class="form-check">
                   <input class="form-check-input" type="radio" name="status"
                          id="sStatusInactive" value="0">
-                  <label class="form-check-label text-secondary" for="sStatusInactive">Ngừng hoạt động</label>
+                  <label class="form-check-label text-secondary" for="sStatusInactive">Ngưng hoạt động</label> {{-- UPDATE --}}
                 </div>
               </div>
             </div>

@@ -119,9 +119,14 @@
                   @endif
                   {{ $cat->name ?? '-' }}
                 </td>
-                <td class="small">
+                {{-- <td class="small">
                   {{ $cat->note ?? '-' }}
+                </td> --}}
+                {{-- UPDATE --}}
+                <td class="small" title="{{ $cat->note }}">
+                  {{ \Illuminate\Support\Str::limit($cat->note ?? '-', 50) }}
                 </td>
+                {{-- UPDATE --}}
                 <td class="text-center">
                   @if ($cat->status === \App\Enums\ActiveStatus::Active)
                     <span class="badge bg-success-subtle text-success border border-success-subtle">Hoạt động</span>
@@ -232,7 +237,7 @@
                 <div class="form-check">
                   <input class="form-check-input" type="radio" name="status"
                          id="catStatusInactive" value="0">
-                  <label class="form-check-label text-secondary" for="catStatusInactive">Ngừng hoạt động</label>
+                  <label class="form-check-label text-secondary" for="catStatusInactive">Ngưng hoạt động</label> {{-- UPDATE --}}
                 </div>
               </div>
             </div>

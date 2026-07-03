@@ -210,7 +210,7 @@
                 </div>
                 <div class="form-check">
                   <input class="form-check-input" type="radio" name="status" id="statusInactive" value="0">
-                  <label class="form-check-label text-secondary" for="statusInactive">Ngừng hoạt động</label>
+                  <label class="form-check-label text-secondary" for="statusInactive">Ngưng hoạt động</label> {{-- UPDATE --}}
                 </div>
               </div>
             </div>

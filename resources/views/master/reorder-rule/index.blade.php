@@ -134,7 +134,12 @@
                     <span class="text-body-secondary small">-</span>
                   @endif
                 </td>
-                <td class="small">{{ $rule->note ?: '-' }}</td>
+                {{-- <td class="small">{{ $rule->note ?: '-' }}</td> --}}
+                {{-- UPDATE --}}
+                <td class="small" title="{{ $rule->note }}">
+                  {{ \Illuminate\Support\Str::limit($rule->note ?? '-', 30) }}
+                </td>
+                {{-- UPDATE --}}
                 <td class="text-center">
                   @if ($rule->status === \App\Enums\ActiveStatus::Active)
                     <span class="badge bg-success-subtle text-success border border-success-subtle">Hoạt động</span>
@@ -294,7 +299,7 @@
                 <div class="form-check">
                   <input class="form-check-input" type="radio" name="status"
                          id="rStatusInactive" value="0">
-                  <label class="form-check-label text-secondary" for="rStatusInactive">Ngừng hoạt động</label>
+                  <label class="form-check-label text-secondary" for="rStatusInactive">Ngưng hoạt động</label> {{-- UPDATE --}}
                 </div>
               </div>
             </div>

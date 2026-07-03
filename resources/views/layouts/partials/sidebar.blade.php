@@ -1,8 +1,8 @@
 <div class="sidebar sidebar-dark sidebar-fixed border-end" id="sidebar">
   <div class="sidebar-header border-bottom">
     <div class="sidebar-brand d-flex align-items-center gap-2">
-      <img src="{{ asset('images/MENT.ico') }}"
-          alt="Logo"
+      <img src="{{ asset('images/MENT.ico') }}" 
+          alt="Logo" 
           style="height: 28px; opacity: 0.85;">
       <span class="sidebar-brand-full fw-semibold fs-5">MenT WMS</span>
     </div>
@@ -196,7 +196,7 @@
     <li class="nav-divider"></li>
     <li class="nav-title">Admin</li>
 
-    <li class="nav-group {{ request()->routeIs('master.employee.*', 'master.warehouse.*', 'master.uom.*', 'master.brand.*') ? 'show' : '' }}">
+    <li class="nav-group {{ request()->routeIs('master.employee.*', 'master.warehouse.*') ? 'show' : '' }}">
       <a class="nav-link nav-group-toggle" href="#">
         <svg class="nav-icon">
           <use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-settings') }}"></use>
