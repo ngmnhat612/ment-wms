@@ -2,7 +2,7 @@
 
 namespace App\Policies\Concerns;
 
-use App\Models\Account;
+use App\Models\Master\Account;
 
 trait HasRoleDepartmentAuthorization
 {

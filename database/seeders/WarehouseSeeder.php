@@ -4,8 +4,8 @@ namespace Database\Seeders;
 
 use App\Enums\ActiveStatus;
 use App\Enums\LocationType;
-use App\Models\Location;
-use App\Models\Warehouse;
+use App\Models\Master\Location;
+use App\Models\Master\Warehouse;
 use Illuminate\Database\Seeder;
 
 class WarehouseSeeder extends Seeder

@@ -35,27 +35,17 @@
         <svg class="nav-icon">
           <use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-description') }}"></use>
         </svg>
-        Yêu cầu vật tư
+        Yêu cầu Nhập/Xuất
       </a>
     </li>
 
     <li class="nav-item">
-      <a class="nav-link {{ request()->routeIs('receipts.*') ? 'active' : '' }}"
-         href="{{ route('receipts.index') }}">
+      <a class="nav-link {{ request()->routeIs('stock-movements.*') ? 'active' : '' }}"
+         href="{{ route('stock-movements.index') }}">
         <svg class="nav-icon">
-          <use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-arrow-thick-bottom') }}"></use>
+          <use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-truck') }}"></use>
         </svg>
-        Nhập kho
-      </a>
-    </li>
-
-    <li class="nav-item">
-      <a class="nav-link {{ request()->routeIs('issues.*') ? 'active' : '' }}"
-         href="{{ route('issues.index') }}">
-        <svg class="nav-icon">
-          <use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-arrow-thick-top') }}"></use>
-        </svg>
-        Xuất kho
+        Nhập/Xuất kho
       </a>
     </li>
 
@@ -121,7 +111,7 @@
           <a class="nav-link {{ request()->routeIs('master.reorder-rule.*') ? 'active' : '' }}"
              href="{{ route('master.reorder-rule.index') }}">
             <span class="nav-icon"><span class="nav-icon-bullet"></span></span>
-            Gán Min-Max
+            Gán Min/Max
           </a>
         </li>
         <li class="nav-item">

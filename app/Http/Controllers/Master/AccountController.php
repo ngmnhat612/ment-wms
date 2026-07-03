@@ -5,9 +5,9 @@ namespace App\Http\Controllers\Master;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Master\Account\StoreAccountRequest;
 use App\Http\Requests\Master\Account\UpdateAccountRequest;
-use App\Models\Account;
-use App\Models\Employee;
-use App\Services\AccountService;
+use App\Models\Master\Account;
+use App\Models\Master\Employee;
+use App\Services\Master\AccountService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Gate;
 

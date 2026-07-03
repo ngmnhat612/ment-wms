@@ -5,8 +5,8 @@ namespace App\Http\Controllers\Master;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Master\UomConversion\StoreUomConversionRequest;
 use App\Http\Requests\Master\UomConversion\UpdateUomConversionRequest;
-use App\Models\Uom;
-use App\Models\UomConversion;
+use App\Models\Master\Uom;
+use App\Models\Master\UomConversion;
 use Illuminate\Http\Request;
 
 class UomConversionController extends Controller

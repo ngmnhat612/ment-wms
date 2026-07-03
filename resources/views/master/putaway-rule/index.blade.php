@@ -151,7 +151,7 @@
                         '{{ $rule->product_id ? 'product' : 'category' }}',
                         {{ $rule->product_id ?? 'null' }},
                         {{ $rule->category_id ?? 'null' }},
-                        {{ $rule->location_id }},
+                        {{ $rule->location_id ?? 'null' }},
                         {{ $rule->status->value }},
                         '{{ addslashes($rule->note ?? '') }}'
                     )" title="Chỉnh sửa">

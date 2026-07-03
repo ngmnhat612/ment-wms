@@ -3,8 +3,8 @@
 namespace Database\Seeders;
 
 use App\Enums\ActiveStatus;
-use App\Models\Account;
-use App\Models\Employee;
+use App\Models\Master\Account;
+use App\Models\Master\Employee;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 
