@@ -6,10 +6,12 @@ use App\Enums\ActiveStatus;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Account extends Authenticatable
 {
     use Notifiable, HasRoles;
+    use SoftDeletes;
 
     protected $table = 'accounts';
 
@@ -18,6 +20,7 @@ class Account extends Authenticatable
         'username',
         'password',
         'status',
+        'is_protected',
     ];
 
     protected $hidden = [
@@ -30,6 +33,7 @@ class Account extends Authenticatable
         return [
             'password' => 'hashed',
             'status'   => ActiveStatus::class,
+            'is_protected' => 'boolean',
         ];
     }
 

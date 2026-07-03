@@ -18,6 +18,3 @@
 
 {{-- Stack CSS riêng từng trang --}}
 @stack('styles')
-
-{{-- htmx — boost link/form thành AJAX, chỉ thay nội dung chính, giữ nguyên sidebar --}}
-<script src="https://unpkg.com/htmx.org@1.9.12" defer></script>

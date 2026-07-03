@@ -43,6 +43,9 @@ class UpdateProductRequest extends FormRequest
             'stock_rotation'      => 'required|in:1,2,3',
             'status'              => 'required|in:0,1',
             'image'               => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
+            'min_qty'             => 'nullable|integer|min:0|max:99999',
+            'max_qty'             => 'nullable|integer|min:0|max:99999|gte:min_qty',
+            'location_id'         => 'nullable|exists:locations,id',
         ];
     }
 
@@ -71,6 +74,9 @@ class UpdateProductRequest extends FormRequest
             'image.image'                     => 'File không phải là hình ảnh hợp lệ.',
             'image.mimes'                     => 'Hình ảnh phải có định dạng jpeg, png, jpg hoặc webp.',
             'image.max'                       => 'Hình ảnh không được vượt quá 2MB.',
+            'max_qty.gte'                     => 'Ngưỡng tối đa phải >= ngưỡng tối thiểu.',
+            'min_qty.max'                     => 'Ngưỡng tối thiểu phải < 99999.',
+            'location_id'                     => 'nullable|exists:locations,id',
         ];
     }
 

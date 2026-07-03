@@ -18,17 +18,23 @@ class StoreProductVariantRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'parent_code' => 'required|string|exists:products,code',
+            'parent_code' => [
+                'required', 'string',
+                Rule::exists('products', 'code')->whereNull('deleted_at'),
+            ],
             'code' => [
                 'nullable', 'string', 'max:50',
-                Rule::unique('products', 'code')->whereNull('deleted_at'),
+                Rule::unique('products', 'code'),
             ],
-            'name'        => 'required|string|max:200',
+            'name'          => 'required|string|max:200',
             'specification' => 'nullable|string|max:500',
-            'status'      => 'required|in:0,1',
-            'image'       => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
+            'status'        => 'required|in:0,1',
+            'image'         => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
             // category_id, uom_id, tracking_type, stock_rotation,
             // alert_before_expiry — không validate vì kế thừa từ cha ở service
+            'min_qty'       => 'nullable|integer|min:0|max:99999',
+            'max_qty'       => 'nullable|integer|min:0|max:99999|gte:min_qty',
+            'location_id'   => 'nullable|exists:locations,id',
         ];
     }
 
@@ -47,6 +53,9 @@ class StoreProductVariantRequest extends FormRequest
             'image.image'          => 'File không phải là hình ảnh hợp lệ.',
             'image.mimes'          => 'Hình ảnh phải có định dạng jpeg, png, jpg hoặc webp.',
             'image.max'            => 'Hình ảnh không được vượt quá 2MB.',
+            'max_qty.gte'          => 'Ngưỡng tối đa phải >= ngưỡng tối thiểu.',
+            'min_qty.max'          => 'Ngưỡng tối thiểu phải < 99999.',
+            'location_id'          => 'nullable|exists:locations,id',
         ];
     }
 

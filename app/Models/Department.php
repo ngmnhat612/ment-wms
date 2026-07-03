@@ -4,15 +4,19 @@ namespace App\Models;
 
 use App\Enums\ActiveStatus;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Department extends Model
 {
+    use SoftDeletes;
+
     protected $table = 'departments';
 
     protected $fillable = [
         'code',
         'name',
         'status',
+        'note',
     ];
 
     protected function casts(): array

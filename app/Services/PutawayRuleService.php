@@ -61,4 +61,37 @@ class PutawayRuleService
     {
         $this->putawayRuleRepository->delete($rule);
     }
+
+    /**
+     * Tạo/cập nhật PutawayRule (theo product) tự động khi Thêm/Sửa vật tư ở form Sản phẩm.
+     */
+    public function syncForProduct(int $productId, int $warehouseId, ?int $locationId): void
+    {
+        $existing = $this->putawayRuleRepository->findByProductAndWarehouse($productId, $warehouseId);
+
+        if ($existing) {
+            $this->update($existing, ['location_id' => $locationId]);
+            return;
+        }
+
+        $this->create([
+            'warehouse_id' => $warehouseId,
+            'product_id'   => $productId,
+            'category_id'  => null,
+            'location_id'  => $locationId,
+            'note'         => null,
+            'status'       => \App\Enums\ActiveStatus::Active,
+        ]);
+    }
+
+    /**
+     * Xóa PutawayRule khi vật tư bị xóa.
+     */
+    public function deleteForProduct(int $productId): void
+    {
+        $rule = \App\Models\PutawayRule::where('product_id', $productId)->first();
+        if ($rule) {
+            $this->delete($rule);
+        }
+    }
 }

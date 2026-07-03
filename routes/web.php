@@ -27,6 +27,8 @@ use App\Http\Controllers\Master\LocationController;
 use App\Http\Controllers\Master\ProductController;
 use App\Http\Controllers\Master\ReorderRuleController;
 use App\Http\Controllers\Master\PutawayRuleController;
+use App\Http\Controllers\Master\DepartmentController;
+use App\Http\Controllers\Master\SnController;
 
 // ── INBOUND ───────────────────────────────────────────────────────────────────
 use App\Http\Controllers\Inbound\StockReceiptController;
@@ -64,9 +66,16 @@ Route::middleware('auth')->group(function () {
         Route::resource('supplier', SupplierController::class)
             ->only(['index', 'store', 'update', 'destroy']);
 
-        // // Nhân viên
-        // Route::resource('employee', EmployeeController::class)
-        //     ->only(['index', 'store', 'update', 'destroy']);
+        // Nhân viên
+        Route::resource('employee', EmployeeController::class)
+            ->only(['index', 'store', 'update', 'destroy']);
+        // Tài khoản đăng nhập của nhân viên
+        Route::post('employee/{employee}/account', [AccountController::class, 'store'])
+            ->name('employee.account.store');
+        Route::put('employee/{employee}/account', [AccountController::class, 'update'])
+            ->name('employee.account.update');
+        Route::delete('employee/{employee}/account', [AccountController::class, 'destroy'])
+            ->name('employee.account.destroy');
 
         // Vị trí
         Route::resource('location', LocationController::class)
@@ -95,6 +104,14 @@ Route::middleware('auth')->group(function () {
         // Kho
         Route::resource('warehouse', WarehouseController::class)
             ->only(['index', 'store', 'update', 'destroy']);
+        
+        // Bộ phận
+        Route::resource('department', DepartmentController::class)
+            ->only(['index', 'store', 'update', 'destroy']);
+
+        // Dự án
+        Route::resource('sn', SnController::class)
+            ->only(['index', 'store', 'update', 'destroy']);
 
         // // Quy đổi đơn vị
         // Route::resource('uom-conversion', UomConversionController::class)
@@ -120,13 +137,14 @@ Route::middleware('auth')->group(function () {
         'master.uom-conversion.index' => 'master/uom-conversion',
         // 'master.category.index'     => 'master/category',
         // 'master.supplier.index'     => 'master/supplier',
-        'master.employee.index'     => 'master/employee',
+        // 'master.employee.index'     => 'master/employee',
         // 'master.location.index'     => 'master/location',
         // 'master.reorder-rule.index' => 'master/reorder-rule',
         // 'master.putaway-rule.index' => 'master/putaway-rule',
         // 'master.brand.index'        => 'master/brand',
         // 'master.warehouse.index'    => 'master/warehouse',
         // 'master.locations'          => 'master/locations',
+        // 'master.department'         => 'master/department',
 
 
         // Báo cáo

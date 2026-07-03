@@ -22,4 +22,8 @@ interface ReorderRuleRepositoryInterface
     public function findTrashed(int $productId, int $warehouseId): ?ReorderRule;
 
     public function restoreAndUpdate(ReorderRule $rule, array $data): ReorderRule;
+
+    public function findByProductAndWarehouse(int $productId, int $warehouseId): ?ReorderRule;
+    
+    public function deleteByProduct(int $productId): void;
 }

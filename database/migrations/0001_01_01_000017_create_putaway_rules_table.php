@@ -14,7 +14,7 @@ return new class extends Migration
             $table->unsignedBigInteger('warehouse_id')->comment('Áp dụng cho kho nào');
             $table->unsignedBigInteger('product_id')->nullable()->comment('NULL nếu rule theo category');
             $table->unsignedBigInteger('category_id')->nullable()->comment('NULL nếu rule theo product');
-            $table->unsignedBigInteger('location_id')->comment('Vị trí đích gợi ý');
+            $table->unsignedBigInteger('location_id')->nullable()->comment('Vị trí đích gợi ý, NULL nếu chưa gán');
             $table->string('note', 500)->nullable();
             $table->tinyInteger('status')->default(1)->comment('1=Active, 0=Inactive');
             $table->timestamps();

@@ -14,9 +14,9 @@
     $sort = request('sort', '');
     $dir  = request('dir', '');
     $nextDir = function($col) use ($sort, $dir) {
-      if ($sort !== $col) return 'asc';        // lần 1: chưa sort col này → asc
-      if ($dir === 'asc')  return 'desc';      // lần 2: đang asc → desc
-      return '';                                // lần 3: đang desc → reset
+      if ($sort !== $col) return 'asc';
+      if ($dir === 'asc')  return 'desc';
+      return '';
     };
     $sortUrl = function($col) use ($sort, $dir, $nextDir) {
       $nd = $nextDir($col);
@@ -242,27 +242,53 @@
                     oninput="this.value = this.value.toUpperCase()">
             </div>
 
-            {{-- Chế độ biến thể: Mã MenT gốc + Mã MenT biến thể (cùng hàng 50/50) --}}
-            <div class="mb-3 d-none" id="variantCodeRow">
-                <div class="row g-3">
-                    <div class="col-6" id="parentCodeWrap">
-                        <label class="form-label">Mã MenT gốc <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control text-uppercase" id="pParentCode" name="parent_code"
-                            placeholder="Nhập hoặc chọn" list="parentCodeList"
-                            oninput="this.value = this.value.toUpperCase(); fetchParentProduct()"
-                            onblur="fetchParentProduct()">
-                        <datalist id="parentCodeList">
-                            @foreach ($allProducts as $p)
-                            <option value="{{ $p->code }}">{{ $p->name }}</option>
-                            @endforeach
-                        </datalist>
-                    </div>
-                    <div class="col-6" id="variantCodeWrap">
-                        <label class="form-label">Mã MenT biến thể</label>
-                        <input type="text" class="form-control text-uppercase" id="pVariantCode" name="code"
-                            placeholder="TỰ ĐỘNG" oninput="this.value = this.value.toUpperCase()">
-                    </div>
-                </div>
+        {{-- Chế độ thường: Tên --}}
+        <div class="mb-3 d-block" id="nameNormalWrap">
+          <label class="form-label">Tên <span class="text-danger">*</span></label>
+          <input type="text" class="form-control" id="pName" name="name"
+                placeholder="Tên đầy đủ" required maxlength="200">
+        </div>
+
+        {{-- Chế độ biến thể: Tên --}}
+        <div class="mb-3 d-none" id="nameVariantWrap">
+          <label class="form-label">Tên <span class="text-danger">*</span></label>
+          <input type="text" class="form-control" id="pNameVariant" name="name"
+                placeholder="Tên đầy đủ" maxlength="200">
+        </div>
+
+        {{-- Danh mục + ĐVT (khoá khi là biến thể) --}}
+        <div class="mb-3">
+          <label class="form-label">Danh mục <span class="text-danger" id="categoryRequired">*</span></label>
+          <select class="form-select" id="pCategory" name="category_id">
+            <option value="">- Chọn danh mục -</option>
+            @foreach ($categories as $cat)
+              <option value="{{ $cat->id }}">{{ $cat->name }}</option>
+            @endforeach
+          </select>
+          <input type="hidden" id="pCategoryHidden">
+        </div>
+        <div class="mb-3">
+          <label class="form-label">ĐVT <span class="text-danger" id="uomRequired">*</span></label>
+          <select class="form-select" id="pUom" name="uom_id">
+            <option value="">- Chọn ĐVT -</option>
+            @foreach ($uoms as $uom)
+              <option value="{{ $uom->id }}">{{ $uom->name }}</option>
+            @endforeach
+          </select>
+        </div>
+
+        {{-- Ảnh --}}
+        <div class="mb-3">
+          <label class="form-label">Ảnh</label>
+          <div class="d-flex gap-3 align-items-start">
+            <div id="imagePreviewWrap"
+                class="rounded border bg-body-secondary d-flex align-items-center justify-content-center overflow-hidden flex-shrink-0"
+                style="width:80px;height:80px">
+              <img id="imagePreview" src="" alt="" class="d-none"
+                  style="width:80px;height:80px;object-fit:cover;">
+              <svg id="imageIcon" class="icon icon-2xl text-body-tertiary">
+                <use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-image') }}"></use>
+              </svg>
             </div>
 
             {{-- Chế độ thường: Tên --}}
@@ -337,7 +363,83 @@
                 <label class="form-label">Thông số kỹ thuật</label>
                 <textarea class="form-control" id="pSpec" name="specification" rows="3"
                     placeholder="Mô tả thông số kỹ thuật của vật tư..." maxlength="500"></textarea>
-                <div class="form-text">Tối đa 500 ký tự</div>
+          <div class="form-text">Tối đa 500 ký tự</div>
+        </div>
+
+        {{-- ===== QUẢN LÝ TỒN KHO ===== --}}
+        <div class="mb-3 fw-semibold text-primary border-bottom pb-1 mt-4">Quản lý tồn kho</div>
+
+        <div class="row g-3 mb-3">
+          <div class="col-6">
+            <label class="form-label">Kiểu theo dõi</label>
+            <select class="form-select" id="pTracking" name="tracking_type" required>
+              @foreach (\App\Enums\TrackingType::options() as $val => $label)
+                <option value="{{ $val }}">{{ $label }}</option>
+              @endforeach
+            </select>
+          </div>
+          <div class="col-6">
+            <label class="form-label">Quy tắc xuất kho</label>
+            <select class="form-select" id="pRotation" name="stock_rotation">
+              @foreach (\App\Enums\StockRotation::options() as $val => $label)
+                <option value="{{ $val }}">{{ $label }}</option>
+              @endforeach
+            </select>
+          </div>
+          <div class="mb-3 d-none" id="alertExpiryWrap">
+            <label class="form-label">
+              Cảnh báo trước hết hạn (ngày) <span class="text-danger">*</span>
+            </label>
+            <input type="number" class="form-control" id="pAlertExpiry"
+                  name="alert_before_expiry" min="1" placeholder="Ví dụ: 30">
+          </div>
+
+          <div class="col-6">
+            <label class="form-label">Ngưỡng tồn tối thiểu (Min)</label>
+            <input type="number" step="1" min="0" max="99999"
+                  class="form-control" id="pMinQty" name="min_qty"
+                  value="0"
+                  onkeydown="blockInvalidNumberKeys(event)"
+                  onpaste="blockInvalidNumberPaste(event)"
+                  oninput="sanitizeNumberInput(this)">
+          </div>
+          <div class="col-6">
+            <label class="form-label">Ngưỡng tồn tối đa (Max)</label>
+            <input type="number" step="1" min="0" max="99999"
+                  class="form-control" id="pMaxQty" name="max_qty"
+                  value="0"
+                  onkeydown="blockInvalidNumberKeys(event)"
+                  onpaste="blockInvalidNumberPaste(event)"
+                  oninput="sanitizeNumberInput(this)">
+          </div>
+
+          {{-- ===== Gợi ý vị trí ===== --}}
+          <div class="col-12">
+            <label class="form-label">Gợi ý vị trí</label>
+            <input type="text" class="form-control" id="pLocationText"
+                  placeholder="Nhập hoặc chọn"
+                  list="locationDatalist" autocomplete="off"
+                  oninput="resolveLocation()" onblur="resolveLocation()">
+            <datalist id="locationDatalist">
+              @foreach ($locations as $loc)
+                <option value="[{{ $loc->code }}] {{ $loc->name }}"></option>
+              @endforeach
+            </datalist>
+            <input type="hidden" id="pLocation" name="location_id" value="">
+            <div class="invalid-feedback" id="pLocationError"></div>
+          </div>
+        </div>
+
+        {{-- ===== THÔNG TIN THÊM ===== --}}
+        <div class="mb-3 fw-semibold text-primary border-bottom pb-1 mt-4">Thông tin thêm</div>
+
+        <div class="mb-4">
+          <label class="form-label">Trạng thái</label>
+          <div class="d-flex gap-3">
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="status"
+                     id="pStatusActive" value="1" checked>
+              <label class="form-check-label text-success" for="pStatusActive">Hoạt động</label>
             </div>
 
             {{-- ===== QUẢN LÝ TỒN KHO ===== --}}
@@ -465,6 +567,8 @@
 
   // Map product data for edit mode
   const productsMap = {};
+  const locations = @json($locations->map(fn($l) => ['id' => $l->id, 'code' => $l->code, 'name' => $l->name]));
+
   @foreach ($products as $p)
     productsMap[{{ $p->id }}] = {
       id:                  {{ $p->id }},
@@ -478,11 +582,45 @@
       status:              {{ $p->status?->value ?? 1 }},
       image_path:          '{{ $p->image_path ?? '' }}',
       image_url:           '{{ $p->image_path ? Storage::url($p->image_path) : '' }}',
+      min_qty: {{ $p->reorderRule->min_qty ?? 0 }},
+      max_qty: {{ $p->reorderRule->max_qty ?? 0 }},
+      location_id:   {{ $p->putawayRule->location_id ?? 'null' }},
+      location_text: '{{ $p->putawayRule && $p->putawayRule->destinationLocation ? "[" . addslashes($p->putawayRule->destinationLocation->code) . "] " . addslashes($p->putawayRule->destinationLocation->name) : "" }}',
     };
 @endforeach
 
-// ===== MỞ FORM =====
-function openForm(id = null) {
+  // ===== HELPER: KHOÁ / MỞ DANH MỤC =====
+  // Dùng chung cho cả openForm() và nhánh khôi phục lỗi validate (update:)
+  // để tránh 2 nơi bị lệch logic như đã xảy ra trước đó.
+  function lockCategoryForEdit(categoryId) {
+    const catSelect = document.getElementById('pCategory');
+    const catHidden = document.getElementById('pCategoryHidden');
+    catSelect.value    = categoryId ?? '';
+    catSelect.disabled = true;
+    catSelect.classList.add('bg-body-secondary');
+    catHidden.name  = 'category_id';
+    catHidden.value = categoryId ?? '';
+  }
+
+  function unlockCategoryForCreate() {
+    const catSelect = document.getElementById('pCategory');
+    const catHidden = document.getElementById('pCategoryHidden');
+    catSelect.disabled = false;
+    catSelect.classList.remove('bg-body-secondary');
+    catHidden.name  = '';
+    catHidden.value = '';
+  }
+
+  // Set giá trị cho <select>, fallback về '' (option mặc định "- Chọn ... -")
+  // nếu giá trị không khớp option nào tồn tại — tránh hiển thị rỗng "lạ".
+  function setSelectValueSafe(selectId, value) {
+    const select = document.getElementById(selectId);
+    const exists = value !== '' && select.querySelector(`option[value="${value}"]`);
+    select.value = exists ? value : '';
+  }
+
+  // ===== MỞ FORM =====
+  function openForm(id = null) {
     const offcanvasEl = document.getElementById('productOffcanvas');
     const offcanvas = new coreui.OffCanvas(offcanvasEl);
     const form = document.getElementById('productForm');
@@ -494,7 +632,11 @@ function openForm(id = null) {
     document.getElementById('pStatusActive').checked = true;
     resetImagePreview();
     offcanvasEl.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
-    offcanvasEl.querySelectorAll('.invalid-feedback').forEach(el => el.remove());
+    offcanvasEl.querySelectorAll('.invalid-feedback').forEach(el => el.textContent = '');
+
+    // Xoá alert lỗi validate còn sót lại từ lần submit thất bại trước đó
+    const oldAlert = form.querySelector('.alert-danger');
+    if (oldAlert) oldAlert.remove();
 
     // Reset toggle biến thể về chế độ thường mỗi lần mở form
     document.getElementById('pIsVariant').checked = false;
@@ -512,14 +654,17 @@ function openForm(id = null) {
         form.action = `${routeBase}/${id}`;
         method.value = 'PUT';
 
-        codeInput.value = p.code;
-        document.getElementById('pName').value = p.name;
-        document.getElementById('pCategory').value = p.category_id ?? '';
-        document.getElementById('pUom').value = p.uom_id ?? '';
-        document.getElementById('pSpec').value = p.specification;
-        document.getElementById('pTracking').value = p.tracking_type;
-        document.getElementById('pRotation').value = p.stock_rotation;
-        document.getElementById(p.status == 1 ? 'pStatusActive' : 'pStatusInactive').checked = true;
+      codeInput.value                             = p.code;
+      document.getElementById('pName').value     = p.name;
+      setSelectValueSafe('pUom', p.uom_id ?? '');
+      document.getElementById('pSpec').value      = p.specification;
+      document.getElementById('pTracking').value  = p.tracking_type;
+      document.getElementById('pRotation').value  = p.stock_rotation;
+      document.getElementById(p.status == 1 ? 'pStatusActive' : 'pStatusInactive').checked = true;
+      document.getElementById('pMinQty').value = p.min_qty ?? 0;
+      document.getElementById('pMaxQty').value = p.max_qty ?? 0;
+      document.getElementById('pLocationText').value = p.location_text ?? '';
+      document.getElementById('pLocation').value     = p.location_id ?? '';
 
         if (p.image_url) {
             showImagePreview(p.image_url);
@@ -529,26 +674,19 @@ function openForm(id = null) {
         codeInput.setAttribute('readonly', true);
         codeInput.classList.add('bg-body-secondary');
 
-        // Lock danh mục khi edit
-        const catSelect = document.getElementById('pCategory');
-        catSelect.disabled = true;
-        catSelect.classList.add('bg-body-secondary');
-        const catHidden = document.getElementById('pCategoryHidden');
-        catHidden.name = 'category_id';
-        catHidden.value = p.category_id ?? '';
+      // Lock danh mục khi edit
+      lockCategoryForEdit(p.category_id);
 
     } else {
         title.textContent = 'Thêm vật tư';
         form.action = routeStore;
         method.value = 'POST';
 
-        // Unlock danh mục khi thêm mới
-        const catSelect = document.getElementById('pCategory');
-        catSelect.disabled = false;
-        catSelect.classList.remove('bg-body-secondary');
-        const catHidden = document.getElementById('pCategoryHidden');
-        catHidden.name = '';
-        catHidden.value = '';
+      unlockCategoryForCreate();
+      document.getElementById('pMinQty').value = 0;
+      document.getElementById('pMaxQty').value = 0;
+      document.getElementById('pLocationText').value = '';
+      document.getElementById('pLocation').value     = '';
     }
 
     offcanvas.show();
@@ -594,7 +732,16 @@ function clearImage() {
     resetImagePreview();
     document.getElementById('pImage').value = '';
     document.getElementById('removeImage').value = '1';
-}
+  }
+
+  function previewImage(input) {
+      if (input.files && input.files[0]) {
+          const reader = new FileReader();
+          reader.onload = e => showImagePreview(e.target.result);
+          reader.readAsDataURL(input.files[0]);
+          document.getElementById('removeImage').value = '0';
+      }
+  }
 
 function previewImage(input) {
     if (input.files && input.files[0]) {
@@ -656,54 +803,83 @@ function reopenProductFormOnValidationError() {
         document.getElementById('pIsVariant').checked = true;
         toggleVariantMode(true);
 
-        // Điền lại old input
-        document.getElementById('pParentCode').value = @json(old('parent_code', ''));
-        document.getElementById('pVariantCode').value = @json(old('code', ''));
-        document.getElementById('pNameVariant').value = @json(old('name', ''));
-        document.getElementById('pSpec').value = @json(old('specification', ''));
-        document.getElementById(
-            @json(old('status', '1')) == '1' ? 'pStatusActive' : 'pStatusInactive'
-        ).checked = true;
+      // Điền lại old input
+      document.getElementById('pParentCode').value  = @json(old('parent_code', ''));
+      document.getElementById('pVariantCode').value = @json(old('code', ''));
+      document.getElementById('pNameVariant').value = @json(old('name', ''));
+      document.getElementById('pSpec').value        = @json(old('specification', ''));
+      document.getElementById(
+        @json(old('status', '1')) == '1' ? 'pStatusActive' : 'pStatusInactive'
+      ).checked = true;
+      document.getElementById('pMinQty').value = @json(old('min_qty', 0));
+      document.getElementById('pMaxQty').value = @json(old('max_qty', 0));
+      document.getElementById('pLocation').value = @json(old('location_id', ''));
+      const oldLoc1 = locations.find(l => l.id == @json(old('location_id', 'null')));
+      document.getElementById('pLocationText').value = oldLoc1 ? `[${oldLoc1.code}] ${oldLoc1.name}` : '';
 
     } else if (pfa.startsWith('update:')) {
-        const id = pfa.split(':')[1];
-        document.getElementById('productOffcanvasTitle').textContent = 'Chỉnh sửa vật tư';
-        document.getElementById('productForm').action = `${routeBase}/${id}`;
-        document.getElementById('formMethod').value = 'PUT';
+      const id = pfa.split(':')[1];
+      const p  = productsMap[id] ?? null;
+
+      document.getElementById('productOffcanvasTitle').textContent = 'Chỉnh sửa vật tư';
+
+      // Gọi toggleVariantMode TRƯỚC — nó sẽ tạm set action = routeStore,
+      // nhưng ta ghi đè lại đúng action/method NGAY SAU ĐÓ nên không ảnh hưởng.
+      toggleVariantMode(false);
+      document.getElementById('variantToggleWrap').classList.add('d-none');
+
+      // Set action/method ĐÚNG — phải nằm sau toggleVariantMode()
+      document.getElementById('productForm').action = `${routeBase}/${id}`;
+      document.getElementById('formMethod').value   = 'PUT';
 
         const codeInput = document.getElementById('pCode');
         codeInput.setAttribute('readonly', true);
         codeInput.classList.add('bg-body-secondary');
 
-        document.getElementById('pCode').value = @json(old('code', ''));
-        document.getElementById('pName').value = @json(old('name', ''));
-        document.getElementById('pCategory').value = @json(old('category_id', ''));
-        document.getElementById('pUom').value = @json(old('uom_id', ''));
-        document.getElementById('pSpec').value = @json(old('specification', ''));
-        document.getElementById('pTracking').value = @json(old('tracking_type', 1));
-        document.getElementById('pRotation').value = @json(old('stock_rotation', 1));
-        document.getElementById(
-            @json(old('status', '1')) == '1' ? 'pStatusActive' : 'pStatusInactive'
-        ).checked = true;
+      document.getElementById('pCode').value     = @json(old('code', ''));
+      document.getElementById('pName').value     = @json(old('name', ''));
+      document.getElementById('pSpec').value     = @json(old('specification', ''));
+      document.getElementById('pTracking').value = @json(old('tracking_type', 1));
+      document.getElementById('pRotation').value = @json(old('stock_rotation', 1));
+      document.getElementById(
+        @json(old('status', '1')) == '1' ? 'pStatusActive' : 'pStatusInactive'
+      ).checked = true;
+      document.getElementById('pMinQty').value = @json(old('min_qty', 0));
+      document.getElementById('pMaxQty').value = @json(old('max_qty', 0));
+      document.getElementById('pLocation').value = @json(old('location_id', ''));
+      const oldLoc2 = locations.find(l => l.id == @json(old('location_id', 'null')));
+      document.getElementById('pLocationText').value = oldLoc2 ? `[${oldLoc2.code}] ${oldLoc2.name}` : '';
 
+      setSelectValueSafe('pUom', @json(old('uom_id', '')));
+
+      const categoryId = p ? (p.category_id ?? '') : @json(old('category_id', ''));
+      lockCategoryForEdit(categoryId);
+      
     } else {
         // store thường fail
         document.getElementById('productOffcanvasTitle').textContent = 'Thêm vật tư';
         document.getElementById('productForm').action = routeStore;
         document.getElementById('formMethod').value = 'POST';
 
-        toggleVariantMode(false);
+      toggleVariantMode(false);
+      unlockCategoryForCreate();
 
-        document.getElementById('pCode').value = @json(old('code', ''));
-        document.getElementById('pName').value = @json(old('name', ''));
-        document.getElementById('pCategory').value = @json(old('category_id', ''));
-        document.getElementById('pUom').value = @json(old('uom_id', ''));
-        document.getElementById('pSpec').value = @json(old('specification', ''));
-        document.getElementById('pTracking').value = @json(old('tracking_type', 1));
-        document.getElementById('pRotation').value = @json(old('stock_rotation', 1));
-        document.getElementById(
-            @json(old('status', '1')) == '1' ? 'pStatusActive' : 'pStatusInactive'
-        ).checked = true;
+      document.getElementById('pCode').value      = @json(old('code', ''));
+      document.getElementById('pName').value      = @json(old('name', ''));
+      setSelectValueSafe('pCategory', @json(old('category_id', '')));
+      setSelectValueSafe('pUom', @json(old('uom_id', '')));
+      document.getElementById('pSpec').value      = @json(old('specification', ''));
+      document.getElementById('pTracking').value  = @json(old('tracking_type', 1));
+      document.getElementById('pRotation').value  = @json(old('stock_rotation', 1));
+      document.getElementById(
+        @json(old('status', '1')) == '1' ? 'pStatusActive' : 'pStatusInactive'
+      ).checked = true;
+      document.getElementById('pMinQty').value = @json(old('min_qty', 0));
+      document.getElementById('pMaxQty').value = @json(old('max_qty', 0));
+
+      document.getElementById('pLocation').value = @json(old('location_id', ''));
+      const oldLoc3 = locations.find(l => l.id == @json(old('location_id', 'null')));
+      document.getElementById('pLocationText').value = oldLoc3 ? `[${oldLoc3.code}] ${oldLoc3.name}` : '';
     }
 
     // document.body.dataset.pfa = '';
@@ -715,7 +891,7 @@ function reopenProductFormOnValidationError() {
     document.addEventListener('DOMContentLoaded', reopenProductFormOnValidationError);
     document.body.addEventListener('htmx:afterSwap', reopenProductFormOnValidationError);
 
-function toggleVariantMode(isVariant) {
+  function toggleVariantMode(isVariant) {
     const form = document.getElementById('productForm');
     form.action = isVariant ? routeStoreVariant : routeStore;
 
@@ -725,9 +901,10 @@ function toggleVariantMode(isVariant) {
     document.getElementById('nameNormalWrap').classList.toggle('d-none', isVariant);
     document.getElementById('nameVariantWrap').classList.toggle('d-none', !isVariant);
 
-    // Disable input ẩn để không bị submit
-    document.getElementById('pCode').disabled = isVariant;
-    document.getElementById('pName').disabled = isVariant;
+    // Disable input ẩn để không bị submit (đặc biệt quan trọng vì
+    // pName và pNameVariant dùng chung name="name")
+    document.getElementById('pCode').disabled        =  isVariant;
+    document.getElementById('pName').disabled        =  isVariant;
     document.getElementById('pVariantCode').disabled = !isVariant;
     document.getElementById('pNameVariant').disabled = !isVariant;
     document.getElementById('pParentCode').disabled = !isVariant;
@@ -761,12 +938,12 @@ async function fetchParentProduct() {
         const data = await res.json();
         if (!res.ok) return;
 
-        document.getElementById('pCategory').value = data.category_id;
-        document.getElementById('pUom').value = data.uom_id;
-        document.getElementById('pTracking').value = data.tracking_type;
-        document.getElementById('pRotation').value = data.stock_rotation;
-        document.getElementById('pNameVariant').value = document.getElementById('pNameVariant').value || data.name;
-        document.getElementById('pSpec').value = data.specification;
+      setSelectValueSafe('pCategory', data.category_id ?? '');
+      setSelectValueSafe('pUom', data.uom_id ?? '');
+      document.getElementById('pTracking').value      = data.tracking_type;
+      document.getElementById('pRotation').value      = data.stock_rotation;
+      document.getElementById('pNameVariant').value    = document.getElementById('pNameVariant').value || data.name;
+      document.getElementById('pSpec').value           = data.specification;
 
         // Preview ảnh từ cha nếu có
         if (data.image_url) {
@@ -778,17 +955,62 @@ async function fetchParentProduct() {
     } catch {}
 }
 
-// ===== CHẶN SUBMIT LIÊN TỤC =====
-document.getElementById('productForm').addEventListener('submit', function() {
-    const btn = document.getElementById('productSubmitBtn');
-    const spinner = document.getElementById('productSubmitSpinner');
-    const icon = document.getElementById('productSubmitIcon');
-    const label = document.getElementById('productSubmitLabel');
+  // ===== CHẶN SUBMIT LIÊN TỤC =====
+  // document.getElementById('productForm').addEventListener('submit', function (e) {
+  //   resolveLocation();
 
-    btn.disabled = true;
-    spinner.classList.remove('d-none');
-    icon.classList.add('d-none');
-    label.textContent = 'Đang lưu...';
+  //   // Nếu người dùng đã nhập text nhưng không khớp vị trí nào -> chặn submit
+  //   const locationText = document.getElementById('pLocationText').value.trim();
+  //   const locationId    = document.getElementById('pLocation').value;
+  //   if (locationText && !locationId) {
+  //     document.getElementById('pLocationText').classList.add('is-invalid');
+  //     document.getElementById('pLocationError').textContent = 'Vị trí không tồn tại trong hệ thống.';
+  //     document.getElementById('pLocationText').focus();
+  //     e.preventDefault();
+  //     return;
+  //   }
+
+  //   const btn     = document.getElementById('productSubmitBtn');
+  //   const spinner = document.getElementById('productSubmitSpinner');
+  //   const icon    = document.getElementById('productSubmitIcon');
+  //   const label   = document.getElementById('productSubmitLabel');
+
+  //   btn.disabled = true;
+  //   spinner.classList.remove('d-none');
+  //   icon.classList.add('d-none');
+  //   label.textContent = 'Đang lưu...';
+  // });
+
+document.getElementById('productForm').addEventListener('submit', function (e) {
+  resolveLocation();
+
+  const locationText = document.getElementById('pLocationText').value.trim();
+  const locationId    = document.getElementById('pLocation').value;
+
+  console.log('[submit] locationText =', JSON.stringify(locationText));
+  console.log('[submit] locationId =', JSON.stringify(locationId));
+  console.log('[submit] điều kiện chặn (locationText && !locationId) =', !!(locationText && !locationId));
+
+  if (locationText && !locationId) {
+    console.log('[submit] ĐANG CHẶN SUBMIT');
+    document.getElementById('pLocationText').classList.add('is-invalid');
+    document.getElementById('pLocationError').textContent = 'Vị trí không tồn tại trong hệ thống.';
+    document.getElementById('pLocationText').focus();
+    e.preventDefault();
+    return;
+  }
+
+  console.log('[submit] KHÔNG chặn, form sẽ submit bình thường');
+
+  const btn     = document.getElementById('productSubmitBtn');
+  const spinner = document.getElementById('productSubmitSpinner');
+  const icon    = document.getElementById('productSubmitIcon');
+  const label   = document.getElementById('productSubmitLabel');
+
+  btn.disabled = true;
+  spinner.classList.remove('d-none');
+  icon.classList.add('d-none');
+  label.textContent = 'Đang lưu...';
 });
 
 // Reset lại nút khi đóng offcanvas (để lần mở sau vẫn hoạt động bình thường)
@@ -818,6 +1040,58 @@ document.querySelectorAll('[data-preview]').forEach(function(thumb) {
     thumb.addEventListener('mouseleave', function() {
         document.getElementById('imgPreviewPopup').style.display = 'none';
     });
-});
+  });
+
+  // function resolveLocation() {
+  //   const text  = document.getElementById('pLocationText').value.trim();
+  //   const el    = document.getElementById('pLocationText');
+  //   const hid   = document.getElementById('pLocation');
+  //   const err   = document.getElementById('pLocationError');
+  //   const match = locations.find(l => `[${l.code}] ${l.name}` === text);
+
+  //   if (match) {
+  //     hid.value = match.id;
+  //     el.classList.remove('is-invalid');
+  //     err.textContent = '';
+  //   } else {
+  //     hid.value = '';
+  //     if (text) {
+  //       el.classList.add('is-invalid');
+  //       err.textContent = 'Vị trí không tồn tại trong hệ thống.';
+  //     } else {
+  //       el.classList.remove('is-invalid');
+  //       err.textContent = '';
+  //     }
+  //   }
+  // }
+
+function resolveLocation() {
+  const text  = document.getElementById('pLocationText').value.trim();
+  const el    = document.getElementById('pLocationText');
+  const hid   = document.getElementById('pLocation');
+  const err   = document.getElementById('pLocationError');
+  const match = locations.find(l => `[${l.code}] ${l.name}` === text);
+
+  console.log('[resolveLocation] text =', JSON.stringify(text));
+  console.log('[resolveLocation] match =', match);
+  console.log('[resolveLocation] locations sample =', locations.slice(0, 3));
+
+  if (match) {
+    hid.value = match.id;
+    el.classList.remove('is-invalid');
+    err.textContent = '';
+  } else {
+    hid.value = '';
+    if (text) {
+      el.classList.add('is-invalid');
+      err.textContent = 'Vị trí không tồn tại trong hệ thống.';
+    } else {
+      el.classList.remove('is-invalid');
+      err.textContent = '';
+    }
+  }
+
+  console.log('[resolveLocation] hid.value sau cùng =', hid.value);
+}
 </script>
 @endpush

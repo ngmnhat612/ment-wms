@@ -41,7 +41,11 @@ class ProductRepository implements ProductRepositoryInterface
         $sortBy   = in_array($sortReq, $sortable) ? $sortReq : 'created_at';
         $sortDir = in_array($filters['dir'] ?? '', ['asc', 'desc']) ? $filters['dir'] : 'desc';
 
-        return $query->orderBy($sortBy, $sortDir)->paginate($perPage)->withQueryString();
+        return $query
+            ->orderBy($sortBy, $sortDir)
+            ->orderBy('id', $sortDir)
+            ->paginate($perPage)
+            ->withQueryString();
     }
 
     public function totalCount(): int

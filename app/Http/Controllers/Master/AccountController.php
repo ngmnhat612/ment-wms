@@ -2,75 +2,78 @@
 
 namespace App\Http\Controllers\Master;
 
-use App\Enums\AccountRole;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Master\Account\StoreAccountRequest;
 use App\Http\Requests\Master\Account\UpdateAccountRequest;
 use App\Models\Account;
 use App\Models\Employee;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
+use App\Services\AccountService;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Gate;
 
 class AccountController extends Controller
 {
+    public function __construct(
+        private readonly AccountService $accountService,
+    ) {}
+
+    // ===== STORE =====
+
     /**
-     * Tạo tài khoản mới cho nhân viên chưa có account
+     * Tạo tài khoản mới cho nhân viên chưa có account.
      */
-    public function store(StoreAccountRequest $request)
+    public function store(StoreAccountRequest $request, Employee $employee): RedirectResponse
     {
-        $this->authorize('create', Account::class);
+        Gate::authorize('create', Account::class);
 
-        $employee = Employee::findOrFail($request->employee_id);
-
-        if ($employee->account()->exists()) {
-            return redirect()->route('master.employee.index')
-                ->with('error', 'Nhân viên này đã có tài khoản.');
+        try {
+            $this->accountService->create($employee, $request->validated());
+        } catch (\RuntimeException $e) {
+            return redirect()
+                ->route('master.employee.index')
+                ->with('error', $e->getMessage());
         }
 
-        Account::create([
-            'employee_id'   => $employee->id,
-            'username'      => $request->username,
-            'password'      => Hash::make($request->password),
-            'status'        => $request->status,
-        ]);
-
-        return redirect()->route('master.employee.index')
+        return redirect()
+            ->route('master.employee.index')
             ->with('success', "Đã tạo tài khoản cho nhân viên \"{$employee->name}\" thành công.");
     }
 
+    // ===== UPDATE =====
+
     /**
-     * Đổi role hoặc reset mật khẩu
+     * Đổi vai trò, trạng thái hoặc reset mật khẩu.
      */
-    public function update(UpdateAccountRequest $request, Account $account)
+    public function update(UpdateAccountRequest $request, Employee $employee): RedirectResponse
     {
-        $this->authorize('update', $account);
+        $account = $employee->account()->firstOrFail();
 
-        DB::transaction(function () use ($request, $account) {
-            $account->status = $request->status;
+        Gate::authorize('update', $account);
 
-            if ($request->filled('new_password')) {
-                $account->password = Hash::make($request->new_password);
-            }
+        $this->accountService->update($account, $request->validated());
 
-            $account->save();
-        });
-
-        return redirect()->route('master.employee.index')
-            ->with('success', "Đã cập nhật tài khoản của \"{$account->employee->name}\" thành công.");
+        return redirect()
+            ->route('master.employee.index')
+            ->with('success', "Đã cập nhật tài khoản của \"{$employee->name}\" thành công.");
     }
 
+    // ===== DESTROY =====
+
     /**
-     * Xóa tài khoản (giữ lại hồ sơ nhân viên)
+     * Xóa tài khoản (giữ lại hồ sơ nhân viên).
      */
-    public function destroy(Account $account)
+    public function destroy(Employee $employee): RedirectResponse
     {
-        $this->authorize('delete', $account);
+        $account = $employee->account()->firstOrFail();
 
-        $name = $account->employee->name;
-        $account->delete();
+        Gate::authorize('delete', $account);
 
-        return redirect()->route('master.employee.index')
+        $name = $employee->name;
+
+        $this->accountService->delete($account);
+
+        return redirect()
+            ->route('master.employee.index')
             ->with('success', "Đã xóa tài khoản của \"{$name}\". Hồ sơ nhân viên vẫn được giữ lại.");
     }
 }

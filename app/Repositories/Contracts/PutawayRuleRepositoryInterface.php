@@ -22,4 +22,6 @@ interface PutawayRuleRepositoryInterface
     public function findTrashed(int $warehouseId, ?int $productId, ?int $categoryId): ?PutawayRule;
 
     public function restoreAndUpdate(PutawayRule $rule, array $data): PutawayRule;
+
+    public function findByProductAndWarehouse(int $productId, int $warehouseId): ?PutawayRule;
 }

@@ -7,6 +7,9 @@
 {{-- CoreUI Bundle (Bootstrap + CoreUI JS) --}}
 <script src="{{ asset('vendor/coreui/js/coreui.bundle.min.js') }}"></script>
 
+{{-- public/js/number-input-guard.js --}}
+<script src="{{ asset('js/number-input-guard.js') }}"></script>
+
 {{-- Simplebar (scrollbar tuỳ chỉnh cho sidebar) --}}
 <script src="{{ asset('vendor/coreui/simplebar/simplebar.min.js') }}"></script>
 

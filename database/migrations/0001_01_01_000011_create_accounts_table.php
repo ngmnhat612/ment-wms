@@ -14,6 +14,7 @@ return new class extends Migration
             $table->string('username', 100)->unique();
             $table->string('password', 255);
             $table->tinyInteger('status')->default(1)->comment('1=Active, 0=Inactive');
+            $table->boolean('is_protected')->default(false)->comment('Tài khoản gốc/bảo vệ — không ai được sửa/xoá qua UI, kể cả Admin khác');
             $table->rememberToken();
             $table->timestamps();
 

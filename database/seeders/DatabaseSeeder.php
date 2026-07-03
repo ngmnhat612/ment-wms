@@ -35,6 +35,9 @@ class DatabaseSeeder extends Seeder
 
             // 9. Vật tư
             ProductSeeder::class,
+
+            // 10. SN
+            SnSeeder::class,
         ]);
     }
 }

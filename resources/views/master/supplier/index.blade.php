@@ -126,20 +126,20 @@
                 <td class="small">{{ $supplier->tax_code ?? '-' }}</td>
                 <td class="small">
                   @if ($supplier->phone)
-                    <a href="tel:{{ $supplier->phone }}" class="text-body text-decoration-none">
+                    <span class="text-body text-decoration-none">
                       <svg class="icon icon-sm me-1"><use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-phone') }}"></use></svg>
                       {{ $supplier->phone }}
-                    </a>
+                    </span>
                   @else
                     -
                   @endif
                 </td>
                 <td class="small">
                   @if ($supplier->email)
-                    <a href="mailto:{{ $supplier->email }}" class="text-body text-decoration-none">
+                    <span class="text-body text-decoration-none">
                       <svg class="icon icon-sm me-1"><use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-envelope-closed') }}"></use></svg>
                       {{ $supplier->email }}
-                    </a>
+                    </span>
                   @else
                     -
                   @endif

@@ -18,6 +18,8 @@ use App\Models\Warehouse;
 use App\Models\Brand;
 use App\Models\Location;
 use App\Models\Supplier;
+use App\Models\Department;
+use App\Models\Sn;
 
 use App\Policies\AccountPolicy;
 use App\Policies\CategoryPolicy;
@@ -36,15 +38,17 @@ use App\Policies\WarehousePolicy;
 use App\Policies\BrandPolicy;
 use App\Policies\LocationPolicy;
 use App\Policies\SupplierPolicy;
-
+use App\Policies\DepartmentPolicy;
+use App\Policies\SnPolicy;
+    
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
 
 class AuthServiceProvider extends ServiceProvider
 {
     protected $policies = [
         // Master
-        // Account::class      => AccountPolicy::class,
-        // Employee::class     => EmployeePolicy::class,
+        Account::class      => AccountPolicy::class,
+        Employee::class     => EmployeePolicy::class,
         Category::class     => CategoryPolicy::class,
         Product::class      => ProductPolicy::class,
         Uom::class          => UomPolicy::class,
@@ -54,6 +58,8 @@ class AuthServiceProvider extends ServiceProvider
         PutawayRule::class  => PutawayRulePolicy::class,
         Location::class     => LocationPolicy::class,
         Supplier::class     => SupplierPolicy::class,
+        Department::class   => DepartmentPolicy::class,
+        Sn::class           => SnPolicy::class,
 
         // Inbound / Outbound
         // StockReceipt::class => StockReceiptPolicy::class,

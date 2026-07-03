@@ -194,6 +194,7 @@
         <form id="ruleForm" method="POST">
           @csrf
           <input type="hidden" name="_method" id="formMethod" value="POST">
+          <input type="hidden" name="id" id="rId" value="{{ old('id') }}">
 
           {{-- warehouse_id luôn là kho mặc định, ẩn không hiển thị --}}
           <input type="hidden" name="warehouse_id" value="{{ $defaultWarehouse?->id }}">
@@ -227,20 +228,26 @@
             <div class="row g-3 mb-3">
               <div class="col-6">
                 <label class="form-label fw-medium">Min <span class="text-danger">*</span></label>
-                <input type="number" step="10" min="0" max="99999"
-                       class="form-control {{ $errors->has('min_qty') ? 'is-invalid' : '' }}"
-                       id="rMinQty" name="min_qty"
-                       value="{{ old('min_qty', 0) }}" required>
+                <input type="number" step="1" min="0" max="99999"
+                      class="form-control {{ $errors->has('min_qty') ? 'is-invalid' : '' }}"
+                      id="rMinQty" name="min_qty"
+                      onkeydown="blockInvalidNumberKeys(event)"
+                      onpaste="blockInvalidNumberPaste(event)"
+                      oninput="sanitizeNumberInput(this)"
+                      value="{{ old('min_qty', 0) }}" required>
                 @error('min_qty')
                   <div class="invalid-feedback">{{ $message }}</div>
                 @enderror
               </div>
               <div class="col-6">
                 <label class="form-label fw-medium">Max <span class="text-danger">*</span></label>
-                <input type="number" step="10" min="0" max="99999"
-                       class="form-control {{ $errors->has('max_qty') ? 'is-invalid' : '' }}"
-                       id="rMaxQty" name="max_qty"
-                       value="{{ old('max_qty', 0) }}" required>
+                <input type="number" step="1" min="0" max="99999"
+                      class="form-control {{ $errors->has('max_qty') ? 'is-invalid' : '' }}"
+                      id="rMaxQty" name="max_qty"
+                      onkeydown="blockInvalidNumberKeys(event)"
+                      onpaste="blockInvalidNumberPaste(event)"
+                      oninput="sanitizeNumberInput(this)"
+                      value="{{ old('max_qty', 0) }}" required>
                 @error('max_qty')
                   <div class="invalid-feedback">{{ $message }}</div>
                 @enderror
@@ -402,13 +409,15 @@
   }
 
   function openModal(id = null, productId = null, employeeId = null,
-                     minQty = 0, maxQty = 0, note = '', status = 1) {
+                    minQty = 0, maxQty = 0, note = '', status = 1) {
     const modal  = new coreui.Modal(document.getElementById('ruleModal'));
     const form   = document.getElementById('ruleForm');
     const title  = document.getElementById('ruleModalLabel');
     const method = document.getElementById('formMethod');
 
     clearValidation();
+
+    document.getElementById('rId').value = id ?? ''; // <-- thêm dòng này
 
     if (id) {
         title.textContent = 'Chỉnh sửa quy tắc';
@@ -448,7 +457,7 @@
 
   @if ($errors->any())
     openModal(
-      null,
+      {{ old('id') ?? 'null' }},
       {{ old('product_id') ?? 'null' }},
       {{ old('employee_id') ?? 'null' }},
       {{ old('min_qty', 0) }},
