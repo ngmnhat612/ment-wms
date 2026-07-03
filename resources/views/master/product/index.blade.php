@@ -235,7 +235,7 @@
           <input type="text" class="form-control text-uppercase"
                 id="pCode" name="code"
                 placeholder="Tự động"
-                oninput="this.value = this.value.toUpperCase()">
+                oninput="this.value = this.value.toUpperCase().replace(/[^A-Z0-9]/g, '')"> {{-- UPDATE --}}
         </div>
 
         {{-- Chế độ biến thể: Mã MenT gốc + Mã MenT biến thể (cùng hàng 50/50) --}}
@@ -247,7 +247,7 @@
                     id="pParentCode" name="parent_code"
                     placeholder="Nhập hoặc chọn"
                     list="parentCodeList"
-                    oninput="this.value = this.value.toUpperCase(); fetchParentProduct()"
+                    oninput="this.value = this.value.toUpperCase().toUpperCase().replace(/[^A-Z0-9]/g, ''); fetchParentProduct()" {{-- UPDATE --}}
                     onblur="fetchParentProduct()">
               <datalist id="parentCodeList">
                 @foreach ($allProducts as $p)
@@ -260,7 +260,7 @@
               <input type="text" class="form-control text-uppercase"
                     id="pVariantCode" name="code"
                     placeholder="TỰ ĐỘNG"
-                    oninput="this.value = this.value.toUpperCase()">
+                    oninput="this.value = this.value.toUpperCase().replace(/[^A-Z0-9]/g, '')"> {{-- UPDATE --}}
             </div>
           </div>
         </div>
