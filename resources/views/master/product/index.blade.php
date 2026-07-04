@@ -235,7 +235,7 @@
           <input type="text" class="form-control text-uppercase"
                 id="pCode" name="code"
                 placeholder="Tự động"
-                oninput="this.value = this.value.toUpperCase().replace(/[^A-Z0-9]/g, '')"> {{-- UPDATE --}}
+                oninput="sanitizeCodeInput(this)"> {{-- UPDATE --}}
         </div>
 
         {{-- Chế độ biến thể: Mã MenT gốc + Mã MenT biến thể (cùng hàng 50/50) --}}
@@ -247,7 +247,7 @@
                     id="pParentCode" name="parent_code"
                     placeholder="Nhập hoặc chọn"
                     list="parentCodeList"
-                    oninput="this.value = this.value.toUpperCase().toUpperCase().replace(/[^A-Z0-9]/g, ''); fetchParentProduct()" {{-- UPDATE --}}
+                    oninput="sanitizeCodeInput(this); fetchParentProduct()" {{-- UPDATE --}}
                     onblur="fetchParentProduct()">
               <datalist id="parentCodeList">
                 @foreach ($allProducts as $p)
@@ -260,7 +260,7 @@
               <input type="text" class="form-control text-uppercase"
                     id="pVariantCode" name="code"
                     placeholder="TỰ ĐỘNG"
-                    oninput="this.value = this.value.toUpperCase().replace(/[^A-Z0-9]/g, '')"> {{-- UPDATE --}}
+                    oninput="sanitizeCodeInput(this)"> {{-- UPDATE --}}
             </div>
           </div>
         </div>
@@ -773,10 +773,10 @@
       document.getElementById('pLocationText').value = oldLoc2 ? `[${oldLoc2.code}] ${oldLoc2.name}` : '';
 
       setSelectValueSafe('pUom', @json(old('uom_id', '')));
-      
+
       const categoryId = p ? (p.category_id ?? '') : @json(old('category_id', ''));
       lockCategoryForEdit(categoryId);
-      
+
       if (p && p.image_url) {
         showImagePreview(p.image_url, p.image_name);
       }

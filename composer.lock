@@ -835,7 +835,7 @@
             "authors": [
                 {
                     "name": "The FontLib Community",
-                    "homepage": "https://github.com/dompdf/php-font-lib/blob/master/AUTHORS.md"
+                    "homepage": "https://github.com/dompdf/php-font-lib/blob/=======AUTHORS.md"
                 }
             ],
             "description": "A library to read, parse, export and make subsets of different types of font files.",

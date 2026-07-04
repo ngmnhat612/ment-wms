@@ -16,3 +16,24 @@ function sanitizeNumberInput(el) {
 
     if (cleaned !== el.value) el.value = cleaned;
 }
+
+// UPDATE
+// Dùng cho các ô chỉ chấp nhận chữ số (SĐT, mã bưu điện...) - KHÔNG xoá số 0 ở đầu,
+// vì các giá trị này (vd: 0901234567) số 0 đầu vẫn có ý nghĩa, khác với ô số lượng/đơn giá.
+function sanitizeDigitsOnly(el) {
+    const cleaned = el.value.replace(/[^\d]/g, '');
+    if (cleaned !== el.value) el.value = cleaned;
+}
+
+// UPDATE
+// Dùng cho các ô "Mã..." (Mã danh mục, Mã phòng ban, Mã MenT, v.v.)
+// Chuyển hoa, chỉ giữ A-Z và 0-9, giữ nguyên vị trí con trỏ.
+function sanitizeCodeInput(el) {
+    const pos = el.selectionStart;
+    const cleaned = el.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+    if (cleaned !== el.value) {
+        el.value = cleaned;
+        el.setSelectionRange(pos, pos);
+    }
+}
+

@@ -321,8 +321,10 @@
                       placeholder="Nhập số điện thoại" maxlength="20"
                       {{-- UPDATE --}}
                       inputmode="numeric"
-                      oninput="this.value = this.value.replace(/[^0-9]/g, '')"
-                      {{-- UPDATE --}}>
+                      onkeydown="blockInvalidNumberKeys(event)"
+                      onpaste="blockInvalidNumberPaste(event)"
+                      oninput="sanitizeDigitsOnly(this)">
+                      {{-- UPDATE --}}
                 @error('phone_number')
                   <div class="invalid-feedback">{{ $message }}</div>
                 @enderror
@@ -546,9 +548,7 @@
 
   // Auto viết hoa mã NV
   document.getElementById('empCode').addEventListener('input', function () {
-    const pos = this.selectionStart;
-    this.value = this.value.toUpperCase().replace(/[^A-Z0-9]/g, ''); //UPDATE
-    this.setSelectionRange(pos, pos);
+    sanitizeCodeInput(this); //UPDATE
   });
 
   @if ($errors->hasAny(['code', 'name', 'phone_number', 'department_id', 'note', 'status']))
