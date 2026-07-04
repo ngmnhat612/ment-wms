@@ -74,7 +74,7 @@ class ProductController extends Controller
             ->with('success', "Đã thêm vật tư \"{$product->name}\" thành công.");
     }
 
-    // ===== STORE VARIANT =====
+    // ===== STORE ======= =====
 
     public function storeVariant(StoreProductVariantRequest $request): RedirectResponse
     {
@@ -139,7 +139,7 @@ class ProductController extends Controller
     public function find(Request $request): JsonResponse
     {
         Gate::authorize('viewAny', Product::class);
-        
+
         $request->validate(['code' => 'required|string']);
 
         $product = $this->productService->findRootByCode(

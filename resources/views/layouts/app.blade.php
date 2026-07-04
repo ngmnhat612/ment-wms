@@ -5,11 +5,7 @@
     @include('layouts.partials.head')
 </head>
 
-<body hx-boost="true"
-      hx-target="#main-content"
-      hx-select="#main-content"
-      hx-swap="innerHTML"
-      hx-push-url="true">
+<body data-pfa="{{ session('product_form_action', '') }}">
 
     @include('layouts.partials.sidebar')
 
