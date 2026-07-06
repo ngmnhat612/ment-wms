@@ -269,7 +269,7 @@
         <div class="mb-3 d-block" id="nameNormalWrap">
           <label class="form-label">Tên <span class="text-danger">*</span></label>
           <input type="text" class="form-control" id="pName" name="name"
-                placeholder="Tên đầy đủ" required maxlength="200">
+                placeholder="Tên đầy đủ" maxlength="200"> {{-- UPDATE --}}
         </div>
 
         {{-- Chế độ biến thể: Tên --}}
@@ -704,9 +704,10 @@
     const pfa = (document.body.dataset.pfa || '').trim();
     if (!pfa) return;
 
+    // UPDATE: <strong>Kiểm tra lại:</strong>
     const alertHtml = `
       <div class="alert alert-danger alert-dismissible mb-3" role="alert">
-        <strong>Vui lòng kiểm tra lại:</strong>
+        <strong>Kiểm tra lại:</strong>
         <ul class="mb-0 mt-1 ps-3">
           @foreach ($errors->all() as $error)
             <li>{{ $error }}</li>
@@ -830,8 +831,9 @@
     document.getElementById('pNameVariant').disabled = !isVariant;
     document.getElementById('pParentCode').disabled  = !isVariant;
 
-    document.getElementById('pName').required        = !isVariant;
-    document.getElementById('pNameVariant').required =  isVariant;
+    // UPDATE
+    // document.getElementById('pName').required        = !isVariant;
+    // document.getElementById('pNameVariant').required =  isVariant;
 
     const lock = ['pCategory', 'pUom', 'pTracking', 'pRotation'];
     lock.forEach(id => {

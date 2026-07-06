@@ -37,7 +37,7 @@
 
   {{-- HEADER --}}
   <div class="d-flex justify-content-end mb-4">
-    <button class="btn btn-primary" onclick="openModal()">
+    <button class="btn btn-primary" onclick="clearValidationErrors('categoryForm'); openModal()"> {{-- UPDATE --}}
       <svg class="icon me-1"><use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-plus') }}"></use></svg>
       Thêm mới
     </button>
@@ -136,7 +136,7 @@
                 </td>
                 <td class="text-center">
                   <button class="btn btn-sm btn-outline-primary me-1"
-                    onclick="openModal(
+                    onclick="clearValidationErrors('categoryForm'); openModal( {{-- UPDATE --}}
                       {{ $cat->id }},
                       '{{ addslashes($cat->code) }}',
                       '{{ addslashes($cat->name) }}',
@@ -185,6 +185,7 @@
         <form id="categoryForm" method="POST">
           @csrf
           <input type="hidden" name="_method" id="formMethod" value="POST">
+          <input type="hidden" name="id" id="catFormId" value="{{ old('id') }}"> {{-- UPDATE --}}
 
           <div class="modal-header">
             <h5 class="modal-title" id="categoryModalLabel">Thêm danh mục</h5>
@@ -300,6 +301,7 @@
       const method  = document.getElementById('formMethod');
       const codeEl  = document.getElementById('catCode');
 
+      setModalFormId('catFormId', id); // UPDATE
       document.getElementById('catName').value = name;
       document.getElementById('catDesc').value = desc;
       document.getElementById(status == 1 ? 'catStatusActive' : 'catStatusInactive').checked = true;
@@ -338,7 +340,8 @@
 
   @if ($errors->any())
     openModal(
-      null,
+    //   null,
+      {{ old('id') ?: 'null' }}, // UPDATE
       '{{ old("code") }}',
       '{{ addslashes(old("name")) }}',
       '{{ addslashes(old("note")) }}',

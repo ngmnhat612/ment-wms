@@ -36,7 +36,7 @@
 
   {{-- HEADER --}}
   <div class="d-flex justify-content-end mb-4">
-    <button class="btn btn-primary" onclick="openModal()">
+    <button class="btn btn-primary" onclick="clearValidationErrors('locationForm'); openModal()"> {{-- UPDATE --}}
       <svg class="icon me-1"><use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-plus') }}"></use></svg>
       Thêm vị trí
     </button>
@@ -135,7 +135,7 @@
                     </td>
                     <td class="text-center">
                       <button class="btn btn-sm btn-outline-primary me-1"
-                              onclick="openModal(
+                              onclick="clearValidationErrors('locationForm'); openModal( {{-- UPDATE --}}
                                 {{ $loc->id }},
                                 {{ $loc->parent_id ?? 'null' }},
                                 {{ $loc->warehouse_id ?? 'null' }},
@@ -187,6 +187,7 @@
         <form id="locationForm" method="POST">
           @csrf
           <input type="hidden" name="_method" id="formMethod" value="POST">
+          <input type="hidden" name="id" id="locFormId" value="{{ old('id') }}"> {{-- UPDATE --}}
           <input type="hidden" name="warehouse_id" id="lWarehouseId" value="{{ $warehouses->first()?->id }}">
           <input type="hidden" name="type" id="lType" value="1">
 
@@ -322,6 +323,7 @@
     const method = document.getElementById('formMethod');
     const codeEl = document.getElementById('lCode');
 
+    setModalFormId('locFormId', id); // UPDATE
     document.getElementById('lParentId').value    = parentId    ?? '';
     document.getElementById('lWarehouseId').value = warehouseId ?? '';
     document.getElementById('lName').value        = name;
@@ -389,8 +391,11 @@
 
   @if ($errors->any())
     openModal(
-      null, null, null,
-      '{{ old('code') }}',
+    //   null, null, null,
+      {{ old('id') ?: 'null' }}, // UPDATE
+      {{ old('parent_id') ?: 'null' }}, // UPDATE
+      {{ old('warehouse_id') ?: 'null' }}, // UPDATE
+      '{{ old('code') }}', 
       '{{ addslashes(old('name')) }}',
       {{ old('type', 1) }},
       {{ old('status', 1) }},

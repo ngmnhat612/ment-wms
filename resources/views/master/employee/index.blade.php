@@ -267,6 +267,7 @@
         <form id="employeeForm" method="POST">
           @csrf
           <input type="hidden" name="_method" id="empMethod" value="POST">
+          <input type="hidden" name="id" id="empFormId" value="{{ old('id') }}"> {{-- UPDATE --}}
 
           <div class="modal-header">
             <h5 class="modal-title" id="employeeModalLabel">Thêm nhân viên</h5>
@@ -513,6 +514,8 @@
     const method  = document.getElementById('empMethod');
     const codeEl  = document.getElementById('empCode');
 
+    setModalFormId('empFormId', id); // UPDATE
+
     if (!keepErrors) {
       form.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
       form.querySelectorAll('.invalid-feedback').forEach(el => el.remove());
@@ -553,7 +556,8 @@
 
   @if ($errors->hasAny(['code', 'name', 'phone_number', 'department_id', 'note', 'status']))
     openEmployeeModal(
-      null,
+    //   null,
+      {{ old('id') ?: 'null' }}, // UPDATE
       '{{ old("code") }}',
       '{{ addslashes(old("name")) }}',
       '{{ addslashes(old("phone_number")) }}',

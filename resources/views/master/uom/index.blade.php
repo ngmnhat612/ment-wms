@@ -37,7 +37,7 @@
 
   {{-- HEADER --}}
   <div class="d-flex justify-content-end mb-4">
-    <button class="btn btn-primary" onclick="openModal()">
+    <button class="btn btn-primary" onclick="clearValidationErrors('uomForm'); openModal()"> {{-- UPDATE --}}
       <svg class="icon me-1"><use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-plus') }}"></use></svg>
       Thêm mới
     </button>
@@ -127,7 +127,7 @@
                 </td>
                 <td class="text-center">
                   <button class="btn btn-sm btn-outline-primary me-1"
-                          onclick="openModal(
+                          onclick="clearValidationErrors('uomForm'); openModal( {{-- UPDATE --}}
                               {{ $uom->id }},
                               '{{ addslashes($uom->code) }}',
                               '{{ addslashes($uom->name) }}',
@@ -176,6 +176,7 @@
         <form id="uomForm" method="POST">
           @csrf
           <input type="hidden" name="_method" id="formMethod" value="POST">
+          <input type="hidden" name="id" id="uomFormId" value="{{ old('id') }}"> {{-- UPDATE --}}
 
           <div class="modal-header">
             <h5 class="modal-title" id="uomModalLabel">Thêm đơn vị tính</h5>
@@ -293,6 +294,7 @@
     const method = document.getElementById('formMethod');
     const codeEl = document.getElementById('uomCode');
 
+    setModalFormId('uomFormId', id); // UPDATE
     document.getElementById('uomName').value = name;
     document.getElementById('uomNote').value = note;
     document.getElementById(status == 1 ? 'uomStatusActive' : 'uomStatusInactive').checked = true;
@@ -332,7 +334,8 @@
 
   @if ($errors->any())
       openModal(
-          null,
+        //   null,
+          {{ old('id') ?: 'null' }}, // UPDATE
           '{{ old("code") }}',
           '{{ addslashes(old("name")) }}',
           '{{ addslashes(old("note")) }}',

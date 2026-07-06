@@ -37,7 +37,7 @@
 
   {{-- HEADER --}}
   <div class="d-flex justify-content-end mb-4">
-    <button class="btn btn-primary" onclick="openModal()">
+    <button class="btn btn-primary" onclick="clearValidationErrors('departmentForm'); openModal()"> {{-- UPDATE --}}
       <svg class="icon me-1"><use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-plus') }}"></use></svg>
       Thêm mới
     </button>
@@ -127,7 +127,7 @@
                 </td>
                 <td class="text-center">
                   <button class="btn btn-sm btn-outline-primary me-1"
-                    onclick="openModal(
+                    onclick="clearValidationErrors('departmentForm'); openModal( {{-- UPDATE --}}
                       {{ $department->id }},
                       '{{ addslashes($department->code) }}',
                       '{{ addslashes($department->name) }}',
@@ -176,6 +176,7 @@
         <form id="departmentForm" method="POST">
           @csrf
           <input type="hidden" name="_method" id="formMethod" value="POST">
+          <input type="hidden" name="id" id="depFormId" value="{{ old('id') }}"> {{-- UPDATE --}}
 
           <div class="modal-header">
             <h5 class="modal-title" id="departmentModalLabel">Thêm bộ phận</h5>
@@ -291,6 +292,7 @@
       const method  = document.getElementById('formMethod');
       const codeEl  = document.getElementById('dCode');
 
+      setModalFormId('depFormId', id); // UPDATE
       document.getElementById('dName').value = name;
       document.getElementById('dNote').value = note;
       document.getElementById(status == 1 ? 'dStatusActive' : 'dStatusInactive').checked = true;
@@ -329,7 +331,8 @@
 
   @if ($errors->any())
     openModal(
-      null,
+    //   null,
+      {{ old('id') ?: 'null' }}, // UPDATE
       '{{ old("code") }}',
       '{{ addslashes(old("name")) }}',
       '{{ addslashes(old("note")) }}',
