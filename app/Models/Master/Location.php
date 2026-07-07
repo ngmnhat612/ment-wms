@@ -6,10 +6,11 @@ use App\Enums\ActiveStatus;
 use App\Enums\LocationType;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Factories\HasFactory; // UPDATE
 
 class Location extends Model
 {
-    use SoftDeletes;
+    use SoftDeletes, HasFactory; // UPDATE
 
     protected $table = 'locations';
 
