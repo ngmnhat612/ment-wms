@@ -96,6 +96,11 @@ class SupplierServiceTest extends TestCase
         $this->assertSame($supplier, $result);
     }
 
+    /**
+     * NOTE: khác với SnService (không kiểm tra code rỗng khi update),
+     * SupplierService::update() giữ nguyên $supplier->code hiện tại
+     * khi payload không có code -> KHÔNG bị lỗi code rỗng.
+     */
     public function test_update_keeps_existing_code_when_code_is_empty(): void
     {
         $supplier = Mockery::mock(Supplier::class)->makePartial();

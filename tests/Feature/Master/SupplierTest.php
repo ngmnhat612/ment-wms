@@ -190,6 +190,11 @@ class SupplierTest extends TestCase
         $this->assertDatabaseHas('suppliers', ['id' => $supplier->id, 'name' => 'Công ty mới']);
     }
 
+    /**
+     * NOTE: khác với Uom (code required khi update) và khác cả Sn (bỏ trống code
+     * có thể gây lỗi rỗng do thiếu null-check), SupplierService::update() tự
+     * giữ nguyên $supplier->code hiện tại khi payload không có code.
+     */
     public function test_update_keeps_existing_code_when_code_is_omitted(): void
     {
         $this->actingAsAdmin();

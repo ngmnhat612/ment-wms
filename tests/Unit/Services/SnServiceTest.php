@@ -114,6 +114,10 @@ class SnServiceTest extends TestCase
 
     // ===== DELETE =====
 
+    /**
+     * NOTE: khác với UomService::delete (kiểm tra hasProducts trước khi xóa),
+     * SnService::delete gọi thẳng repository, không kiểm tra ràng buộc nào.
+     */
     public function test_delete_calls_repository_delete_directly_without_dependency_check(): void
     {
         $sn = new Sn(['name' => 'Dự án A']);
