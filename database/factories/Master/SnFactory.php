@@ -13,7 +13,7 @@ class SnFactory extends Factory
     public function definition(): array
     {
         return [
-            'code'   => strtoupper($this->faker->unique()->bothify('DVT####')),
+            'code'   => strtoupper($this->faker->unique()->bothify('DA####')),
             'name'   => $this->faker->unique()->words(2, true),
             'note'   => $this->faker->optional()->sentence(),
             'status' => ActiveStatus::Active->value,
