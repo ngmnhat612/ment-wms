@@ -5,10 +5,11 @@ namespace App\Models\Master;
 use App\Enums\ActiveStatus;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Factories\HasFactory; // UPDATE
 
 class Category extends Model
 {
-    use SoftDeletes;
+    use SoftDeletes, HasFactory; // UPDATE
 
     protected $table = 'categories';
 
