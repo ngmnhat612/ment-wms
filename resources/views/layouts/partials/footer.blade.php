@@ -10,6 +10,9 @@
 {{-- public/js/number-input-guard.js --}}
 <script src="{{ asset('js/number-input-guard.js') }}"></script>
 
+{{-- public/js/crud-modal-helpers.js --}}
+<script src="{{ asset('js/crud-modal-helpers.js') }}"></script>
+
 {{-- Simplebar (scrollbar tuỳ chỉnh cho sidebar) --}}
 <script src="{{ asset('vendor/coreui/simplebar/simplebar.min.js') }}"></script>
 

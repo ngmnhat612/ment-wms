@@ -19,7 +19,7 @@
     <a href="{{ Route::has('issues.create') ? route('issues.create') : '#' }}"
        class="btn btn-primary {{ Route::has('issues.create') ? '' : 'disabled' }}">
       <svg class="icon me-1"><use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-plus') }}"></use></svg>
-      Xuấtw
+      Xuất
     </a>
   </div>
 
