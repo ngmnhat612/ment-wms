@@ -3,6 +3,7 @@
 namespace App\Models\Master;
 
 use App\Enums\ActiveStatus;
+use Illuminate\Database\Eloquent\Factories\HasFactory;   // UPDATE
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
@@ -11,7 +12,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Account extends Authenticatable
 {
     use Notifiable, HasRoles;
-    use SoftDeletes;
+    use SoftDeletes, HasFactory; // UPDATE
 
     protected $table = 'accounts';
 
