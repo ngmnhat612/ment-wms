@@ -200,7 +200,7 @@
                     class="form-control {{ $errors->has('name') ? 'is-invalid' : '' }}"
                     id="bName" name="name"
                     value="{{ old('name') }}"
-                    placeholder="Tên đầy đủ" required maxlength="200">
+                    placeholder="Nhập tên" required maxlength="200">
               @error('name')
                 <div class="invalid-feedback">{{ $message }}</div>
               @enderror

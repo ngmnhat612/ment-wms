@@ -9,6 +9,9 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Models\Inventory\Lot;
+use App\Models\Inventory\Serial;
+use App\Models\Inventory\Stock;
 
 class Product extends Model
 {

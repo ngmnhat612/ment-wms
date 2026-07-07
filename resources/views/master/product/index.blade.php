@@ -264,14 +264,14 @@
         <div class="mb-3 d-block" id="nameNormalWrap">
           <label class="form-label">Tên <span class="text-danger">*</span></label>
           <input type="text" class="form-control" id="pName" name="name"
-                placeholder="Tên đầy đủ" required maxlength="200">
+                placeholder="Nhập tên" required maxlength="200">
         </div>
 
         {{-- Chế độ biến thể: Tên --}}
         <div class="mb-3 d-none" id="nameVariantWrap">
           <label class="form-label">Tên <span class="text-danger">*</span></label>
           <input type="text" class="form-control" id="pNameVariant" name="name"
-                placeholder="Tên đầy đủ" maxlength="200">
+                placeholder="Nhập tên" maxlength="200">
         </div>
 
         {{-- Danh mục + ĐVT (khoá khi là biến thể) --}}

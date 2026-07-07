@@ -15,6 +15,11 @@ use App\Repositories\Contracts\Master\DepartmentRepositoryInterface;
 use App\Repositories\Contracts\Master\EmployeeRepositoryInterface;
 use App\Repositories\Contracts\Master\AccountRepositoryInterface;
 use App\Repositories\Contracts\Master\SnRepositoryInterface;
+use App\Repositories\Contracts\StockMovement\StockReceiptRepositoryInterface;
+use App\Repositories\Contracts\StockMovement\StockIssueRepositoryInterface;
+use App\Repositories\Contracts\StockMovement\StockMovementFormDataRepositoryInterface;
+use App\Repositories\Contracts\Inventory\LotRepositoryInterface;
+use App\Repositories\Contracts\Inventory\SerialRepositoryInterface;
 
 use App\Repositories\Eloquent\Master\CategoryRepository;
 use App\Repositories\Eloquent\Master\ProductRepository;
@@ -29,6 +34,11 @@ use App\Repositories\Eloquent\Master\DepartmentRepository;
 use App\Repositories\Eloquent\Master\EmployeeRepository;
 use App\Repositories\Eloquent\Master\AccountRepository;
 use App\Repositories\Eloquent\Master\SnRepository;
+use App\Repositories\Eloquent\StockMovement\StockReceiptRepository;
+use App\Repositories\Eloquent\StockMovement\StockIssueRepository;
+use App\Repositories\Eloquent\StockMovement\StockMovementFormDataRepository;
+use App\Repositories\Eloquent\Inventory\LotRepository;
+use App\Repositories\Eloquent\Inventory\SerialRepository;
 
 use Illuminate\Support\ServiceProvider;
 
@@ -101,7 +111,23 @@ class RepositoryServiceProvider extends ServiceProvider
             SnRepository::class,
         );
         
-        // --- Thêm binding cho các repository khác tại đây ---
-        // $this->app->bind(StockRepositoryInterface::class, StockRepository::class);
+        $this->app->bind(
+            StockReceiptRepositoryInterface::class,
+            StockReceiptRepository::class,
+        );
+
+        $this->app->bind(
+            StockIssueRepositoryInterface::class,
+            StockIssueRepository::class,
+        );
+
+        $this->app->bind(
+            StockMovementFormDataRepositoryInterface::class,
+            StockMovementFormDataRepository::class
+        );
+
+        $this->app->bind(LotRepositoryInterface::class, LotRepository::class);
+        $this->app->bind(SerialRepositoryInterface::class, SerialRepository::class);
+
     }
 }

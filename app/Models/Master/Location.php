@@ -6,6 +6,8 @@ use App\Enums\ActiveStatus;
 use App\Enums\LocationType;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Models\Master\Warehouse;
+use App\Models\Inventory\Stock;
 
 class Location extends Model
 {

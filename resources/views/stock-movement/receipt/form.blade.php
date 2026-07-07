@@ -1,11 +1,11 @@
 @extends('layouts.app')
 
-@section('title', (isset($receipt) ? 'Sửa phiếu nhập' : 'Tạo phiếu nhập') . ' — Warehouse System')
+@section('title', (isset($receipt) ? 'Chỉnh sửa phiếu nhập' : 'Thêm phiếu nhập'))
 
 @section('breadcrumb')
 <li class="breadcrumb-item">Nghiệp vụ kho</li>
-<li class="breadcrumb-item"><a href="{{ route('receipts.index') }}">Nhập kho</a></li>
-<li class="breadcrumb-item active">{{ isset($receipt) ? $receipt->code : 'Tạo mới' }}</li>
+<li class="breadcrumb-item"><a href="{{ route('stock-movements.index') }}">Nhập/Xuất kho</a></li>
+<li class="breadcrumb-item active">{{ isset($receipt) ? $receipt->code : 'Thêm phiếu nhập' }}</li>
 @endsection
 
 @section('content')
@@ -16,114 +16,117 @@ $action = $isEdit ? route('receipts.update', $receipt->id) : route('receipts.sto
 @endphp
 
 {{-- HEADER --}}
-<div class="d-flex justify-content-between align-items-center mb-3">
+<div class="d-flex justify-content-between align-items-center mb-4">
     <div>
-        <h4 class="mb-0 fw-semibold">{{ $isEdit ? 'Sửa phiếu nhập' : 'Tạo phiếu nhập mới' }}</h4>
-        <small
-            class="text-body-secondary">{{ $isEdit ? $receipt->code : 'Điền thông tin và thêm hàng hóa cần nhập' }}</small>
+        <h4 class="mb-0 fw-semibold">{{ $isEdit ? 'Chỉnh sửa phiếu nhập' : 'Thêm phiếu nhập' }}</h4>
     </div>
-    <a href="{{ route('receipts.index') }}" class="btn btn-outline-secondary btn-sm">
-        <svg class="icon me-1">
-            <use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-arrow-left') }}"></use>
-        </svg>
+    <a href="{{ $isEdit ? route('receipts.show', $receipt->id) : route('stock-movements.index') }}" class="btn btn-outline-secondary">
         Quay lại
     </a>
 </div>
 
 <form method="POST" action="{{ $action }}" id="receiptForm">
+    @if ($errors->any())
+    <div class="alert alert-danger alert-dismissible fade show mb-3" role="alert">
+        <strong>Vui lòng kiểm tra lại thông tin:</strong>
+        <ul class="mb-0 mt-1">
+            @foreach ($errors->all() as $error)
+            <li>{{ $error }}</li>
+            @endforeach
+        </ul>
+        <button type="button" class="btn-close" data-coreui-dismiss="alert"></button>
+    </div>
+    @endif
     @csrf
     @if($isEdit) @method('PUT') @endif
 
-    {{-- ── THÔNG TIN PHIẾU (1 hàng ngang) ── --}}
+    {{-- ── THÔNG TIN PHIẾU ── --}}
     <div class="card mb-3">
-        <div class="card-header fw-semibold py-2">
-            <svg class="icon me-1 text-primary">
-                <use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-description') }}"></use>
-            </svg>
+        <div class="card-header fw-semibold d-flex align-items-center" style="min-height:44px">
             Thông tin phiếu
         </div>
-        <div class="card-body py-3">
+        <div class="card-body">
             <div class="row g-3">
 
-                <div class="col-md-2">
-                    <label class="form-label form-label-sm mb-1">Mã phiếu</label>
+                {{-- Loại nhập giữ mặc định = 1 (Từ nhà cung cấp), không hiển thị input --}}
+                <input type="hidden" name="warehouse_id" value="{{ old('warehouse_id', $receipt->warehouse_id ?? optional($warehouses->first())->id) }}">
+
+                <div class="col-md-3">
+                    <label class="form-label mb-1">Mã phiếu</label>
                     <input type="text"
-                        class="form-control form-control-sm text-uppercase @error('code') is-invalid @enderror"
-                        name="code" value="{{ old('code', $receipt->code ?? '') }}" placeholder="Tự sinh nếu trống"
+                        class="form-control text-uppercase @error('code') is-invalid @enderror"
+                        name="code" value="{{ old('code', $receipt->code ?? '') }}" placeholder="Tự động"
                         maxlength="50" {{ $isEdit ? 'readonly' : '' }}>
                     @error('code')<div class="invalid-feedback">{{ $message }}</div>@enderror
                 </div>
 
-                <div class="col-md-2">
-                    <label class="form-label form-label-sm mb-1">Loại nhập <span class="text-danger">*</span></label>
-                    <select class="form-select form-select-sm @error('receipt_type') is-invalid @enderror"
-                        name="receipt_type" id="receiptType" required>
-                        <option value="1" {{ old('receipt_type', $receipt->receipt_type ?? 1) == 1 ? 'selected' : '' }}>
-                            Từ nhà cung cấp</option>
-                        <option value="2" {{ old('receipt_type', $receipt->receipt_type ?? 1) == 2 ? 'selected' : '' }}>
-                            Trả hàng SX / BT</option>
-                        <option value="3" {{ old('receipt_type', $receipt->receipt_type ?? 1) == 3 ? 'selected' : '' }}>
-                            Khác</option>
-                    </select>
-                    @error('receipt_type')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                </div>
+                <div class="col-md-3">
+                    <label class="form-label mb-1">Phiếu liên kết</label>
+                    <input type="text"
+                        class="form-control @error('stock_in_request_id') is-invalid @enderror"
+                        id="stock_in_request_code"
+                        list="stockInRequestList"
+                        placeholder="Nhập hoặc chọn"
+                        autocomplete="off"
+                        value="{{ old('stock_in_request_code', ($receipt->stockInRequest->code ?? '')) }}"
+                        {{ $isEdit && isset($receipt->stock_in_request_id) ? 'readonly' : '' }}>
 
-                <div class="col-md-2" id="supplierGroup">
-                    <label class="form-label form-label-sm mb-1">Nhà cung cấp</label>
-                    <select class="form-select form-select-sm @error('supplier_id') is-invalid @enderror"
-                        name="supplier_id">
-                        <option value="">— Chọn NCC —</option>
-                        @foreach ($suppliers as $sup)
-                        <option value="{{ $sup->id }}"
-                            {{ old('supplier_id', $receipt->supplier_id ?? '') == $sup->id ? 'selected' : '' }}>
-                            {{ $sup->name }}
-                        </option>
+                    <datalist id="stockInRequestList">
+                        @foreach($stockInRequests ?? [] as $request)
+                            <option data-id="{{ $request->id }}" value="{{ $request->code }}"></option>
                         @endforeach
-                    </select>
-                    @error('supplier_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    </datalist>
+
+                    <input type="hidden" name="stock_in_request_id" id="stock_in_request_id"
+                        value="{{ old('stock_in_request_id', $receipt->stock_in_request_id ?? '') }}">
+
+                    @error('stock_in_request_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
                 </div>
 
-                <div class="col-md-2">
-                    <label class="form-label form-label-sm mb-1">Số tham chiếu</label>
-                    <input type="text" class="form-control form-control-sm @error('reference_no') is-invalid @enderror"
-                        name="reference_no" value="{{ old('reference_no', $receipt->reference_no ?? '') }}"
-                        placeholder="Số PO / chứng từ" maxlength="100">
-                    @error('reference_no')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                </div>
-
-                <div class="col-md-2">
-                    <label class="form-label form-label-sm mb-1">Ngày nhập <span class="text-danger">*</span></label>
-                    <input type="date" class="form-control form-control-sm @error('receipt_date') is-invalid @enderror"
+                <div class="col-md-3">
+                    <label class="form-label mb-1">Ngày nhập <span class="text-danger">*</span></label>
+                    <input type="date" class="form-control @error('receipt_date') is-invalid @enderror"
                         name="receipt_date"
                         value="{{ old('receipt_date', isset($receipt->receipt_date) ? \Carbon\Carbon::parse($receipt->receipt_date)->format('Y-m-d') : date('Y-m-d')) }}"
                         required>
                     @error('receipt_date')<div class="invalid-feedback">{{ $message }}</div>@enderror
                 </div>
 
-                <div class="col-md-2">
-                    <label class="form-label form-label-sm mb-1">Ghi chú</label>
-                    <input type="text" class="form-control form-control-sm" name="note"
-                        value="{{ old('note', $receipt->note ?? '') }}" placeholder="Ghi chú nếu có..." maxlength="500">
+                <div class="col-md-3">
+                    <label class="form-label mb-1">Ghi chú</label>
+                    <input type="text" class="form-control" name="note"
+                        value="{{ old('note', $receipt->note ?? '') }}" maxlength="500" placeholder="Ghi chú">
                 </div>
 
             </div>
         </div>
     </div>
 
-    {{-- ── CHI TIẾT HÀNG HÓA ── --}}
+    {{-- Datalist dùng chung cho các ô gõ-để-tìm bên dưới --}}
+    <datalist id="productDatalist">
+        @foreach($products as $p)
+        <option value="{{ $p->code }} - {{ $p->name }}"></option>
+        @endforeach
+    </datalist>
+    <datalist id="locationDatalist">
+        @foreach($locations as $loc)
+        <option value="{{ $loc->code }}{{ $loc->name ? ' - '.$loc->name : '' }}"></option>
+        @endforeach
+    </datalist>
+    <datalist id="employeeDatalist">
+        @foreach($employees as $e)
+        <option value="{{ $e->code }} - {{ $e->name }}"></option>
+        @endforeach
+    </datalist>
+
+    {{-- ── CHI TIẾT PHIẾU ── --}}
     <div class="card">
-        <div class="card-header d-flex justify-content-between align-items-center py-2">
+        <div class="card-header d-flex justify-content-between align-items-center" style="min-height:44px">
             <span class="fw-semibold">
-                <svg class="icon me-1 text-primary">
-                    <use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-list') }}"></use>
-                </svg>
-                Chi tiết hàng hóa
+                Chi tiết phiếu
             </span>
-            <button type="button" class="btn btn-sm btn-outline-primary" onclick="addRow()">
-                <svg class="icon me-1">
-                    <use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-plus') }}"></use>
-                </svg>
-                Thêm dòng
+            <button type="button" class="btn btn-sm btn-primary" onclick="addRow()" title="Thêm dòng">
+                <svg class="icon"><use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-plus') }}"></use></svg>
             </button>
         </div>
 
@@ -131,150 +134,172 @@ $action = $isEdit ? route('receipts.update', $receipt->id) : route('receipts.sto
             <div id="lotSerialAlertContainer"></div>
 
             <div class="table-responsive">
-                <table class="table table-sm align-middle mb-0" id="detailTable">
+                <table class="table table-hover align-middle mb-0" id="detailTable">
                     <thead class="table-light">
                         <tr>
-                            <th style="width:36px" class="text-center">#</th>
-                            <th style="min-width:200px">Hàng hóa <span class="text-danger">*</span></th>
-                            <th style="width:80px">ĐVT</th>
-                            <th style="width:120px">SL dự kiến <span class="text-danger">*</span></th>
-                            <th style="width:120px">SL thực nhận</th>
-                            <th style="width:140px">Vị trí kho</th>
-                            <th style="width:120px">
-                                Số Lot
-                                <svg class="icon icon-sm text-body-secondary"
-                                    title="Bắt buộc với hàng theo Lô hoặc Lô+Serial">
-                                    <use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-info') }}">
-                                    </use>
-                                </svg>
-                            </th>
-                            <th style="width:120px">
-                                Số Serial
-                                <svg class="icon icon-sm text-body-secondary"
-                                    title="Bắt buộc với hàng theo Serial hoặc Lô+Serial">
-                                    <use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-info') }}">
-                                    </use>
-                                </svg>
-                            </th>
-                            <th style="width:120px">Hạn dùng</th>
-                            <th style="width:36px"></th>
+                            <th class="text-center" style="width:2%">#</th>
+                            <th style="min-width:180px">Vật tư <span class="text-danger">*</span></th>
+                            <th style="width:8%">TSKT</th>
+                            <th style="width:4%">ĐVT</th>
+                            <th style="width:6%">Nhập <span class="text-danger">*</span></th>
+                            <th style="width:6%">Thực nhập</th>
+                            <th style="width:10%">Vị trí <span class="text-danger">*</span></th>
+                            <th style="width:10%">Người nhận <span class="text-danger">*</span></th>
+                            <th style="width:6%">SN</th>
+                            <th style="width:6%">Lô</th>
+                            <th style="min-width:200px">Sê-ri <span class="lot-serial-hint text-body-secondary fw-normal small"></span></th>
+                            <th style="width:6%">Kho phụ</th>
+                            <th style="min-width:120px">Ghi chú</th>
+                            <th style="width:2%"></th>
                         </tr>
                     </thead>
                     <tbody id="detailBody">
 
                         @php
-                        $detailsOld = old('details');
-                        if ($detailsOld) {
-                        $rows = collect($detailsOld);
+                        // Mỗi hàng UI giờ = 1 LINE (không còn detail phẳng cũ).
+                        // Khi sửa phiếu: mỗi $receipt->lines là 1 hàng; serial_numbers
+                        // được ghép lại từ tất cả $line->details->serial (join bằng space).
+                        $linesOld = old('lines');
+                        if ($linesOld) {
+                            $rows = collect($linesOld);
                         } elseif ($isEdit) {
-                        $rows = $receipt->details;
+                            $rows = $receipt->lines;
                         } else {
-                        $rows = collect();
+                            $rows = collect();
                         }
                         @endphp
 
-                        @foreach($rows as $i => $detail)
+                        @foreach($rows as $i => $lineRow)
                         @php
-                        if (is_array($detail)) {
-                        // Dữ liệu cũ (old input) sau khi validate lỗi
-                        $productId = $detail['product_id'] ?? '';
-                        $product = $products->firstWhere('id', (int) $productId);
-                        $tracking = (int) ($product->tracking_type ?? 1);
-                        $uomId = $detail['uom_id'] ?? ($product->uom_id ?? '');
-                        $uomName = $product->uom?->name ?? '—';
-                        $expectedQty = isset($detail['expected_qty']) ? $detail['expected_qty'] + 0 : '';
-                        $actualQty = isset($detail['actual_qty']) ? $detail['actual_qty'] + 0 : '';
-                        $locationId = $detail['location_id'] ?? '';
-                        $lotNumber = $detail['lot_number'] ?? '';
-                        $serialNumber = $detail['serial_number'] ?? '';
-                        $expiryDate = $detail['expiry_date'] ?? '';
+                        if (is_array($lineRow)) {
+                            // Dữ liệu cũ (old input) sau khi validate lỗi — đã là FLAT lines[i]
+                            $productId = $lineRow['product_id'] ?? '';
+                            $product = $products->firstWhere('id', (int) $productId);
+                            $tracking = (int) ($product?->tracking_type?->value ?? 1);
+                            $uomId = $lineRow['uom_id'] ?? ($product->uom_id ?? '');
+                            $uomName = $product->uom?->name ?? '-';
+                            $expectedQty = isset($lineRow['expected_qty']) ? $lineRow['expected_qty'] + 0 : '';
+                            $actualQty = isset($lineRow['actual_qty']) ? $lineRow['actual_qty'] + 0 : '';
+                            $locationId = $lineRow['location_id'] ?? '';
+                            $receiverId = $lineRow['receiver_id'] ?? '';
+                            $snId = $lineRow['sn_id'] ?? '';
+                            $lotNumber = $lineRow['lot_number'] ?? '';
+                            $serialNumbers = $lineRow['serial_numbers'] ?? '';
+                            $subWarehouse = $lineRow['sub_warehouse'] ?? '';
+                            $note = $lineRow['note'] ?? '';
                         } else {
-                        // Dữ liệu từ phiếu đang sửa
-                        $productId = $detail->product_id;
-                        $product = $detail->product;
-                        $tracking = (int) ($product->tracking_type ?? 1);
-                        $uomId = $detail->uom_id;
-                        $uomName = $detail->uom?->name ?? '—';
-                        $expectedQty = $detail->expected_qty + 0;
-                        $actualQty = $detail->actual_qty + 0;
-                        $locationId = $detail->location_id;
-                        $lotNumber = $detail->lot?->lot_number ?? '';
-                        $serialNumber = $detail->serial?->serial_number ?? '';
-                        $expiryDate = $detail->expiry_date
-                        ? \Carbon\Carbon::parse($detail->expiry_date)->format('Y-m-d')
-                        : '';
+                            // Dữ liệu từ phiếu đang sửa: $lineRow là 1 StockReceiptLine,
+                            // đã eager-load 'details.location/lot/serial/receiver' ở Repository.
+                            $productId = $lineRow->product_id;
+                            $product = $lineRow->product;
+                            $tracking = (int) ($product?->tracking_type?->value ?? 1);
+                            $uomId = $lineRow->uom_id;
+                            $uomName = $lineRow->uom?->name ?? '-';
+                            $expectedQty = $lineRow->expected_qty + 0;
+                            $firstDetail = $lineRow->details->first();
+                            $actualQty = $tracking === 2
+                                ? $lineRow->details->count()
+                                : ($firstDetail->actual_qty ?? 0) + 0;
+                            $locationId = $firstDetail->location_id ?? '';
+                            $receiverId = $firstDetail->receiver_id ?? '';
+                            $snId = $lineRow->sn_id;
+                            $lotNumber = $firstDetail->lot?->lot_number ?? '';
+                            // Ghép mọi serial của line này thành 1 chuỗi cách nhau space.
+                            $serialNumbers = $lineRow->details->pluck('serial.serial_number')->filter()->implode(' ');
+                            $subWarehouse = $firstDetail->sub_warehouse ?? '';
+                            $note = $lineRow->note ?? '';
                         }
                         @endphp
                         <tr>
                             <td class="text-center text-body-secondary small">{{ $i + 1 }}</td>
                             <td>
-                                <select class="form-select form-select-sm product-select"
-                                    name="details[{{ $i }}][product_id]" required onchange="onProductChange(this)">
-                                    <option value="">— Chọn hàng hóa —</option>
-                                    @foreach($products as $p)
-                                    <option value="{{ $p->id }}" data-uom="{{ $p->uom?->name }}"
-                                        data-uom-id="{{ $p->uom_id }}"
-                                        data-tracking="{{ (int) ($p->tracking_type ?? 1) }}"
-                                        {{ (string) $productId === (string) $p->id ? 'selected' : '' }}>
-                                        {{ $p->code }} — {{ $p->name }}
-                                    </option>
-                                    @endforeach
-                                </select>
+                                <input type="hidden" name="lines[{{ $i }}][product_id]"
+                                    class="product-id-hidden" value="{{ $productId }}">
+                                <input type="text" class="form-control product-input" list="productDatalist"
+                                    value="{{ $product ? $product->code.' - '.$product->name : '' }}"
+                                    placeholder="Nhập hoặc chọn" autocomplete="off"
+                                    oninput="onProductInput(this)" required>
                             </td>
                             <td>
-                                <input type="hidden" name="details[{{ $i }}][uom_id]" class="uom-hidden"
+                                <input type="text" class="form-control tskt-label" value="{{ $product->specification ?? '' }}"
+                                    placeholder="-" readonly tabindex="-1">
+                            </td>
+                            <td>
+                                <input type="hidden" name="lines[{{ $i }}][uom_id]" class="uom-hidden"
                                     value="{{ $uomId }}">
                                 <span class="uom-label text-body-secondary small">{{ $uomName }}</span>
                             </td>
                             <td>
-                                <input type="number" class="form-control form-control-sm text-end"
-                                    name="details[{{ $i }}][expected_qty]" value="{{ $expectedQty }}" min="0.001"
-                                    step="0.001" required oninput="updateTotals()" onchange="onExpectedQtyChange(this)">
+                                <input type="number" class="form-control text-end"
+                                    name="lines[{{ $i }}][expected_qty]" value="{{ $expectedQty }}" min="0"
+                                    step="1" required oninput="updateTotals()">
                             </td>
                             <td>
-                                <input type="number" class="form-control form-control-sm text-end actual-qty-input"
-                                    name="details[{{ $i }}][actual_qty]" value="{{ $actualQty }}" min="0" step="0.001"
-                                    {{ in_array($tracking, [3,4]) ? 'readonly' : '' }}>
+                                <input type="number" class="form-control text-end actual-qty-input"
+                                    name="lines[{{ $i }}][actual_qty]" value="{{ $actualQty }}" min="0" step="1"
+                                    {{ $tracking === 2 ? 'readonly' : '' }}>
                             </td>
                             <td>
-                                <select class="form-select form-select-sm" name="details[{{ $i }}][location_id]">
-                                    <option value="">— Chọn —</option>
-                                    @foreach($locations as $loc)
-                                    <option value="{{ $loc->id }}"
-                                        {{ (string) $locationId === (string) $loc->id ? 'selected' : '' }}>
-                                        {{ $loc->code }}
+                                @php $selLoc = $locations->firstWhere('id', (int) $locationId); @endphp
+                                <input type="hidden" name="lines[{{ $i }}][location_id]"
+                                    class="location-id-hidden" value="{{ $locationId }}">
+                                <input type="text" class="form-control location-input" list="locationDatalist"
+                                    value="{{ $selLoc ? $selLoc->code.($selLoc->name ? ' - '.$selLoc->name : '') : '' }}"
+                                    placeholder="Nhập hoặc chọn" autocomplete="off"
+                                    oninput="onLocationInput(this)" required>
+                            </td>
+                            <td>
+                                @php $selEmp = $employees->firstWhere('id', (int) $receiverId); @endphp
+                                <input type="hidden" name="lines[{{ $i }}][receiver_id]"
+                                    class="receiver-id-hidden" value="{{ $receiverId }}">
+                                <input type="text" class="form-control receiver-input" list="employeeDatalist"
+                                    value="{{ $selEmp ? $selEmp->code.' - '.$selEmp->name : '' }}"
+                                    placeholder="Nhập hoặc chọn" autocomplete="off"
+                                    oninput="onReceiverInput(this)" required>
+                            </td>
+                            <td>
+                                <select class="form-select" name="lines[{{ $i }}][sn_id]">
+                                    <option value="">- Chọn -</option>
+                                    @foreach($sns as $s)
+                                    <option value="{{ $s->id }}"
+                                        {{ (string) $snId === (string) $s->id ? 'selected' : '' }}>
+                                        {{ $s->code }}
                                     </option>
                                     @endforeach
                                 </select>
                             </td>
-                            {{-- Lot field --}}
+                            {{-- Lot field: 1 lô dùng chung cho cả dòng (và mọi serial con) --}}
+                            <td>
+                                <input type="number"
+                                    class="form-control lot-input"
+                                    name="lines[{{ $i }}][lot_number]" value="{{ $lotNumber }}"
+                                    placeholder="Tự động" min="1" step="1"
+                                    oninput="clearFieldError(this)">
+                            </td>
+                            {{-- Serial field: chuỗi text, mỗi mã cách nhau <space> --}}
                             <td>
                                 <input type="text"
-                                    class="form-control form-control-sm lot-input {{ in_array($tracking, [1,3]) ? 'bg-body-secondary' : '' }}"
-                                    name="details[{{ $i }}][lot_number]" value="{{ $lotNumber }}"
-                                    placeholder="{{ in_array($tracking, [1,3]) ? '—' : 'Số lot' }}" maxlength="100"
-                                    {{ in_array($tracking, [1,3]) ? 'readonly' : '' }}
-                                    {{ $tracking === 4 ? 'onchange="autoFillLot(this)"' : '' }}>
-                            </td>
-                            {{-- Serial field --}}
-                            <td>
-                                <input type="text"
-                                    class="form-control form-control-sm serial-input {{ in_array($tracking, [1,2]) ? 'bg-body-secondary' : '' }}"
-                                    name="details[{{ $i }}][serial_number]" value="{{ $serialNumber }}"
-                                    placeholder="{{ in_array($tracking, [1,2]) ? '—' : 'Mã serial' }}" maxlength="100"
-                                    {{ in_array($tracking, [1,2]) ? 'readonly' : '' }}>
+                                    class="form-control serial-input {{ $tracking === 1 ? 'bg-body-secondary' : '' }}"
+                                    name="lines[{{ $i }}][serial_numbers]" value="{{ $serialNumbers }}"
+                                    placeholder="{{ $tracking === 1 ? '-' : 'SN0001 SN0002 ...' }}"
+                                    maxlength="5000" autocomplete="off"
+                                    oninput="onSerialInput(this)"
+                                    {{ $tracking === 1 ? 'readonly' : '' }}>
                             </td>
                             <td>
-                                <input type="date" class="form-control form-control-sm"
-                                    name="details[{{ $i }}][expiry_date]" value="{{ $expiryDate }}">
+                                <input type="text" class="form-control"
+                                    name="lines[{{ $i }}][sub_warehouse]" value="{{ $subWarehouse }}"
+                                    maxlength="50" placeholder="Nhập">
                             </td>
                             <td>
-                                <button type="button" class="btn btn-sm btn-outline-danger p-1"
+                                <input type="text" class="form-control"
+                                    name="lines[{{ $i }}][note]" value="{{ $note }}"
+                                    placeholder="Ghi chú" maxlength="500">
+                            </td>
+                            <td class="text-end pe-3" style="align-items:center; justify-content:flex-end;">
+                                <button type="button" class="btn btn-sm btn-outline-danger"
                                     onclick="removeRow(this)" title="Xóa dòng">
-                                    <svg class="icon">
-                                        <use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-trash') }}">
-                                        </use>
-                                    </svg>
+                                    <svg class="icon"><use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-trash') }}"></use></svg>
                                 </button>
                             </td>
                         </tr>
@@ -285,42 +310,34 @@ $action = $isEdit ? route('receipts.update', $receipt->id) : route('receipts.sto
             </div>
 
             {{-- Empty state --}}
-            <div id="emptyDetail" class="text-center text-body-secondary py-4" style="display:none">
+            <div id="emptyDetail" class="text-center text-body-secondary py-5" style="display:none">
                 <svg class="icon icon-3xl d-block mx-auto mb-2 opacity-25">
-                    <use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-list') }}"></use>
+                    <use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-list-rich') }}"></use>
                 </svg>
-                Chưa có hàng hóa nào.
-                <br>
-                <button type="button" class="btn btn-sm btn-outline-primary mt-2" onclick="addRow()">
-                    <svg class="icon me-1">
-                        <use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-plus') }}"></use>
-                    </svg>
-                    Thêm dòng đầu tiên
-                </button>
+                Chưa có vật tư nào.
             </div>
         </div>
 
-        <div class="card-footer py-2 text-body-secondary small">
-            <span>Tổng dòng: <strong id="rowCount">{{ $isEdit ? $receipt->details->count() : 0 }}</strong></span>
+        <div class="card-footer d-flex justify-content-between align-items-center py-2">
+            <small class="text-body-secondary">
+                Tổng dòng: <strong id="rowCount">{{ $isEdit ? $receipt->lines->count() : 0 }}</strong>
+            </small>
         </div>
     </div>
 
     {{-- ── NÚT LƯU ── --}}
     <div class="d-flex gap-2 justify-content-end mt-3">
-        <a href="{{ route('receipts.index') }}" class="btn btn-outline-secondary">Hủy</a>
         @if(!$isEdit)
         <button type="submit" class="btn btn-outline-primary" name="action" value="save_and_new">
-            <svg class="icon me-1">
-                <use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-plus') }}"></use>
-            </svg>
-            Lưu & Tạo phiếu mới
+            <svg class="icon me-1"><use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-plus') }}"></use></svg>
+            Lưu & Thêm mới
         </button>
         @endif
         <button type="submit" class="btn btn-primary" name="action" value="save">
             <svg class="icon me-1">
                 <use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-save') }}"></use>
             </svg>
-            {{ $isEdit ? 'Cập nhật phiếu' : 'Lưu phiếu nhập' }}
+            Lưu
         </button>
     </div>
 
@@ -331,15 +348,20 @@ $action = $isEdit ? route('receipts.update', $receipt->id) : route('receipts.sto
 @push('scripts')
 <script>
 const PRODUCTS = @json($productsJson);
-const LOCATIONS = @json($locationsJson);
+const LOCATIONS = @json($locationsJson ?? []);
+const EMPLOYEES = @json($employeesJson ?? []);
+const SNS = @json($snsJson ?? []);
 
-// TRACKING constants (mirrors PHP)
-const TRACKING_NONE = 1;
-const TRACKING_LOT = 2;
-const TRACKING_SERIAL = 3;
-const TRACKING_LOT_AND_SERIAL = 4;
+// TRACKING constants (mirrors PHP TrackingType enum)
+const TRACKING_LOT = 1;
+const TRACKING_LOT_AND_SERIAL = 2;
 
 let rowIndex = <?php echo $rows->count(); ?>;
+
+// ── Đếm số serial trong 1 chuỗi "SN0001 SN0002 ..." ────────────────
+function countSerials(str) {
+    return (str || '').trim().split(/\s+/).filter(Boolean).length;
+}
 
 // ── Áp tracking lên một <tr> ──────────────────────────────────────
 function applyTracking(tr, tracking) {
@@ -354,46 +376,16 @@ function applyTracking(tr, tracking) {
         el.classList.remove('bg-body-secondary', 'is-invalid');
     });
 
+    // Lô luôn mở, không bắt buộc — để trống sẽ tự sinh mã ở backend
+    lotInput.placeholder = 'Tự động';
+
     switch (tracking) {
-        case TRACKING_NONE:
-            // Khóa cả 2
-            lotInput.readOnly = true;
-            lotInput.value = '';
-            lotInput.placeholder = '—';
-            serialInput.readOnly = true;
-            serialInput.value = '';
-            serialInput.placeholder = '—';
-            lotInput.classList.add('bg-body-secondary');
-            serialInput.classList.add('bg-body-secondary');
-            if (actualInput) {
-                actualInput.readOnly = false;
-                actualInput.classList.remove('bg-body-secondary');
-            }
-            break;
-
         case TRACKING_LOT:
-            // Mở lot, khóa serial
-            lotInput.placeholder = 'Số lot / batch';
+            // Khóa serial; actual_qty nhập tay bình thường
             serialInput.readOnly = true;
             serialInput.value = '';
-            serialInput.placeholder = '—';
+            serialInput.placeholder = '-';
             serialInput.classList.add('bg-body-secondary');
-            if (actualInput) {
-                actualInput.readOnly = false;
-                actualInput.classList.remove('bg-body-secondary');
-            }
-            break;
-
-        case TRACKING_SERIAL:
-            // Khóa lot, mở serial; actual_qty mặc định = 1, cho phép sửa
-            lotInput.readOnly = true;
-            lotInput.value = '';
-            lotInput.placeholder = '—';
-            lotInput.classList.add('bg-body-secondary');
-            serialInput.placeholder = 'Mã serial';
-            if (actualInput && !actualInput.value) {
-                actualInput.value = 1;
-            }
             if (actualInput) {
                 actualInput.readOnly = false;
                 actualInput.classList.remove('bg-body-secondary');
@@ -401,152 +393,160 @@ function applyTracking(tr, tracking) {
             break;
 
         case TRACKING_LOT_AND_SERIAL:
-            // Mở cả 2; actual_qty mặc định = 1, cho phép sửa
-            lotInput.placeholder = 'Số lot';
-            serialInput.placeholder = 'Mã serial';
-            if (actualInput && !actualInput.value) {
-                actualInput.value = 1;
-            }
+            // Mở serial; actual_qty giờ luôn = số serial đếm được, khóa không cho tự gõ
+            serialInput.placeholder = 'SN0001 SN0002 ...';
             if (actualInput) {
-                actualInput.readOnly = false;
-                actualInput.classList.remove('bg-body-secondary');
+                actualInput.readOnly = true;
+                actualInput.classList.add('bg-body-secondary');
+                actualInput.value = countSerials(serialInput.value);
             }
             break;
     }
 }
 
-// ── Khi chọn sản phẩm ─────────────────────────────────────────────
-function onProductChange(sel) {
-    const opt = sel.options[sel.selectedIndex];
-    const tr = sel.closest('tr');
-    const tracking = parseInt(opt.dataset.tracking) || TRACKING_NONE;
-
-    tr.querySelector('.uom-label').textContent = opt.dataset.uom || '—';
-    tr.querySelector('.uom-hidden').value = opt.dataset.uomId || '';
-
-    applyTracking(tr, tracking);
+// ── Tìm dữ liệu theo nhãn hiển thị (dùng cho input + datalist) ─────
+function findProductByLabel(label) {
+    return PRODUCTS.find(p => `${p.code} - ${p.name}` === label);
+}
+function findLocationByLabel(label) {
+    return LOCATIONS.find(l => l.code === label || `${l.code}${l.name ? ' - ' + l.name : ''}` === label);
+}
+function findEmployeeByLabel(label) {
+    return EMPLOYEES.find(e => `${e.code} - ${e.name}` === label);
 }
 
-// ── Auto-fill lot cho các dòng cùng sản phẩm (tracking=4) ─────────
-function autoFillLot(lotInput) {
-    const tr = lotInput.closest('tr');
-    const sel = tr.querySelector('.product-select');
-    const prodId = sel.value;
-    const lotValue = lotInput.value.trim();
-    if (!prodId || !lotValue) return;
-
-    // Điền lot_number vào tất cả dòng cùng product_id, cùng tracking=4
-    document.querySelectorAll('#detailBody tr').forEach(row => {
-        const rowSel = row.querySelector('.product-select');
-        if (!rowSel || rowSel.value !== prodId || row === tr) return;
-        const opt = rowSel.options[rowSel.selectedIndex];
-        if (parseInt(opt.dataset.tracking) !== TRACKING_LOT_AND_SERIAL) return;
-        const rowLot = row.querySelector('.lot-input');
-        if (rowLot && !rowLot.readOnly && !rowLot.value.trim()) {
-            rowLot.value = lotValue;
-        }
-    });
-}
-
-// ── Khi nhập SL dự kiến (tự nhân dòng cho Serial) ─────────────────
-function onExpectedQtyChange(input) {
-    updateTotals();
+// ── Khi gõ/chọn Tên vật tư ─────────────────────────────────────────
+function onProductInput(input) {
     const tr = input.closest('tr');
-    const sel = tr.querySelector('.product-select');
-    const opt = sel.options[sel.selectedIndex];
-    const tracking = parseInt(opt.dataset.tracking) || TRACKING_NONE;
-    const qty = parseInt(input.value) || 1;
+    const hidden = tr.querySelector('.product-id-hidden');
+    const p = findProductByLabel(input.value.trim());
 
-    if (!([TRACKING_SERIAL, TRACKING_LOT_AND_SERIAL].includes(tracking)) || qty <= 1) return;
+    if (p) {
+        hidden.value = p.id;
+        input.classList.remove('is-invalid');
+        input.dataset.tracking = p.tracking;
 
-    const locVal = tr.querySelector('select[name$="[location_id]"]').value;
-    const expiryVal = tr.querySelector('input[name$="[expiry_date]"]').value;
-    const lotVal = tr.querySelector('.lot-input')?.value ?? '';
-    const prodVal = sel.value;
+        tr.querySelector('.uom-label').textContent = p.uom || '-';
+        tr.querySelector('.uom-hidden').value = p.uom_id || '';
+        tr.querySelector('.tskt-label').value = p.specification ?? '';
 
-    input.value = 1;
-
-    for (let n = 1; n < qty; n++) {
-        document.getElementById('detailBody').insertAdjacentHTML('beforeend', rowTemplate(rowIndex));
-        const newTr = document.getElementById('detailBody').lastElementChild;
-        rowIndex++;
-
-        const newSel = newTr.querySelector('.product-select');
-        newSel.value = prodVal;
-        // Sync selected option rồi mới gọi onProductChange
-        const targetOpt = Array.from(newSel.options).find(o => o.value === prodVal);
-        if (targetOpt) targetOpt.selected = true;
-        onProductChange(newSel);
-
-        newTr.querySelector('select[name$="[location_id]"]').value = locVal;
-        newTr.querySelector('input[name$="[expiry_date]"]').value = expiryVal;
-        newTr.querySelector('input[name$="[expected_qty]"]').value = 1;
-
-        // Điền sẵn lot nếu tracking=4
-        if (tracking === TRACKING_LOT_AND_SERIAL && lotVal) {
-            const newLot = newTr.querySelector('.lot-input');
-            if (newLot) newLot.value = lotVal;
-        }
+        applyTracking(tr, parseInt(p.tracking) || TRACKING_LOT);
+    } else {
+        hidden.value = '';
+        delete input.dataset.tracking;
+        input.classList.toggle('is-invalid', input.value.trim() !== '');
+        tr.querySelector('.uom-label').textContent = '-';
+        tr.querySelector('.uom-hidden').value = '';
+        tr.querySelector('.tskt-label').value = '';
     }
-
-    syncRowNumbers();
-    toggleEmptyState();
-    updateTotals();
 }
 
-// ── Template dòng mới ─────────────────────────────────────────────
-function rowTemplate(i) {
-    const productOptions = PRODUCTS.map(p =>
-        `<option value="${p.id}" data-uom="${p.uom}" data-uom-id="${p.uom_id}" data-tracking="${p.tracking}">${p.code} — ${p.name}</option>`
-    ).join('');
+// ── Khi gõ/chọn Vị trí ───────────────────────────────────────────
+function onLocationInput(input) {
+    const tr = input.closest('tr');
+    const hidden = tr.querySelector('.location-id-hidden');
+    const l = findLocationByLabel(input.value.trim());
 
-    const locationOptions = LOCATIONS.map(l =>
-        `<option value="${l.id}">${l.code}${l.name ? ' — ' + l.name : ''}</option>`
+    if (l) {
+        hidden.value = l.id;
+        input.classList.remove('is-invalid');
+    } else {
+        hidden.value = '';
+        input.classList.toggle('is-invalid', input.value.trim() !== '');
+    }
+}
+
+// ── Khi gõ/chọn Người nhận ─────────────────────────────────────────
+function onReceiverInput(input) {
+    const tr = input.closest('tr');
+    const hidden = tr.querySelector('.receiver-id-hidden');
+    const e = findEmployeeByLabel(input.value.trim());
+
+    if (e) {
+        hidden.value = e.id;
+        input.classList.remove('is-invalid');
+    } else {
+        hidden.value = '';
+        input.classList.toggle('is-invalid', input.value.trim() !== '');
+    }
+}
+
+// ── Khi gõ chuỗi Sê-ri: tự cập nhật Thực nhập = số serial đếm được ──
+function onSerialInput(input) {
+    clearFieldError(input);
+    const tr = input.closest('tr');
+    const actualInput = tr.querySelector('.actual-qty-input');
+    const productInput = tr.querySelector('.product-input');
+    const tracking = parseInt(productInput?.dataset?.tracking) || TRACKING_LOT;
+
+    if (tracking === TRACKING_LOT_AND_SERIAL && actualInput) {
+        actualInput.value = countSerials(input.value);
+    }
+}
+
+// ── Thêm dòng mới ──────────────────────────────────────────────────
+function rowTemplate(i) {
+    const snOptions = SNS.map(s =>
+        `<option value="${s.id}">${s.code}</option>`
     ).join('');
 
     return `
 <tr>
   <td class="text-center text-body-secondary small">${i + 1}</td>
   <td>
-    <select class="form-select form-select-sm product-select" name="details[${i}][product_id]" required onchange="onProductChange(this)">
-      <option value="">— Chọn hàng hóa —</option>
-      ${productOptions}
+    <input type="hidden" name="lines[${i}][product_id]" class="product-id-hidden" value="">
+    <input type="text" class="form-control product-input" list="productDatalist"
+           placeholder="Nhập hoặc chọn" autocomplete="off" oninput="onProductInput(this)" required>
+  </td>
+  <td>
+    <input type="text" class="form-control tskt-label" placeholder="-" readonly tabindex="-1">
+  </td>
+  <td>
+    <input type="hidden" name="lines[${i}][uom_id]" class="uom-hidden" value="">
+    <span class="uom-label text-body-secondary small">-</span>
+  </td>
+  <td>
+    <input type="number" class="form-control text-end" name="lines[${i}][expected_qty]"
+           min="0" step="1" required placeholder="0" oninput="updateTotals()">
+  </td>
+  <td>
+    <input type="number" class="form-control text-end actual-qty-input" name="lines[${i}][actual_qty]"
+           min="0" step="1" placeholder="0">
+  </td>
+  <td>
+    <input type="hidden" name="lines[${i}][location_id]" class="location-id-hidden" value="">
+    <input type="text" class="form-control location-input" list="locationDatalist"
+           placeholder="Nhập hoặc chọn" autocomplete="off" oninput="onLocationInput(this)" required>
+  </td>
+  <td>
+    <input type="hidden" name="lines[${i}][receiver_id]" class="receiver-id-hidden" value="">
+    <input type="text" class="form-control receiver-input" list="employeeDatalist"
+           placeholder="Nhập hoặc chọn" autocomplete="off" oninput="onReceiverInput(this)" required>
+  </td>
+  <td>
+    <select class="form-select" name="lines[${i}][sn_id]">
+      <option value="">- Chọn -</option>
+      ${snOptions}
     </select>
   </td>
   <td>
-    <input type="hidden" name="details[${i}][uom_id]" class="uom-hidden" value="">
-    <span class="uom-label text-body-secondary small">—</span>
+    <input type="number" class="form-control lot-input"
+        name="lines[${i}][lot_number]" placeholder="Tự động" min="1" step="1"
+        oninput="clearFieldError(this)">
   </td>
   <td>
-    <input type="number" class="form-control form-control-sm text-end" name="details[${i}][expected_qty]"
-           min="0.001" step="0.001" required placeholder="0"
-           oninput="updateTotals()" onchange="onExpectedQtyChange(this)">
+    <input type="text" class="form-control serial-input bg-body-secondary"
+           name="lines[${i}][serial_numbers]" placeholder="-" maxlength="5000" readonly
+           oninput="onSerialInput(this)">
   </td>
   <td>
-    <input type="number" class="form-control form-control-sm text-end actual-qty-input" name="details[${i}][actual_qty]"
-           min="0" step="0.001" placeholder="0">
+    <input type="text" class="form-control" name="lines[${i}][sub_warehouse]" maxlength="50" placeholder="Nhập">
   </td>
   <td>
-    <select class="form-select form-select-sm" name="details[${i}][location_id]">
-      <option value="">— Chọn —</option>
-      ${locationOptions}
-    </select>
+    <input type="text" class="form-control" name="lines[${i}][note]" placeholder="Ghi chú" maxlength="500">
   </td>
-  <td>
-    <input type="text" class="form-control form-control-sm lot-input bg-body-secondary"
-           name="details[${i}][lot_number]" placeholder="—" maxlength="100" readonly
-           oninput="clearFieldError(this)" onchange="autoFillLot(this)">
-  </td>
-  <td>
-    <input type="text" class="form-control form-control-sm serial-input bg-body-secondary"
-           name="details[${i}][serial_number]" placeholder="—" maxlength="100" readonly
-           oninput="clearFieldError(this)">
-  </td>
-  <td>
-    <input type="date" class="form-control form-control-sm" name="details[${i}][expiry_date]">
-  </td>
-  <td>
-    <button type="button" class="btn btn-sm btn-outline-danger p-1" onclick="removeRow(this)" title="Xóa dòng">
+  <td class="text-end pe-3" style="align-items:center; justify-content:flex-end;">
+    <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeRow(this)" title="Xóa dòng">
       <svg class="icon"><use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-trash') }}"></use></svg>
     </button>
   </td>
@@ -597,87 +597,77 @@ function clearFieldError(input) {
     }
 }
 
-// ── Hiện/ẩn NCC ───────────────────────────────────────────────────
-document.getElementById('receiptType').addEventListener('change', function() {
-    document.getElementById('supplierGroup').style.display = this.value == '1' ? '' : 'none';
-});
-
-// ── Client-side validate Lot/Serial ───────────────────────────────
+// ── Client-side validate Lot/Serial (gương với StockReceiptRequest) ─
 function validateLotSerial() {
     const errors = [];
 
-    // ── Bước 1: validate từng dòng bắt buộc nhập lot/serial ──────────
-    document.querySelectorAll('#detailBody tr').forEach((tr, i) => {
-        const sel = tr.querySelector('.product-select');
-        const opt = sel?.options[sel.selectedIndex];
-        const tracking = parseInt(opt?.dataset?.tracking) || TRACKING_NONE;
+    document.querySelectorAll('#detailBody tr').forEach(tr => {
         const lotInput = tr.querySelector('.lot-input');
         const serialInput = tr.querySelector('.serial-input');
         [lotInput, serialInput].forEach(el => el?.classList.remove('is-invalid'));
-
-        if (tracking === TRACKING_LOT && !lotInput.value.trim()) {
-            lotInput.classList.add('is-invalid');
-            errors.push(`Dòng ${i+1}: Hàng theo <strong>Lô</strong> — chưa nhập Số Lot.`);
-        } else if (tracking === TRACKING_SERIAL && !serialInput.value.trim()) {
-            serialInput.classList.add('is-invalid');
-            errors.push(`Dòng ${i+1}: Hàng theo <strong>Serial</strong> — chưa nhập Mã Serial.`);
-        } else if (tracking === TRACKING_LOT_AND_SERIAL) {
-            if (!lotInput.value.trim()) {
-                lotInput.classList.add('is-invalid');
-                errors.push(`Dòng ${i+1}: Hàng theo <strong>Lô+Serial</strong> — chưa nhập Số Lot.`);
-            }
-            if (!serialInput.value.trim()) {
-                serialInput.classList.add('is-invalid');
-                errors.push(`Dòng ${i+1}: Hàng theo <strong>Lô+Serial</strong> — chưa nhập Mã Serial.`);
-            }
-        }
     });
 
-    // ── Bước 2: kiểm tra serial trùng trong cùng phiếu (theo product_id) ──
-    const serialMap = {}; // { product_id: { serial_value: rowIndex } }
+    // ── Bước 1: Serial bắt buộc + actual_qty phải khớp số serial ────
     document.querySelectorAll('#detailBody tr').forEach((tr, i) => {
-        const sel = tr.querySelector('.product-select');
-        const productId = sel?.value;
-        const serialInput = tr.querySelector('.serial-input');
-        const serialVal = serialInput?.value.trim();
-        if (!productId || !serialVal) return;
-
-        if (!serialMap[productId]) serialMap[productId] = {};
-        if (serialMap[productId][serialVal] !== undefined) {
-            serialInput.classList.add('is-invalid');
-            const firstRow = serialMap[productId][serialVal] + 1;
-            errors.push(
-                `Dòng ${i+1}: Số Serial <strong>"${serialVal}"</strong> đã nhập ở dòng ${firstRow} (cùng sản phẩm).`
-            );
-        } else {
-            serialMap[productId][serialVal] = i;
-        }
-    });
-
-    // ── Bước 3: LotAndSerial — các dòng cùng product phải dùng cùng 1 lot ──
-    const lotMap = {}; // { product_id: { lot_value: rowIndex } }
-    document.querySelectorAll('#detailBody tr').forEach((tr, i) => {
-        const sel = tr.querySelector('.product-select');
-        const opt = sel?.options[sel.selectedIndex];
-        const tracking = parseInt(opt?.dataset?.tracking) || TRACKING_NONE;
+        const productInput = tr.querySelector('.product-input');
+        const tracking = parseInt(productInput?.dataset?.tracking) || TRACKING_LOT;
         if (tracking !== TRACKING_LOT_AND_SERIAL) return;
 
-        const productId = sel?.value;
+        const serialInput = tr.querySelector('.serial-input');
+        const serials = (serialInput.value || '').trim().split(/\s+/).filter(Boolean);
+
+        if (serials.length === 0) {
+            serialInput.classList.add('is-invalid');
+            errors.push(`Dòng ${i+1}: Hàng theo <strong>Lô+Sê-ri</strong> — chưa nhập Mã Serial (cách nhau bằng dấu cách).`);
+            return;
+        }
+
+        // Serial trùng NGAY TRONG chuỗi của chính dòng này
+        const seenInRow = new Set();
+        for (const s of serials) {
+            if (seenInRow.has(s)) {
+                serialInput.classList.add('is-invalid');
+                errors.push(`Dòng ${i+1}: Mã Serial <strong>"${s}"</strong> bị lặp lại trong cùng dòng.`);
+                break;
+            }
+            seenInRow.add(s);
+        }
+    });
+
+    // ── Bước 2: Serial trùng giữa các dòng khác nhau (cùng product) ──
+    const serialMap = {}; // { product_id: { serial_value: rowIndex } }
+    document.querySelectorAll('#detailBody tr').forEach((tr, i) => {
+        const productId = tr.querySelector('.product-id-hidden')?.value;
+        const serialInput = tr.querySelector('.serial-input');
+        const serials = (serialInput?.value || '').trim().split(/\s+/).filter(Boolean);
+        if (!productId) return;
+
+        serials.forEach(serialVal => {
+            if (!serialMap[productId]) serialMap[productId] = {};
+            if (serialMap[productId][serialVal] !== undefined) {
+                serialInput.classList.add('is-invalid');
+                const firstRow = serialMap[productId][serialVal] + 1;
+                errors.push(
+                    `Dòng ${i+1}: Số Serial <strong>"${serialVal}"</strong> đã nhập ở dòng ${firstRow} (cùng sản phẩm).`
+                );
+            } else {
+                serialMap[productId][serialVal] = i;
+            }
+        });
+    });
+
+    // ── Bước 3: Số Lô trùng — mỗi dòng giờ = 1 lô riêng, trùng luôn là lỗi ──
+    const lotNumberMap = {}; // { lotNumber: rowIndex }
+    document.querySelectorAll('#detailBody tr').forEach((tr, i) => {
         const lotInput = tr.querySelector('.lot-input');
         const lotVal = lotInput?.value.trim();
-        if (!productId || !lotVal) return;
+        if (!lotVal) return; // để trống -> backend tự sinh, bỏ qua
 
-        if (!lotMap[productId]) lotMap[productId] = null;
-
-        if (lotMap[productId] === null) {
-            lotMap[productId] = {
-                value: lotVal,
-                row: i
-            };
-        } else if (lotMap[productId].value !== lotVal) {
+        if (lotNumberMap[lotVal] !== undefined) {
             lotInput.classList.add('is-invalid');
-            const firstRow = lotMap[productId].row + 1;
-            errors.push(`Nhiều serial trong cùng 1 lô thì nhập cùng mã lot.`);
+            errors.push(`Dòng ${i+1}: Số Lô <strong>"${lotVal}"</strong> đã dùng ở dòng ${lotNumberMap[lotVal] + 1}.`);
+        } else {
+            lotNumberMap[lotVal] = i;
         }
     });
 
@@ -706,12 +696,9 @@ document.getElementById('receiptForm').addEventListener('submit', function(e) {
 
 // ── Init ──────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
-    const type = document.getElementById('receiptType').value;
-    if (type != '1') document.getElementById('supplierGroup').style.display = 'none';
-
     document.querySelectorAll('#detailBody tr').forEach(tr => {
-        const sel = tr.querySelector('.product-select');
-        if (sel?.value) onProductChange(sel);
+        const productInput = tr.querySelector('.product-input');
+        if (productInput?.value) onProductInput(productInput);
     });
 
     toggleEmptyState();
@@ -721,5 +708,21 @@ document.addEventListener('DOMContentLoaded', () => {
     addRow();
     <?php endif; ?>
 });
+
+(function () {
+    const input  = document.getElementById('stock_in_request_code');
+    const hidden = document.getElementById('stock_in_request_id');
+    const list   = document.getElementById('stockInRequestList');
+
+    function syncHiddenId() {
+        const val = input.value.trim();
+        const match = [...list.options].find(o => o.value === val);
+        hidden.value = match ? match.dataset.id : '';
+    }
+
+    input.addEventListener('input', syncHiddenId);
+    // Đồng bộ ngay khi load (trường hợp edit / old() đã có sẵn giá trị)
+    syncHiddenId();
+})();
 </script>
 @endpush

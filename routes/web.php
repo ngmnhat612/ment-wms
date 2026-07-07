@@ -30,10 +30,12 @@ use App\Http\Controllers\Master\PutawayRuleController;
 use App\Http\Controllers\Master\DepartmentController;
 use App\Http\Controllers\Master\SnController;
 
-// ── STOCK-MOVEMENT ───────────────────────────────────────────────────────────────────
+// ── STOCK-MOVEMENT ────────────────────────────────────────────────────────────
 use App\Http\Controllers\StockMovement\StockMovementController;
+use App\Http\Controllers\StockMovement\StockReceiptController;
+use App\Http\Controllers\StockMovement\StockIssueController;
 
-// ── OUTBOUND ──────────────────────────────────────────────────────────────────
+// ── STOCK-REQUEST ─────────────────────────────────────────────────────────────
 use App\Http\Controllers\Outbound\StockRequestController;
 
 // ── STOCKTAKE ─────────────────────────────────────────────────────────────────
@@ -125,12 +127,8 @@ Route::middleware('auth')->group(function () {
     Route::resource('receipts', StockReceiptController::class)->except(['index']);
     Route::get('receipts/{receipt}/print', [StockReceiptController::class, 'printPdf'])
         ->name('receipts.print');
-    Route::post('receipts/{receipt}/submit', [StockReceiptController::class, 'submit'])
-        ->name('receipts.submit');
     Route::post('receipts/{receipt}/approve', [StockReceiptController::class, 'approve'])
         ->name('receipts.approve');
-    Route::post('receipts/{receipt}/confirm', [StockReceiptController::class, 'confirm'])
-        ->name('receipts.confirm');
     Route::post('receipts/{receipt}/cancel', [StockReceiptController::class, 'cancel'])
         ->name('receipts.cancel');
     Route::post('receipts/suggest-putaway', [StockReceiptController::class, 'suggestPutaway'])
@@ -140,16 +138,14 @@ Route::middleware('auth')->group(function () {
     Route::resource('issues', StockIssueController::class)->except(['index']);
     Route::get('issues/{issue}/print', [StockIssueController::class, 'printPdf'])
         ->name('issues.print');
-    Route::post('issues/{issue}/submit', [StockIssueController::class, 'submit'])
-        ->name('issues.submit');
-    Route::post('issues/{issue}/approve', [StockIssueController::class, 'approve'])
-        ->name('issues.approve');
-    Route::post('issues/{issue}/confirm', [StockIssueController::class, 'confirm'])
-        ->name('issues.confirm');
+    Route::post('issues/{issue}/complete', [StockIssueController::class, 'complete'])
+        ->name('issues.complete');
     Route::post('issues/{issue}/cancel', [StockIssueController::class, 'cancel'])
         ->name('issues.cancel');
-    Route::get('issues/stock-locations/{productId}', [StockIssueController::class, 'stockLocations'])
-        ->name('issues.stock-locations');
+
+    // ── TỒN KHO ─────────────────────────────────────────────────────────────
+    Route::get('inventory', [InventoryController::class, 'index'])->name('inventory.index');
+    Route::resource('inventory', InventoryController::class)->except(['index']);
 
     Route::get('under-construction', fn() => view('under-construction'))
         ->name('under-construction');
@@ -163,7 +159,7 @@ Route::middleware('auth')->group(function () {
         'stocktakes.index'      => 'stocktakes',
 
         // Tồn kho
-        'inventory.index'       => 'inventory',
+        // 'inventory.index'       => 'inventory',
 
         // Master data
         // 'master.uom.index'          => 'master/uom',
