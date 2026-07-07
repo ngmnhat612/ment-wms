@@ -38,6 +38,9 @@ class DatabaseSeeder extends Seeder
 
             // 10. SN
             SnSeeder::class,
+
+            // 11. Vị trí kho
+            LocationSeeder::class,
         ]);
     }
 }

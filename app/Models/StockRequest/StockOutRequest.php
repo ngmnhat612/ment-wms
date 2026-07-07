@@ -1,0 +1,38 @@
+<?php
+
+namespace App\Models\StockRequest;
+
+use App\Enums\DocumentStatus;
+use App\Models\Master\Account;
+use App\Models\Master\Warehouse;
+use Illuminate\Database\Eloquent\Model;
+
+class StockOutRequest extends Model
+{
+    protected $table = 'stock_out_request';
+
+    protected $fillable = [
+        'warehouse_id', 'created_by', 'code', 'status', 'note',
+    ];
+
+    protected $casts = [
+        'status'       => DocumentStatus::class,
+        'warehouse_id' => 'integer',
+        'created_by'   => 'integer',
+    ];
+
+    public function warehouse()
+    {
+        return $this->belongsTo(Warehouse::class);
+    }
+
+    public function createdBy()
+    {
+        return $this->belongsTo(Account::class, 'created_by');
+    }
+
+    public function details()
+    {
+        return $this->hasMany(StockOutRequestDetail::class, 'stock_out_request_id');
+    }
+}

@@ -1,10 +1,13 @@
 <?php
 
-namespace App\Models;
+namespace App\Models\Inventory;
 
 use App\Enums\LotSerialStatus;
 use App\Enums\StockRotation;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Master\Product;
+use App\Models\Master\Location;
+use App\Models\Master\Warehouse;
 
 class Stock extends Model
 {

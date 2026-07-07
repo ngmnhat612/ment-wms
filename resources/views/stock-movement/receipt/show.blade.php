@@ -1,447 +1,250 @@
 @extends('layouts.app')
-
-@section('title', 'Phiếu nhập ' . $receipt->code . ' — Warehouse System')
-
+ 
+@section('title', 'Phiếu nhập ' . $receipt->code)
+ 
 @section('breadcrumb')
 <li class="breadcrumb-item">Nghiệp vụ kho</li>
-<li class="breadcrumb-item"><a href="{{ route('receipts.index') }}">Nhập kho</a></li>
+<li class="breadcrumb-item"><a href="{{ route('stock-movements.index') }}">Nhập/Xuất kho</a></li>
 <li class="breadcrumb-item active">{{ $receipt->code }}</li>
 @endsection
-
+ 
 @section('content')
-
+ 
 @php
 $fmt = fn($n) => rtrim(rtrim(number_format((float)$n, 3, '.', ','), '0'), '.');
-$statusMap = [
-1 => ['Nháp', 'secondary', 'cil-pencil'],
-2 => ['Chờ duyệt', 'warning', 'cil-clock'],
-3 => ['Đã duyệt', 'info', 'cil-check'],
-4 => ['Hoàn thành', 'success', 'cil-check-circle'],
-5 => ['Đã hủy', 'danger', 'cil-x-circle'],
-];
-[$statusText, $statusColor, $statusIcon] = $statusMap[$receipt->status] ?? ['?', 'secondary', 'cil-info'];
-$typeLabels = [1 => 'Từ nhà cung cấp', 2 => 'Trả hàng SX', 3 => 'Khác'];
-
-// Kiểm tra xem có dòng nào dùng serial không (để quyết định có hiện cột Serial)
-$hasSerial = $receipt->details->contains(fn($d) =>
-in_array((int)($d->product?->tracking_type ?? 1), [3, 4])
-);
-$hasLot = $receipt->details->contains(fn($d) =>
-in_array((int)($d->product?->tracking_type ?? 1), [2, 4])
-);
 @endphp
-
+ 
 {{-- HEADER --}}
-<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+<div class="d-flex justify-content-between align-items-center mb-4">
     <div>
-        <h4 class="mb-1 fw-semibold d-flex align-items-center gap-2">
+        <h4 class="mb-0 fw-semibold d-flex align-items-center gap-2">
             {{ $receipt->code }}
-            <span
-                class="badge bg-{{ $statusColor }}-subtle text-{{ $statusColor }}-emphasis border border-{{ $statusColor }}-subtle rounded-pill fs-6">
-                <svg class="icon me-1">
-                    <use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#' . $statusIcon) }}"></use>
-                </svg>
-                {{ $statusText }}
+            <span class="{{ $receipt->status->badgeClass() }}" style="font-size: 0.8rem;">
+                {{ $receipt->status->label() }}
             </span>
         </h4>
-        <small class="text-body-secondary">
-            Tạo lúc {{ $receipt->created_at?->format('d/m/Y H:i') }}
-            @if($receipt->createdBy) bởi <strong>{{ $receipt->createdBy->name }}</strong> @endif
-        </small>
     </div>
-
+ 
     <div class="d-flex gap-2 flex-wrap">
         {{-- DRAFT --}}
-        @if((int)$receipt->status === 1)
-        <a href="{{ route('receipts.edit', $receipt) }}" class="btn btn-outline-secondary btn-sm">
-            <svg class="icon me-1">
-                <use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-pencil') }}"></use>
-            </svg>Chỉnh sửa
-        </a>
-        <form method="POST" action="{{ route('receipts.submit', $receipt) }}">
-            @csrf
-            <button type="submit" class="btn btn-warning btn-sm">
-                <svg class="icon me-1">
-                    <use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-send') }}"></use>
-                </svg>Gửi duyệt
-            </button>
-        </form>
-        <form method="POST" action="{{ route('receipts.destroy', $receipt) }}"
-            onsubmit="return confirm('Xóa vĩnh viễn phiếu {{ $receipt->code }}?')">
-            @csrf @method('DELETE')
-            <button type="submit" class="btn btn-outline-danger btn-sm">
-                <svg class="icon me-1">
-                    <use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-trash') }}"></use>
-                </svg>Xóa
-            </button>
-        </form>
-        @endif
-
-        {{-- PENDING --}}
-        @if((int)$receipt->status === 2 && auth()->user()->can('receipt.approve'))
-        <form method="POST" action="{{ route('receipts.approve', $receipt) }}">
-            @csrf
-            <button type="submit" class="btn btn-primary btn-sm">
-                <svg class="icon me-1">
-                    <use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-check') }}"></use>
-                </svg>Duyệt phiếu
-            </button>
-        </form>
-        @endif
-
-        {{-- APPROVED --}}
-        @if((int)$receipt->status === 3)
-        <button type="button" class="btn btn-success btn-sm" data-coreui-toggle="modal"
-            data-coreui-target="#confirmModal">
-            <svg class="icon me-1">
-                <use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-check-circle') }}"></use>
-            </svg>Xác nhận nhận hàng
+        @if($receipt->status === \App\Enums\DocumentStatus::Draft)
+        <button type="button" class="btn btn-success" data-coreui-toggle="modal" data-coreui-target="#confirmModal">
+            Duyệt
         </button>
-        @endif
-
-        {{-- HỦY (trừ completed/cancelled) --}}
-        @if(!in_array((int)$receipt->status, [4, 5]))
-        <form method="POST" action="{{ route('receipts.cancel', $receipt) }}"
-            onsubmit="return confirm('Hủy phiếu {{ $receipt->code }}?\nThao tác này không thể khôi phục.')">
-            @csrf
-            <button type="submit" class="btn btn-outline-danger btn-sm">
-                <svg class="icon me-1">
-                    <use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-x-circle') }}"></use>
-                </svg>Hủy phiếu
-            </button>
-        </form>
-        @endif
-
-        @if((int) $receipt->status === 4)
-        <a href="{{ route('receipts.print', $receipt) }}" target="_blank" class="btn btn-outline-primary">
-            <svg class="icon me-1">
-                <use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-print') }}"></use>
-            </svg>
-            Xuất PDF
+ 
+        <a href="{{ route('receipts.edit', $receipt) }}" class="btn btn-primary">
+            Chỉnh sửa
         </a>
         @endif
-
-        <a href="{{ route('receipts.index') }}" class="btn btn-outline-secondary btn-sm">
-            <svg class="icon me-1">
-                <use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-arrow-left') }}"></use>
-            </svg>Quay lại
+ 
+        <a href="{{ route('stock-movements.index') }}" class="btn btn-outline-secondary">
+            Quay lại
         </a>
     </div>
 </div>
-
-{{-- ALERTS --}}
-@if(session('success'))
-<div class="alert alert-success alert-dismissible mb-3">
-    <svg class="icon me-1">
-        <use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-check') }}"></use>
-    </svg>
-    {{ session('success') }}
-    <button type="button" class="btn-close" data-coreui-dismiss="alert"></button>
-</div>
-@endif
-@if(session('error'))
-<div class="alert alert-danger alert-dismissible mb-3">
-    <svg class="icon me-1">
-        <use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-warning') }}"></use>
-    </svg>
-    {{ session('error') }}
-    <button type="button" class="btn-close" data-coreui-dismiss="alert"></button>
-</div>
-@endif
-
-{{-- TIMELINE --}}
+ 
+{{-- ── THÔNG TIN PHIẾU ── --}}
 <div class="card mb-3">
-    <div class="card-body py-3">
-        <div class="d-flex justify-content-between align-items-center">
-            @php $steps = [1 => 'Nháp', 2 => 'Chờ duyệt', 3 => 'Đã duyệt', 4 => 'Hoàn thành']; @endphp
-            @foreach($steps as $step => $label)
-            @php
-            $done = $receipt->status >= $step && $receipt->status !== 5;
-            $current = $receipt->status === $step;
-            $color = $done ? 'success' : 'secondary';
-            $lineClass = $receipt->status > $step ? 'border-success' : 'border-secondary';
-            @endphp
-            <div class="d-flex flex-column align-items-center flex-fill">
-                <div class="rounded-circle d-flex align-items-center justify-content-center mb-1 border border-2
-                    bg-{{ $color }}{{ $current ? '' : '-subtle' }}
-                    text-{{ $color }}{{ $current ? ' text-white' : '' }}
-                    border-{{ $color }}" style="width:32px;height:32px;font-size:13px">
-                    {{ $step }}
-                </div>
-                <small class="text-{{ $color }} {{ $current ? 'fw-semibold' : '' }}">{{ $label }}</small>
-            </div>
-            @if($step < 4) <div class="flex-fill border-top border-2 mt-2 mb-auto {{ $lineClass }}"
-                style="max-width:60px">
-        </div>
-        @endif
-        @endforeach
-    </div>
-</div>
-</div>
-
-{{-- THÔNG TIN PHIẾU (1 hàng ngang — giống form) --}}
-<div class="card mb-3">
-    <div class="card-header fw-semibold py-2">
-        <svg class="icon me-1 text-primary">
-            <use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-description') }}"></use>
-        </svg>
+    <div class="card-header fw-semibold d-flex align-items-center" style="min-height:44px">
         Thông tin phiếu
     </div>
-    <div class="card-body py-3">
-        <div class="row g-3 small">
-            <div class="col-md-2">
-                <div class="text-body-secondary mb-1">Mã phiếu</div>
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-3">
+                <label class="form-label mb-1">Mã phiếu</label>
                 <div class="fw-semibold">{{ $receipt->code }}</div>
             </div>
-            <div class="col-md-2">
-                <div class="text-body-secondary mb-1">Loại nhập</div>
-                <div>{{ $typeLabels[$receipt->receipt_type] ?? '—' }}</div>
-            </div>
-            <div class="col-md-2">
-                <div class="text-body-secondary mb-1">Nhà cung cấp</div>
-                <div>{{ $receipt->supplier?->name ?? '—' }}</div>
-            </div>
-            <div class="col-md-2">
-                <div class="text-body-secondary mb-1">Số tham chiếu</div>
-                <div>{{ $receipt->reference_no ?? '—' }}</div>
-            </div>
-            <div class="col-md-2">
-                <div class="text-body-secondary mb-1">Ngày nhập</div>
-                <div>{{ $receipt->receipt_date ? \Carbon\Carbon::parse($receipt->receipt_date)->format('d/m/Y') : '—' }}
+            <div class="col-md-3">
+                <label class="form-label mb-1">Phiếu liên kết</label>
+                <div>
+                    @if($receipt->stockInRequest)
+                        <a href="{{ route('stock-in-requests.show', $receipt->stockInRequest) }}">
+                            {{ $receipt->stockInRequest->code }}
+                        </a>
+                    @else
+                        -
+                    @endif
                 </div>
             </div>
-            <div class="col-md-2">
-                <div class="text-body-secondary mb-1">Trạng thái</div>
-                <span
-                    class="badge bg-{{ $statusColor }}-subtle text-{{ $statusColor }}-emphasis border border-{{ $statusColor }}-subtle rounded-pill">
-                    {{ $statusText }}
-                </span>
+            <div class="col-md-3">
+                <label class="form-label mb-1">Ngày nhập</label>
+                <div>{{ $receipt->receipt_date ? \Carbon\Carbon::parse($receipt->receipt_date)->format('d/m/Y') : '-' }}</div>
             </div>
-            @if($receipt->note)
-            <div class="col-12">
-                <div class="text-body-secondary mb-1">Ghi chú</div>
-                <div>{{ $receipt->note }}</div>
+            <div class="col-md-3">
+                <label class="form-label mb-1">Ghi chú</label>
+                <div>{{ $receipt->note ?? '-' }}</div>
             </div>
-            @endif
-            <div class="col-md-2">
-                <div class="text-body-secondary mb-1">Người tạo</div>
-                <div>{{ $receipt->createdBy?->name ?? '—' }}</div>
-            </div>
-            @if($receipt->confirmedBy)
-            <div class="col-md-2">
-                <div class="text-body-secondary mb-1">Người duyệt</div>
-                <div>{{ $receipt->confirmedBy->name }}</div>
-            </div>
-            @endif
         </div>
     </div>
 </div>
-
-{{-- CHI TIẾT HÀNG HÓA --}}
+ 
+{{-- ── CHI TIẾT PHIẾU ── --}}
 <div class="card">
-    <div class="card-header fw-semibold d-flex justify-content-between align-items-center py-2">
-        <span>
-            <svg class="icon me-1 text-primary">
-                <use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-list') }}"></use>
-            </svg>
-            Chi tiết hàng hóa
+    <div class="card-header d-flex justify-content-between align-items-center" style="min-height:44px">
+        <span class="fw-semibold">
+            Chi tiết phiếu
         </span>
-        <span class="badge bg-primary-subtle text-primary-emphasis">{{ $receipt->details->count() }} dòng</span>
     </div>
+ 
     <div class="card-body p-0">
         <div class="table-responsive">
-            <table class="table table-sm align-middle mb-0">
+            <table class="table table-hover align-middle mb-0">
                 <thead class="table-light">
                     <tr>
-                        <th style="width:36px" class="text-center">#</th>
-                        <th>Hàng hóa</th>
-                        <th style="width:70px">ĐVT</th>
-                        <th style="width:100px" class="text-end">SL dự kiến</th>
-                        <th style="width:150px" class="text-end">SL thực nhận</th>
-                        <th style="width:110px">Vị trí kho</th>
-                        <th style="width:120px">Tracking</th>
-                        @if($hasLot)
-                        <th style="width:120px">Số Lot/Batch</th>
-                        @endif
-                        @if($hasSerial)
-                        <th style="width:120px">Số Serial</th>
-                        @endif
-                        <th style="width:100px">Hạn dùng</th>
-                        <th style="width:80px" class="text-center">QC</th>
+                        <th class="text-center" style="width:2%">#</th>
+                        <th style="min-width:180px">Vật tư</th>
+                        <th style="width:8%">TSKT</th>
+                        <th style="width:4%">ĐVT</th>
+                        <th style="width:6%" class="text-end">Nhập</th>
+                        <th style="width:6%" class="text-end">Thực nhập</th>
+                        <th style="width:10%">Vị trí</th>
+                        <th style="width:10%">Người nhận</th>
+                        <th style="width:6%">SN</th>
+                        <th style="width:6%">Lô</th>
+                        <th style="min-width:200px">Sê-ri</th>
+                        <th style="width:6%">Kho phụ</th>
+                        <th style="min-width:120px">Ghi chú</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @forelse($receipt->details as $i => $detail)
+                @forelse($receipt->lines as $li => $line)
                     @php
-                    $tracking = (int)($detail->product?->tracking_type ?? 1);
-                    $trackingLabel = [1=>'—', 2=>'Lô', 3=>'Serial', 4=>'Lô+Serial'][$tracking] ?? '—';
-                    $trackingColor = [1=>'secondary', 2=>'info', 3=>'warning', 4=>'primary'][$tracking] ?? 'secondary';
+                        $tracking = (int)($line->product?->tracking_type?->value ?? 1);
+                        $firstDetail = $line->details->first();
+                        $actualQty = $tracking === 2
+                            ? $line->details->count()
+                            : ($firstDetail->actual_qty ?? 0);
+                        $serialNumbers = $line->details->pluck('serial.serial_number')->filter()->implode(' ');
+                        $lotNumber = $firstDetail->lot?->lot_number ?? '-';
                     @endphp
                     <tr>
-                        <td class="text-center text-body-secondary small">{{ $i + 1 }}</td>
+                        <td class="text-center text-body-secondary">{{ $li + 1 }}</td>
                         <td>
-                            <div class="fw-semibold small">{{ $detail->product?->name ?? '—' }}</div>
-                            <div class="text-body-secondary" style="font-size:11px">{{ $detail->product?->code }}</div>
+                            <div class="fw-medium">{{ $line->product->name ?? '-' }}</div>
+                            <div class="small text-body-secondary font-monospace">{{ $line->product->code ?? '' }}</div>
                         </td>
-                        <td class="text-body-secondary small">{{ $detail->uom?->name ?? '—' }}</td>
-                        <td class="text-end fw-semibold small">{{ $fmt($detail->expected_qty) }}</td>
-                        <td class="text-end small">
-                            @if($detail->actual_qty !== null)
-                            <span
-                                class="fw-semibold {{ $detail->actual_qty < $detail->expected_qty ? 'text-warning' : 'text-success' }}">
-                                {{ $fmt($detail->actual_qty) }}
+                        <td>{{ $line->product?->specification ?? '-' }}</td>
+                        <td>{{ $line->uom?->name ?? '-' }}</td>
+                        <td class="text-end">{{ $fmt($line->expected_qty) }}</td>
+                        <td class="text-end">
+                            <span class="{{ $actualQty < $line->expected_qty ? 'text-warning' : 'text-success' }}">
+                                {{ $fmt($actualQty) }}
                             </span>
-                            @else
-                            <span class="text-body-secondary">—</span>
-                            @endif
                         </td>
                         <td>
-                            @if($detail->location)
-                            <span
-                                class="badge bg-secondary-subtle text-secondary-emphasis border border-secondary-subtle">
-                                {{ $detail->location->code }}
-                            </span>
-                            @elseif(isset($putawaySuggestions[$detail->id]))
-                            @php $suggested = $putawaySuggestions[$detail->id]; @endphp
-                            <span class="badge bg-info-subtle text-info-emphasis border border-info-subtle"
-                                title="Gợi ý theo Putaway Rule">
-                                <svg class="icon icon-sm me-1">
-                                    <use
-                                        xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-location-pin') }}">
-                                    </use>
-                                </svg>
-                                {{ $suggested->code }}
-                            </span>
-                            <div style="font-size:10px" class="text-info">Putaway Rule</div>
+                            @if ($firstDetail?->location)
+                                <div class="fw-medium">{{ $firstDetail->location->name }}</div>
+                                <div class="small text-body-secondary font-monospace">{{ $firstDetail->location->code }}</div>
                             @else
-                            <span class="text-body-secondary small">—</span>
+                                <span class="text-body-secondary small">-</span>
                             @endif
                         </td>
                         <td>
-                            <span
-                                class="badge bg-{{ $trackingColor }}-subtle text-{{ $trackingColor }}-emphasis border border-{{ $trackingColor }}-subtle">
-                                {{ $trackingLabel }}
-                            </span>
-                        </td>
-                        @if($hasLot)
-                        <td class="small">
-                            @if($detail->lot)
-                            <span
-                                class="badge bg-info-subtle text-info-emphasis border border-info-subtle font-monospace">
-                                {{ $detail->lot->lot_number }}
-                            </span>
-                            @elseif(in_array($tracking, [2,4]))
-                            <span class="text-danger small">Chưa có lot</span>
+                            @if ($firstDetail?->receiver)
+                                <div class="fw-medium">{{ $firstDetail->receiver->name }}</div>
+                                <div class="small text-body-secondary font-monospace">{{ $firstDetail->receiver->code }}</div>
                             @else
-                            <span class="text-body-secondary">—</span>
+                                <span class="text-body-secondary small">-</span>
                             @endif
                         </td>
-                        @endif
-                        @if($hasSerial)
+                        <td>{{ $line->sn?->code ?? '-' }}</td>
+                        <td>{{ $lotNumber }}</td>
                         <td class="small">
-                            @if($detail->serial)
-                            <span
-                                class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle font-monospace">
-                                {{ $detail->serial->serial_number }}
-                            </span>
-                            @elseif(in_array($tracking, [3,4]))
-                            <span class="text-danger small">Chưa có serial</span>
-                            @else
-                            <span class="text-body-secondary">—</span>
+                            @if($tracking === 2 && $serialNumbers !== '')
+                                <span class="font-monospace">{{ $serialNumbers }}</span>
+                            @elseif($tracking === 2)
+                                <span class="text-danger">Chưa có serial</span>
+                            @else -
                             @endif
                         </td>
-                        @endif
-                        <td class="small">
-                            @if($detail->expiry_date)
-                            @php
-                            $expiry = \Carbon\Carbon::parse($detail->expiry_date);
-                            $daysLeft = now()->diffInDays($expiry, false);
-                            @endphp
-                            <span
-                                class="{{ $daysLeft < 30 ? 'text-danger fw-semibold' : ($daysLeft < 90 ? 'text-warning' : '') }}">
-                                {{ $expiry->format('d/m/Y') }}
-                            </span>
-                            @if($daysLeft < 30 && $daysLeft>= 0)
-                                <div style="font-size:10px" class="text-danger">còn {{ $daysLeft }} ngày</div>
-                                @elseif($daysLeft < 0) <div style="font-size:10px" class="text-danger">Đã hết hạn
+                        <td>{{ $firstDetail->sub_warehouse ?? '-' }}</td>
+                        <td>{{ $line->note ?? '-' }}</td>
+                    </tr>
+                @empty
+                <tr><td colspan="13" class="text-center text-body-secondary py-5">Không có dòng chi tiết.</td></tr>
+                @endforelse
+                </tbody>
+            </table>
         </div>
-        @endif
-        @else
-        <span class="text-body-secondary">—</span>
-        @endif
-        </td>
-        <td class="text-center">
-            @php
-            $qcMap = [0=>['—','secondary'], 1=>['Pass','success'], 2=>['Fail','danger'], 3=>['Pending','warning']];
-            [$qcLabel, $qcColor] = $qcMap[$detail->qc_status] ?? ['—','secondary'];
-            @endphp
-            <span
-                class="badge bg-{{ $qcColor }}-subtle text-{{ $qcColor }}-emphasis border border-{{ $qcColor }}-subtle">
-                {{ $qcLabel }}
-            </span>
-        </td>
-        </tr>
-        @empty
-        <tr>
-            <td colspan="12" class="text-center text-body-secondary py-4">Không có dòng chi tiết.</td>
-        </tr>
-        @endforelse
-        </tbody>
-        </table>
+    </div>
+ 
+    <div class="card-footer d-flex justify-content-between align-items-center py-2">
+        <small class="text-body-secondary">
+            Tổng dòng: <strong>{{ $receipt->lines->count() }}</strong>
+        </small>
     </div>
 </div>
-
-@if($receipt->status === 4)
-<div class="card-footer border-success bg-success-subtle text-success d-flex align-items-center gap-2 py-2">
-    <svg class="icon">
-        <use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-check-circle') }}"></use>
-    </svg>
-    <span class="small fw-semibold">Tồn kho đã được cập nhật thành công.</span>
+ 
+{{-- ── NÚT HỦY ── --}}
+@if($receipt->status === \App\Enums\DocumentStatus::Draft)
+<div class="d-flex gap-2 justify-content-end mt-3">
+    <button type="button" class="btn btn-outline-danger" data-coreui-toggle="modal"
+        data-coreui-target="#cancelModal">
+        Hủy
+    </button>
 </div>
 @endif
-</div>
-
-{{-- MODAL XÁC NHẬN NHẬN HÀNG --}}
-@if((int)$receipt->status === 3)
+ 
+{{-- MODAL XÁC NHẬN DUYỆT --}}
+@if($receipt->status === \App\Enums\DocumentStatus::Draft)
 <div class="modal fade" id="confirmModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
         <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title text-success">
-                    <svg class="icon me-1">
-                        <use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-check-circle') }}"></use>
-                    </svg>
-                    Xác nhận nhận hàng
-                </h5>
+            <div class="modal-header border-0 pb-0">
                 <button type="button" class="btn-close" data-coreui-dismiss="modal"></button>
             </div>
-            <div class="modal-body">
-                <p>Xác nhận đã nhận đủ hàng theo phiếu <strong>{{ $receipt->code }}</strong>?</p>
-                <div class="alert alert-info small mb-0">
-                    <svg class="icon me-1">
-                        <use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-info') }}"></use>
-                    </svg>
-                    Sau khi xác nhận, tồn kho sẽ được cập nhật và không thể hoàn tác.
-                    Nếu số lượng thực nhận khác dự kiến, vui lòng chỉnh sửa phiếu trước.
-                </div>
+            <div class="modal-body text-center px-4 pb-2">
+                <svg class="icon icon-3xl text-success mb-3">
+                    <use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-check-circle') }}"></use>
+                </svg>
+                <h6 class="fw-semibold mb-1">Xác nhận duyệt</h6>
+                <p class="text-body-secondary small mb-0">
+                    Xác nhận đã nhận đủ hàng theo phiếu<br>
+                    <strong class="text-body">{{ $receipt->code }}</strong>?
+                </p>
+                <p class="text-success small mt-1">Tồn kho sẽ được cập nhật và không thể hoàn tác.</p>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-outline-secondary btn-sm" data-coreui-dismiss="modal">Hủy
-                    bỏ</button>
-                <form method="POST" action="{{ route('receipts.confirm', $receipt) }}">
+            <div class="modal-footer border-0 pt-0 justify-content-center gap-2">
+                <button type="button" class="btn btn-outline-secondary btn-sm" data-coreui-dismiss="modal">Đóng</button>
+                <form method="POST" action="{{ route('receipts.approve', $receipt) }}" class="d-inline">
                     @csrf
-                    <button type="submit" class="btn btn-success btn-sm">
-                        <svg class="icon me-1">
-                            <use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-check-circle') }}">
-                            </use>
-                        </svg>
-                        Xác nhận & cập nhật tồn kho
-                    </button>
+                    <button type="submit" class="btn btn-success btn-sm">Duyệt</button>
                 </form>
             </div>
         </div>
     </div>
 </div>
 @endif
-
+ 
+{{-- MODAL XÁC NHẬN HỦY PHIẾU --}}
+@if($receipt->status === \App\Enums\DocumentStatus::Draft)
+<div class="modal fade" id="cancelModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content">
+            <div class="modal-header border-0 pb-0">
+                <button type="button" class="btn-close" data-coreui-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center px-4 pb-2">
+                <svg class="icon icon-3xl text-danger mb-3">
+                    <use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-warning') }}"></use>
+                </svg>
+                <h6 class="fw-semibold mb-1">Xác nhận hủy</h6>
+                <p class="text-body-secondary small mb-0">
+                    Bạn có chắc muốn hủy phiếu<br>
+                    <strong class="text-body">{{ $receipt->code }}</strong>?
+                </p>
+                <p class="text-danger small mt-1">Thao tác này không thể hoàn tác.</p>
+            </div>
+            <div class="modal-footer border-0 pt-0 justify-content-center gap-2">
+                <button type="button" class="btn btn-outline-secondary btn-sm" data-coreui-dismiss="modal">Đóng</button>
+                <form method="POST" action="{{ route('receipts.cancel', $receipt) }}" class="d-inline">
+                    @csrf
+                    <button type="submit" class="btn btn-danger btn-sm">Hủy</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+@endif
+ 
 @endsection

@@ -1,11 +1,11 @@
 @extends('layouts.app')
 
-@section('title', (isset($issue) ? 'Sửa phiếu xuất' : 'Tạo phiếu xuất') . ' — Warehouse System')
+@section('title', (isset($issue) ? 'Chỉnh sửa phiếu xuất' : 'Thêm phiếu xuất'))
 
 @section('breadcrumb')
 <li class="breadcrumb-item">Nghiệp vụ kho</li>
-<li class="breadcrumb-item"><a href="{{ route('issues.index') }}">Xuất kho</a></li>
-<li class="breadcrumb-item active">{{ isset($issue) ? $issue->code : 'Tạo mới' }}</li>
+<li class="breadcrumb-item"><a href="{{ route('stock-movements.index') }}">Nhập/Xuất kho</a></li>
+<li class="breadcrumb-item active">{{ isset($issue) ? $issue->code : 'Thêm phiếu xuất' }}</li>
 @endsection
 
 @section('content')
@@ -16,275 +16,298 @@ $action = $isEdit ? route('issues.update', $issue->id) : route('issues.store');
 @endphp
 
 {{-- HEADER --}}
-<div class="d-flex justify-content-between align-items-center mb-3">
+<div class="d-flex justify-content-between align-items-center mb-4">
     <div>
-        <h4 class="mb-0 fw-semibold">{{ $isEdit ? 'Sửa phiếu xuất' : 'Tạo phiếu xuất mới' }}</h4>
-        <small
-            class="text-body-secondary">{{ $isEdit ? $issue->code : 'Điền thông tin và thêm hàng hóa cần xuất' }}</small>
+        <h4 class="mb-0 fw-semibold">{{ $isEdit ? 'Chỉnh sửa phiếu xuất' : 'Thêm phiếu xuất' }}</h4>
     </div>
-    <a href="{{ route('issues.index') }}" class="btn btn-outline-secondary btn-sm">
-        <svg class="icon me-1">
-            <use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-arrow-left') }}"></use>
-        </svg>
+    <a href="{{ route('stock-movements.index') }}" class="btn btn-secondary">
         Quay lại
     </a>
 </div>
 
 <form method="POST" action="{{ $action }}" id="issueForm">
+    @if ($errors->any())
+    <div class="alert alert-danger alert-dismissible fade show mb-3" role="alert">
+        <strong>Vui lòng kiểm tra lại thông tin:</strong>
+        <ul class="mb-0 mt-1">
+            @foreach ($errors->all() as $error)
+            <li>{{ $error }}</li>
+            @endforeach
+        </ul>
+        <button type="button" class="btn-close" data-coreui-dismiss="alert"></button>
+    </div>
+    @endif
     @csrf
     @if($isEdit) @method('PUT') @endif
 
-    {{-- ── THÔNG TIN PHIẾU (1 hàng ngang) ── --}}
+    {{-- ── THÔNG TIN PHIẾU ── --}}
     <div class="card mb-3">
-        <div class="card-header fw-semibold py-2">
-            <svg class="icon me-1 text-primary">
-                <use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-description') }}"></use>
-            </svg>
+        <div class="card-header fw-semibold d-flex align-items-center" style="min-height:44px">
             Thông tin phiếu
         </div>
-        <div class="card-body py-3">
+        <div class="card-body">
             <div class="row g-3">
 
-                <div class="col-md-2">
-                    <label class="form-label form-label-sm mb-1">Mã phiếu</label>
+                {{-- Kho xuất giữ mặc định là kho đầu tiên, không hiển thị input --}}
+                <input type="hidden" name="warehouse_id" value="{{ old('warehouse_id', $issue->warehouse_id ?? optional($warehouses->first())->id) }}">
+
+                <div class="col-md-3">
+                    <label class="form-label mb-1">Mã phiếu</label>
                     <input type="text"
-                        class="form-control form-control-sm text-uppercase @error('code') is-invalid @enderror"
-                        name="code" value="{{ old('code', $issue->code ?? '') }}" placeholder="Tự sinh nếu trống"
+                        class="form-control text-uppercase @error('code') is-invalid @enderror"
+                        name="code" value="{{ old('code', $issue->code ?? '') }}" placeholder="Tự động"
                         maxlength="50" {{ $isEdit ? 'readonly' : '' }}>
                     @error('code')<div class="invalid-feedback">{{ $message }}</div>@enderror
                 </div>
 
-                <div class="col-md-2">
-                    <label class="form-label form-label-sm mb-1">Loại xuất <span class="text-danger">*</span></label>
-                    <select class="form-select form-select-sm @error('issue_type') is-invalid @enderror"
-                        name="issue_type" id="issueType" required>
-                        <option value="1" {{ old('issue_type', $issue->issue_type ?? 1) == 1 ? 'selected' : '' }}>
-                            Sản xuất</option>
-                        <option value="2" {{ old('issue_type', $issue->issue_type ?? 1) == 2 ? 'selected' : '' }}>
-                            Bảo trì</option>
-                        <option value="3" {{ old('issue_type', $issue->issue_type ?? 1) == 3 ? 'selected' : '' }}>
-                            Mượn</option>
-                        <option value="4" {{ old('issue_type', $issue->issue_type ?? 1) == 4 ? 'selected' : '' }}>
-                            Khác</option>
-                    </select>
-                    @error('issue_type') <div class="invalid-feedback">{{ $message }}</div> @enderror
-                </div>
-
-                <div class="col-md-2">
-                    <label class="form-label form-label-sm mb-1">Người yêu cầu</label>
-                    <select class="form-select form-select-sm @error('requester_id') is-invalid @enderror"
-                        name="requester_id">
-                        <option value="">— Chọn —</option>
-                        @foreach ($users as $user)
-                        <option value="{{ $user->id }}"
-                            {{ old('requester_id', $issue->requester_id ?? '') == $user->id ? 'selected' : '' }}>
-                            {{ $user->name }}
-                        </option>
-                        @endforeach
-                    </select>
-                    @error('requester_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                </div>
-
-                <div class="col-md-2">
-                    <label class="form-label form-label-sm mb-1">Số tham chiếu</label>
-                    <input type="text" class="form-control form-control-sm @error('reference_no') is-invalid @enderror"
-                        name="reference_no" value="{{ old('reference_no', $issue->reference_no ?? '') }}"
-                        placeholder="Số lệnh SX / công việc" maxlength="100">
-                    @error('reference_no')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                </div>
-
-                <div class="col-md-2">
-                    <label class="form-label form-label-sm mb-1">Ngày xuất <span class="text-danger">*</span></label>
-                    <input type="date" class="form-control form-control-sm @error('issue_date') is-invalid @enderror"
+                <div class="col-md-3">
+                    <label class="form-label mb-1">Ngày xuất <span class="text-danger">*</span></label>
+                    <input type="date" class="form-control @error('issue_date') is-invalid @enderror"
                         name="issue_date"
                         value="{{ old('issue_date', isset($issue->issue_date) ? \Carbon\Carbon::parse($issue->issue_date)->format('Y-m-d') : date('Y-m-d')) }}"
                         required>
                     @error('issue_date')<div class="invalid-feedback">{{ $message }}</div>@enderror
                 </div>
 
-                {{-- Hạn trả — chỉ hiện khi Mượn --}}
-                <div class="col-md-2" id="returnDateGroup"
-                    style="{{ old('issue_type', $issue->issue_type ?? 1) == 3 ? '' : 'display:none' }}">
-                    <label class="form-label form-label-sm mb-1">Hạn trả hàng</label>
-                    <input type="date"
-                        class="form-control form-control-sm @error('expected_return_date') is-invalid @enderror"
-                        name="expected_return_date"
-                        value="{{ old('expected_return_date', isset($issue->expected_return_date) ? \Carbon\Carbon::parse($issue->expected_return_date)->format('Y-m-d') : '') }}">
-                    @error('expected_return_date')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                <div class="col-md-6">
+                    <label class="form-label mb-1">Ghi chú</label>
+                    <input type="text" class="form-control" name="note"
+                        value="{{ old('note', $issue->note ?? '') }}" maxlength="500" placeholder="Ghi chú">
                 </div>
 
-                <div class="col-md-2">
-                    <label class="form-label form-label-sm mb-1">Ghi chú</label>
-                    <input type="text" class="form-control form-control-sm" name="note"
-                        value="{{ old('note', $issue->note ?? '') }}" placeholder="Ghi chú nếu có..." maxlength="500">
-                </div>
+            </div>
+        </div>
+    </div>
 
-            </div>{{-- end row g-3 --}}
-        </div>{{-- end card-body --}}
-    </div>{{-- end card --}}
+    {{-- Datalist dùng chung cho các ô gõ-để-tìm bên dưới --}}
+    <datalist id="productDatalist">
+        @foreach($products as $p)
+        <option value="{{ $p->code }} - {{ $p->name }}"></option>
+        @endforeach
+    </datalist>
+    <datalist id="locationDatalist">
+        @foreach($locations as $loc)
+        <option value="{{ $loc->code }}{{ $loc->name ? ' - '.$loc->name : '' }}"></option>
+        @endforeach
+    </datalist>
+    <datalist id="employeeDatalist">
+        @foreach($employees as $e)
+        <option value="{{ $e->code }} - {{ $e->name }}"></option>
+        @endforeach
+    </datalist>
 
-    {{-- ── CHI TIẾT HÀNG HÓA ── --}}
+    {{-- ── CHI TIẾT PHIẾU ── --}}
     <div class="card">
-        <div class="card-header d-flex justify-content-between align-items-center py-2">
+        <div class="card-header d-flex justify-content-between align-items-center" style="min-height:44px">
             <span class="fw-semibold">
-                <svg class="icon me-1 text-primary">
-                    <use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-list') }}"></use>
-                </svg>
-                Chi tiết hàng hóa
+                Chi tiết phiếu
             </span>
-            <button type="button" class="btn btn-sm btn-outline-primary" onclick="addRow()">
-                <svg class="icon me-1">
-                    <use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-plus') }}"></use>
-                </svg>
-                Thêm dòng
+            <button type="button" class="btn btn-sm btn-primary" onclick="addRow()">
+                <svg class="icon"><use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-plus') }}"></use></svg>
             </button>
         </div>
 
         <div class="card-body p-0">
+            <div id="lotSerialAlertContainer"></div>
+
             <div class="table-responsive">
-                <table class="table table-sm align-middle mb-0" id="detailTable">
+                <table class="table table-hover align-middle mb-0" id="detailTable">
                     <thead class="table-light">
                         <tr>
-                            <th style="width:36px"></th>
-                            <th>Hàng hóa <span class="text-danger">*</span></th>
-                            <th style="width:100px">ĐVT</th>
-                            <th style="width:110px">Số lượng <span class="text-danger">*</span></th>
-                            <th style="width:130px">Vị trí kho <span class="text-danger">*</span></th>
-                            <th style="width:110px">Số Lot</th>
-                            <th style="width:120px">Số Serial</th>
-                            <th style="width:90px">Tồn hiện</th>
-                            <th style="width:200px">Ghi chú</th>
-                            <th style="width:36px"></th>
+                            <th class="text-center" style="width:2%">#</th>
+                            <th style="min-width:180px">Vật tư <span class="text-danger">*</span></th>
+                            <th style="width:8%">TSKT</th>
+                            <th style="width:4%">ĐVT</th>
+                            <th style="width:6%">Xuất <span class="text-danger">*</span></th>
+                            <th style="width:6%">Thực xuất</th>
+                            <th style="width:10%">Vị trí <span class="text-danger">*</span></th>
+                            <th style="width:10%">Người nhận <span class="text-danger">*</span></th>
+                            <th style="width:6%">SN</th>
+                            <th style="width:6%">Lô</th>
+                            <th style="width:6%">Sê-ri</th>
+                            <th style="width:6%">Kho phụ</th>
+                            <th style="min-width:120px">Ghi chú</th>
+                            <th style="width:2%"></th>
                         </tr>
                     </thead>
                     <tbody id="detailBody">
 
-                        @if($isEdit && $issue->details->count())
-                        @foreach($issue->details as $i => $detail)
-                        <tr class="existing-row" data-current-location="{{ $detail->location_id }}"
-                            data-current-lot-id="{{ $detail->lot_id ?? '' }}"
-                            data-current-lot-number="{{ $detail->lot?->lot_number ?? '' }}"
-                            data-current-serial-id="{{ $detail->serial_id ?? '' }}"
-                            data-current-serial-number="{{ $detail->serial?->serial_number ?? '' }}">
+                        @php
+                        $detailsOld = old('details');
+                        if ($detailsOld) {
+                        $rows = collect($detailsOld);
+                        } elseif ($isEdit) {
+                        $rows = $issue->details;
+                        } else {
+                        $rows = collect();
+                        }
+                        @endphp
+
+                        @foreach($rows as $i => $detail)
+                        @php
+                        if (is_array($detail)) {
+                        // Dữ liệu cũ (old input) sau khi validate lỗi
+                        $productId = $detail['product_id'] ?? '';
+                        $product = $products->firstWhere('id', (int) $productId);
+                        $tracking = (int) ($product?->tracking_type?->value ?? 1);
+                        $uomId = $detail['uom_id'] ?? ($product->uom_id ?? '');
+                        $uomName = $product->uom?->name ?? '-';
+                        $expectedQty = isset($detail['expected_qty']) ? $detail['expected_qty'] + 0 : '';
+                        $actualQty = isset($detail['actual_qty']) ? $detail['actual_qty'] + 0 : '';
+                        $locationId = $detail['location_id'] ?? '';
+                        $receiverId = $detail['receiver_id'] ?? '';
+                        $snId = $detail['sn_id'] ?? '';
+                        $lotNumber = $detail['lot_number'] ?? '';
+                        $serialNumber = $detail['serial_number'] ?? '';
+                        $subWarehouse = $detail['sub_warehouse'] ?? '';
+                        $note = $detail['note'] ?? '';
+                        } else {
+                        // Dữ liệu từ phiếu đang sửa
+                        $productId = $detail->product_id;
+                        $product = $detail->product;
+                        $tracking = (int) ($product?->tracking_type?->value ?? 1);
+                        $uomId = $detail->uom_id;
+                        $uomName = $detail->uom?->name ?? '-';
+                        $expectedQty = $detail->expected_qty + 0;
+                        $actualQty = $detail->actual_qty + 0;
+                        $locationId = $detail->location_id;
+                        $receiverId = $detail->receiver_id;
+                        $snId = $detail->sn_id;
+                        $lotNumber = $detail->lot?->lot_number ?? '';
+                        $serialNumber = $detail->serial?->serial_number ?? '';
+                        $subWarehouse = $detail->sub_warehouse ?? '';
+                        $note = $detail->note ?? '';
+                        }
+                        @endphp
+                        <tr>
                             <td class="text-center text-body-secondary small">{{ $i + 1 }}</td>
                             <td>
-                                <select class="form-select form-select-sm product-select"
-                                    name="details[{{ $i }}][product_id]" required onchange="onProductChange(this)">
-                                    <option value="">— Chọn hàng hóa —</option>
-                                    @foreach($products as $p)
-                                    <option value="{{ $p->id }}" data-uom="{{ $p->uom?->name }}"
-                                        data-uom-id="{{ $p->uom_id }}" data-stock="{{ $p->total_stock }}"
-                                        data-tracking="{{ $p->tracking_type }}"
-                                        {{ $detail->product_id == $p->id ? 'selected' : '' }}>
-                                        {{ $p->code }} — {{ $p->name }}
+                                <input type="hidden" name="details[{{ $i }}][product_id]"
+                                    class="product-id-hidden" value="{{ $productId }}">
+                                <input type="text" class="form-control product-input" list="productDatalist"
+                                    value="{{ $product ? $product->code.' - '.$product->name : '' }}"
+                                    placeholder="Nhập hoặc chọn" autocomplete="off"
+                                    oninput="onProductInput(this)" required>
+                            </td>
+                            <td>
+                                <input type="text" class="form-control tskt-label" value="{{ $product->specification ?? '' }}"
+                                    placeholder="-" readonly tabindex="-1">
+                            </td>
+                            <td>
+                                <input type="hidden" name="details[{{ $i }}][uom_id]" class="uom-hidden"
+                                    value="{{ $uomId }}">
+                                <span class="uom-label text-body-secondary small">{{ $uomName }}</span>
+                            </td>
+                            <td>
+                                <input type="number" class="form-control text-end"
+                                    name="details[{{ $i }}][expected_qty]" value="{{ $expectedQty }}" min="0"
+                                    step="1" required oninput="updateTotals()" onchange="onExpectedQtyChange(this)">
+                            </td>
+                            <td>
+                                <input type="number" class="form-control text-end actual-qty-input"
+                                    name="details[{{ $i }}][actual_qty]" value="{{ $actualQty }}" min="0" step="1"
+                                    {{ in_array($tracking, [3,4]) ? 'readonly' : '' }}>
+                            </td>
+                            <td>
+                                @php $selLoc = $locations->firstWhere('id', (int) $locationId); @endphp
+                                <input type="hidden" name="details[{{ $i }}][location_id]"
+                                    class="location-id-hidden" value="{{ $locationId }}">
+                                <input type="text" class="form-control location-input" list="locationDatalist"
+                                    value="{{ $selLoc ? $selLoc->code.($selLoc->name ? ' - '.$selLoc->name : '') : '' }}"
+                                    placeholder="Nhập hoặc chọn" autocomplete="off"
+                                    oninput="onLocationInput(this)" required>
+                            </td>
+                            <td>
+                                @php $selEmp = $employees->firstWhere('id', (int) $receiverId); @endphp
+                                <input type="hidden" name="details[{{ $i }}][receiver_id]"
+                                    class="receiver-id-hidden" value="{{ $receiverId }}">
+                                <input type="text" class="form-control receiver-input" list="employeeDatalist"
+                                    value="{{ $selEmp ? $selEmp->code.' - '.$selEmp->name : '' }}"
+                                    placeholder="Nhập hoặc chọn" autocomplete="off"
+                                    oninput="onReceiverInput(this)" required>
+                            </td>
+                            <td>
+                                <select class="form-select" name="details[{{ $i }}][sn_id]">
+                                    <option value="">- Chọn -</option>
+                                    @foreach($sns as $s)
+                                    <option value="{{ $s->id }}"
+                                        {{ (string) $snId === (string) $s->id ? 'selected' : '' }}>
+                                        {{ $s->code }}
                                     </option>
                                     @endforeach
                                 </select>
                             </td>
+                            {{-- Lot field --}}
                             <td>
-                                <input type="hidden" name="details[{{ $i }}][uom_id]" class="uom-hidden"
-                                    value="{{ $detail->uom_id }}">
-                                <span
-                                    class="uom-label text-body-secondary small">{{ $detail->uom?->name ?? '—' }}</span>
+                                <input type="text"
+                                    class="form-control lot-input {{ in_array($tracking, [1,3]) ? 'bg-body-secondary' : '' }}"
+                                    name="details[{{ $i }}][lot_number]" value="{{ $lotNumber }}"
+                                    placeholder="{{ in_array($tracking, [1,3]) ? '-' : 'Số lot' }}" maxlength="100"
+                                    {{ in_array($tracking, [1,3]) ? 'readonly' : '' }}
+                                    {{ $tracking === 4 ? 'onchange="autoFillLot(this)"' : '' }}>
+                            </td>
+                            {{-- Serial field --}}
+                            <td>
+                                <input type="text"
+                                    class="form-control serial-input {{ in_array($tracking, [1,2]) ? 'bg-body-secondary' : '' }}"
+                                    name="details[{{ $i }}][serial_number]" value="{{ $serialNumber }}"
+                                    placeholder="{{ in_array($tracking, [1,2]) ? '-' : 'Mã serial' }}" maxlength="100"
+                                    {{ in_array($tracking, [1,2]) ? 'readonly' : '' }}>
                             </td>
                             <td>
-                                <input type="number" class="form-control form-control-sm text-end qty-input"
-                                    name="details[{{ $i }}][quantity]" value="{{ $detail->quantity }}" min="0.001"
-                                    step="0.001" required oninput="handleQtyInput(this)">
+                                <input type="text" class="form-control"
+                                    name="details[{{ $i }}][sub_warehouse]" value="{{ $subWarehouse }}"
+                                    maxlength="50">
                             </td>
                             <td>
-                                <select class="form-select form-select-sm location-select"
-                                    name="details[{{ $i }}][location_id]" required onchange="onLocationChange(this)"
-                                    disabled>
-                                    <option value="{{ $detail->location_id }}">⏳ Đang tải...</option>
-                                </select>
+                                <input type="text" class="form-control"
+                                    name="details[{{ $i }}][note]" value="{{ $note }}"
+                                    placeholder="Ghi chú" maxlength="500">
                             </td>
-                            <td>
-                                <input type="hidden" name="details[{{ $i }}][lot_id]" class="lot-id-hidden"
-                                    value="{{ $detail->lot_id ?? '' }}">
-                                <select class="form-select form-select-sm lot-select" disabled>
-                                    <option value="">— Đang tải —</option>
-                                </select>
-                            </td>
-                            <td>
-                                <input type="hidden" name="details[{{ $i }}][serial_id]" class="serial-id-hidden"
-                                    value="{{ $detail->serial_id ?? '' }}">
-                                <select class="form-select form-select-sm serial-select" disabled>
-                                    <option value="">— Đang tải —</option>
-                                </select>
-                            </td>
-                            <td class="text-end small stock-display text-body-secondary"
-                                data-stock="{{ $detail->product?->total_stock ?? 0 }}">
-                                {{ number_format($detail->product?->total_stock ?? 0, 0) }}
-                            </td>
-                            <td>
-                                <input type="text" class="form-control form-control-sm" name="details[{{ $i }}][note]"
-                                    value="{{ $detail->note ?? '' }}" placeholder="Ghi chú..." maxlength="200">
-                            </td>
-                            <td>
-                                <button type="button" class="btn btn-sm btn-outline-danger p-1"
+                            <td class="text-end pe-3">
+                                <button type="button" class="btn btn-sm btn-outline-danger"
                                     onclick="removeRow(this)" title="Xóa dòng">
-                                    <svg class="icon">
-                                        <use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-trash') }}">
-                                        </use>
-                                    </svg>
+                                    <svg class="icon"><use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-trash') }}"></use></svg>
                                 </button>
                             </td>
                         </tr>
                         @endforeach
-                        @endif
 
                     </tbody>
                 </table>
             </div>
 
-            <div id="emptyDetail" class="text-center text-body-secondary py-5"
-                style="{{ ($isEdit && $issue->details->count()) ? 'display:none' : '' }}">
+            {{-- Empty state --}}
+            <div id="emptyDetail" class="text-center text-body-secondary py-5" style="display:none">
                 <svg class="icon icon-3xl d-block mx-auto mb-2 opacity-25">
-                    <use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-list') }}"></use>
+                    <use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-list-rich') }}"></use>
                 </svg>
-                Chưa có hàng hóa nào.<br>
-                <button type="button" class="btn btn-sm btn-outline-primary mt-2" onclick="addRow()">
-                    <svg class="icon me-1">
-                        <use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-plus') }}"></use>
-                    </svg>
-                    Thêm dòng đầu tiên
-                </button>
+                Chưa có vật tư nào.
             </div>
         </div>
 
-        <div class="card-footer text-body-secondary small d-flex justify-content-between">
-            <span>Tổng số dòng: <strong id="rowCount">{{ $isEdit ? $issue->details->count() : 0 }}</strong></span>
-            <span>Tổng SL xuất: <strong id="totalQty">0</strong></span>
+        <div class="card-footer d-flex justify-content-between align-items-center py-2">
+            <small class="text-body-secondary">
+                Tổng dòng: <strong id="rowCount">{{ $isEdit ? $issue->details->count() : 0 }}</strong>
+            </small>
         </div>
     </div>
 
-    {{-- Cảnh báo tồn kho --}}
-    <div class="alert alert-warning d-none mt-3" id="stockWarning">
-        <svg class="icon me-1">
-            <use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-warning') }}"></use>
-        </svg>
-        <strong>Cảnh báo:</strong> Một số dòng có số lượng xuất vượt quá tồn kho hiện tại.
-    </div>
     {{-- ── NÚT LƯU ── --}}
     <div class="d-flex gap-2 justify-content-end mt-3">
-        <a href="{{ route('issues.index') }}" class="btn btn-outline-secondary">Hủy</a>
+        <a href="{{ route('stock-movements.index') }}" class="btn btn-outline-secondary">Hủy</a>
         @if(!$isEdit)
         <button type="submit" class="btn btn-outline-primary" name="action" value="save_and_new">
-            <svg class="icon me-1">
-                <use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-plus') }}"></use>
-            </svg>
-            Lưu & Tạo phiếu mới
+            <svg class="icon me-1"><use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-plus') }}"></use></svg>
+            Lưu & Thêm mới
         </button>
         @endif
         <button type="submit" class="btn btn-primary" name="action" value="save">
             <svg class="icon me-1">
                 <use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-save') }}"></use>
             </svg>
-            {{ $isEdit ? 'Cập nhật phiếu' : 'Lưu phiếu xuất' }}
+            Lưu
         </button>
-    </div>
-    </div>
     </div>
 
 </form>
@@ -294,93 +317,313 @@ $action = $isEdit ? route('issues.update', $issue->id) : route('issues.store');
 @push('scripts')
 <script>
 const PRODUCTS = @json($productsJson);
-const LOCATIONS = @json($locationsJson);
+const LOCATIONS = @json($locationsJson ?? []);
+const EMPLOYEES = @json($employeesJson ?? []);
+const SNS = @json($snsJson ?? []);
 
-// Lots indexed by product_id
-const LOTS = @json($lots ?? []);
+// TRACKING constants (mirrors PHP)
+const TRACKING_NONE = 1;
+const TRACKING_LOT = 2;
+const TRACKING_SERIAL = 3;
+const TRACKING_LOT_AND_SERIAL = 4;
 
-let rowIndex = <?php echo $isEdit ? $issue->details->count() : 0; ?>;
+let rowIndex = <?php echo $rows->count(); ?>;
 
-// ── Template dòng chi tiết ─────────────────────────────────────────
-function rowTemplate(i) {
-    const productOptions = PRODUCTS.map(p =>
-        `<option value="${p.id}" data-uom="${p.uom}" data-uom-id="${p.uom_id}" data-stock="${p.stock}" data-tracking="${p.tracking_type}">
-      ${p.code} — ${p.name}
-    </option>`
-    ).join('');
+// ── Áp tracking lên một <tr> ──────────────────────────────────────
+function applyTracking(tr, tracking) {
+    const lotInput = tr.querySelector('.lot-input');
+    const serialInput = tr.querySelector('.serial-input');
+    const actualInput = tr.querySelector('.actual-qty-input');
+    if (!lotInput || !serialInput) return;
 
-    const locationOptions = LOCATIONS.map(l =>
-        `<option value="${l.id}">${l.code}${l.name ? ' — ' + l.name : ''}</option>`
-    ).join('');
+    // Reset
+    [lotInput, serialInput].forEach(el => {
+        el.readOnly = false;
+        el.classList.remove('bg-body-secondary', 'is-invalid');
+    });
 
-    return `
-  <tr data-tracking="1">
-    <td class="text-center text-body-secondary small">${i + 1}</td>
-    <td>
-      <select class="form-select form-select-sm product-select"
-              name="details[${i}][product_id]" required
-              onchange="onProductChange(this)">
-        <option value="">— Chọn hàng hóa —</option>
-        ${productOptions}
-      </select>
-    </td>
-    <td>
-      <input type="hidden" name="details[${i}][uom_id]" class="uom-hidden" value="">
-      <span class="uom-label text-body-secondary small">—</span>
-    </td>
-    <td>
-      <input type="number" class="form-control form-control-sm text-end qty-input"
-             name="details[${i}][quantity]"
-             min="0.001" step="0.001" required placeholder="0"
-             oninput="handleQtyInput(this)">
-    </td>
-    <td>
-      <select class="form-select form-select-sm location-select" name="details[${i}][location_id]"
-              required onchange="onLocationChange(this)">
-        <option value="">— Chọn sản phẩm trước —</option>
-      </select>
-    </td>
-    <td>
-      <input type="hidden" name="details[${i}][lot_id]" class="lot-id-hidden" value="">
-      <select class="form-select form-select-sm lot-select">
-        <option value="">— Chọn vị trí trước —</option>
-      </select>
-    </td>
-    <td>
-      <input type="hidden" name="details[${i}][serial_id]" class="serial-id-hidden" value="">
-      <select class="form-select form-select-sm serial-select">
-        <option value="">— Chọn vị trí trước —</option>
-      </select>
-    </td>
-    <td class="text-end small stock-display text-body-secondary">—</td>
-    <td>
-      <input type="text" class="form-control form-control-sm"
-             name="details[${i}][note]"
-             placeholder="Ghi chú..." maxlength="200">
-    </td>
-    <td>
-      <button type="button" class="btn btn-sm btn-outline-danger p-1"
-              onclick="removeRow(this)" title="Xóa dòng">
-        <svg class="icon"><use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-trash') }}"></use></svg>
-      </button>
-    </td>
-  </tr>`;
+    switch (tracking) {
+        case TRACKING_NONE:
+            // Khóa cả 2
+            lotInput.readOnly = true;
+            lotInput.value = '';
+            lotInput.placeholder = '-';
+            serialInput.readOnly = true;
+            serialInput.value = '';
+            serialInput.placeholder = '-';
+            lotInput.classList.add('bg-body-secondary');
+            serialInput.classList.add('bg-body-secondary');
+            if (actualInput) {
+                actualInput.readOnly = false;
+                actualInput.classList.remove('bg-body-secondary');
+            }
+            break;
+
+        case TRACKING_LOT:
+            // Mở lot, khóa serial
+            lotInput.placeholder = 'Số lot / batch';
+            serialInput.readOnly = true;
+            serialInput.value = '';
+            serialInput.placeholder = '-';
+            serialInput.classList.add('bg-body-secondary');
+            if (actualInput) {
+                actualInput.readOnly = false;
+                actualInput.classList.remove('bg-body-secondary');
+            }
+            break;
+
+        case TRACKING_SERIAL:
+            // Khóa lot, mở serial; actual_qty mặc định = 1, cho phép sửa
+            lotInput.readOnly = true;
+            lotInput.value = '';
+            lotInput.placeholder = '-';
+            lotInput.classList.add('bg-body-secondary');
+            serialInput.placeholder = 'Mã serial';
+            if (actualInput && !actualInput.value) {
+                actualInput.value = 1;
+            }
+            if (actualInput) {
+                actualInput.readOnly = false;
+                actualInput.classList.remove('bg-body-secondary');
+            }
+            break;
+
+        case TRACKING_LOT_AND_SERIAL:
+            // Mở cả 2; actual_qty mặc định = 1, cho phép sửa
+            lotInput.placeholder = 'Số lot';
+            serialInput.placeholder = 'Mã serial';
+            if (actualInput && !actualInput.value) {
+                actualInput.value = 1;
+            }
+            if (actualInput) {
+                actualInput.readOnly = false;
+                actualInput.classList.remove('bg-body-secondary');
+            }
+            break;
+    }
 }
 
-window.addRow = function() {
-    document.getElementById('detailBody').insertAdjacentHTML('beforeend', rowTemplate(rowIndex));
-    rowIndex++;
+// ── Tìm dữ liệu theo nhãn hiển thị (dùng cho input + datalist) ─────
+function findProductByLabel(label) {
+    return PRODUCTS.find(p => `${p.code} - ${p.name}` === label);
+}
+function findLocationByLabel(label) {
+    return LOCATIONS.find(l => l.code === label || `${l.code}${l.name ? ' - ' + l.name : ''}` === label);
+}
+function findEmployeeByLabel(label) {
+    return EMPLOYEES.find(e => `${e.code} - ${e.name}` === label);
+}
+
+// ── Khi gõ/chọn Tên vật tư ─────────────────────────────────────────
+function onProductInput(input) {
+    const tr = input.closest('tr');
+    const hidden = tr.querySelector('.product-id-hidden');
+    const p = findProductByLabel(input.value.trim());
+
+    if (p) {
+        hidden.value = p.id;
+        input.classList.remove('is-invalid');
+        input.dataset.tracking = p.tracking_type;
+
+        tr.querySelector('.uom-label').textContent = p.uom || '-';
+        tr.querySelector('.uom-hidden').value = p.uom_id || '';
+        tr.querySelector('.tskt-label').value = p.specification ?? '';
+
+        applyTracking(tr, parseInt(p.tracking_type) || TRACKING_NONE);
+    } else {
+        hidden.value = '';
+        delete input.dataset.tracking;
+        input.classList.toggle('is-invalid', input.value.trim() !== '');
+        tr.querySelector('.uom-label').textContent = '-';
+        tr.querySelector('.uom-hidden').value = '';
+        tr.querySelector('.tskt-label').value = '';
+    }
+}
+
+// ── Khi gõ/chọn Vị trí ───────────────────────────────────────────
+function onLocationInput(input) {
+    const tr = input.closest('tr');
+    const hidden = tr.querySelector('.location-id-hidden');
+    const l = findLocationByLabel(input.value.trim());
+
+    if (l) {
+        hidden.value = l.id;
+        input.classList.remove('is-invalid');
+    } else {
+        hidden.value = '';
+        input.classList.toggle('is-invalid', input.value.trim() !== '');
+    }
+}
+
+// ── Khi gõ/chọn Người nhận ─────────────────────────────────────────
+function onReceiverInput(input) {
+    const tr = input.closest('tr');
+    const hidden = tr.querySelector('.receiver-id-hidden');
+    const e = findEmployeeByLabel(input.value.trim());
+
+    if (e) {
+        hidden.value = e.id;
+        input.classList.remove('is-invalid');
+    } else {
+        hidden.value = '';
+        input.classList.toggle('is-invalid', input.value.trim() !== '');
+    }
+}
+
+// ── Auto-fill lot cho các dòng cùng sản phẩm (tracking=4) ─────────
+function autoFillLot(lotInput) {
+    const tr = lotInput.closest('tr');
+    const prodId = tr.querySelector('.product-id-hidden')?.value;
+    const lotValue = lotInput.value.trim();
+    if (!prodId || !lotValue) return;
+
+    // Điền lot_number vào tất cả dòng cùng product_id, cùng tracking=4
+    document.querySelectorAll('#detailBody tr').forEach(row => {
+        const rowProdId = row.querySelector('.product-id-hidden')?.value;
+        if (!rowProdId || rowProdId !== prodId || row === tr) return;
+        const rowProductInput = row.querySelector('.product-input');
+        if (parseInt(rowProductInput?.dataset?.tracking) !== TRACKING_LOT_AND_SERIAL) return;
+        const rowLot = row.querySelector('.lot-input');
+        if (rowLot && !rowLot.readOnly && !rowLot.value.trim()) {
+            rowLot.value = lotValue;
+        }
+    });
+}
+
+// ── Khi nhập SL dự kiến (tự nhân dòng cho Serial) ─────────────────
+function onExpectedQtyChange(input) {
+    updateTotals();
+    const tr = input.closest('tr');
+    const productInput = tr.querySelector('.product-input');
+    const tracking = parseInt(productInput?.dataset?.tracking) || TRACKING_NONE;
+    const qty = parseInt(input.value) || 1;
+
+    if (!([TRACKING_SERIAL, TRACKING_LOT_AND_SERIAL].includes(tracking)) || qty <= 1) return;
+
+    const locVal = tr.querySelector('.location-input').value;
+    const locIdVal = tr.querySelector('.location-id-hidden').value;
+    const receiverVal = tr.querySelector('.receiver-input').value;
+    const receiverIdVal = tr.querySelector('.receiver-id-hidden').value;
+    const snVal = tr.querySelector('select[name$="[sn_id]"]').value;
+    const subWarehouseVal = tr.querySelector('input[name$="[sub_warehouse]"]').value;
+    const noteVal = tr.querySelector('input[name$="[note]"]').value;
+    const lotVal = tr.querySelector('.lot-input')?.value ?? '';
+    const prodVal = productInput.value;
+
+    input.value = 1;
+
+    for (let n = 1; n < qty; n++) {
+        document.getElementById('detailBody').insertAdjacentHTML('beforeend', rowTemplate(rowIndex));
+        const newTr = document.getElementById('detailBody').lastElementChild;
+        rowIndex++;
+
+        const newProductInput = newTr.querySelector('.product-input');
+        newProductInput.value = prodVal;
+        onProductInput(newProductInput);
+
+        newTr.querySelector('.location-input').value = locVal;
+        newTr.querySelector('.location-id-hidden').value = locIdVal;
+        newTr.querySelector('.receiver-input').value = receiverVal;
+        newTr.querySelector('.receiver-id-hidden').value = receiverIdVal;
+        newTr.querySelector('select[name$="[sn_id]"]').value = snVal;
+        newTr.querySelector('input[name$="[sub_warehouse]"]').value = subWarehouseVal;
+        newTr.querySelector('input[name$="[note]"]').value = noteVal;
+        newTr.querySelector('input[name$="[expected_qty]"]').value = 1;
+
+        // Điền sẵn lot nếu tracking=4
+        if (tracking === TRACKING_LOT_AND_SERIAL && lotVal) {
+            const newLot = newTr.querySelector('.lot-input');
+            if (newLot) newLot.value = lotVal;
+        }
+    }
+
     syncRowNumbers();
     toggleEmptyState();
     updateTotals();
 }
 
-window.removeRow = function(btn) {
+// ── Template dòng mới ─────────────────────────────────────────────
+function rowTemplate(i) {
+    const snOptions = SNS.map(s =>
+        `<option value="${s.id}">${s.code}</option>`
+    ).join('');
+
+    return `
+<tr>
+  <td class="text-center text-body-secondary small">${i + 1}</td>
+  <td>
+    <input type="hidden" name="details[${i}][product_id]" class="product-id-hidden" value="">
+    <input type="text" class="form-control product-input" list="productDatalist"
+           placeholder="Nhập hoặc chọn" autocomplete="off" oninput="onProductInput(this)" required>
+  </td>
+  <td>
+    <input type="text" class="form-control tskt-label" placeholder="-" readonly tabindex="-1">
+  </td>
+  <td>
+    <input type="hidden" name="details[${i}][uom_id]" class="uom-hidden" value="">
+    <span class="uom-label text-body-secondary small">-</span>
+  </td>
+  <td>
+    <input type="number" class="form-control text-end" name="details[${i}][expected_qty]"
+           min="0" step="1" required placeholder="0"
+           oninput="updateTotals()" onchange="onExpectedQtyChange(this)">
+  </td>
+  <td>
+    <input type="number" class="form-control text-end actual-qty-input" name="details[${i}][actual_qty]"
+           min="0" step="1" placeholder="0">
+  </td>
+  <td>
+    <input type="hidden" name="details[${i}][location_id]" class="location-id-hidden" value="">
+    <input type="text" class="form-control location-input" list="locationDatalist"
+           placeholder="Nhập hoặc chọn" autocomplete="off" oninput="onLocationInput(this)" required>
+  </td>
+  <td>
+    <input type="hidden" name="details[${i}][receiver_id]" class="receiver-id-hidden" value="">
+    <input type="text" class="form-control receiver-input" list="employeeDatalist"
+           placeholder="Nhập hoặc chọn" autocomplete="off" oninput="onReceiverInput(this)" required>
+  </td>
+  <td>
+    <select class="form-select" name="details[${i}][sn_id]">
+      <option value="">- Chọn -</option>
+      ${snOptions}
+    </select>
+  </td>
+  <td>
+    <input type="text" class="form-control lot-input bg-body-secondary"
+           name="details[${i}][lot_number]" placeholder="-" maxlength="100" readonly
+           oninput="clearFieldError(this)" onchange="autoFillLot(this)">
+  </td>
+  <td>
+    <input type="text" class="form-control serial-input bg-body-secondary"
+           name="details[${i}][serial_number]" placeholder="-" maxlength="100" readonly
+           oninput="clearFieldError(this)">
+  </td>
+  <td>
+    <input type="text" class="form-control" name="details[${i}][sub_warehouse]" maxlength="50">
+  </td>
+  <td>
+    <input type="text" class="form-control" name="details[${i}][note]" placeholder="Ghi chú" maxlength="500">
+  </td>
+  <td class="text-end pe-3">
+    <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeRow(this)" title="Xóa dòng">
+      <svg class="icon"><use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-trash') }}"></use></svg>
+    </button>
+  </td>
+</tr>`;
+}
+
+function addRow() {
+    document.getElementById('detailBody').insertAdjacentHTML('beforeend', rowTemplate(rowIndex++));
+    syncRowNumbers();
+    toggleEmptyState();
+    updateTotals();
+}
+
+function removeRow(btn) {
     btn.closest('tr').remove();
     syncRowNumbers();
     toggleEmptyState();
     updateTotals();
-    checkAllStock();
 }
 
 function syncRowNumbers() {
@@ -396,496 +639,135 @@ function toggleEmptyState() {
 }
 
 function updateTotals() {
+    const el = document.getElementById('totalExpected');
+    if (!el) return;
     let total = 0;
-    document.querySelectorAll('input[name$="[quantity]"]').forEach(inp => {
-        total += parseFloat(inp.value) || 0;
+    document.querySelectorAll('input[name$="[expected_qty]"]').forEach(inp => total += parseFloat(inp.value) || 0);
+    el.textContent = total.toLocaleString('vi-VN', {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 3
     });
-    document.getElementById('totalQty').textContent =
-        total.toLocaleString('vi-VN', {
-            minimumFractionDigits: 0,
-            maximumFractionDigits: 3
-        });
 }
 
-// ── Khi chọn hàng hóa → điền ĐVT, tồn kho tổng, fetch vị trí/lot ─
-window.onProductChange = function(sel) {
-    const opt = sel.options[sel.selectedIndex];
-    const tr = sel.closest('tr');
-    const productId = parseInt(opt.value);
-
-    tr.dataset.tracking = opt.dataset.tracking || 1;
-
-    // ĐVT
-    tr.querySelector('.uom-label').textContent = opt.dataset.uom || '—';
-    tr.querySelector('.uom-hidden').value = opt.dataset.uomId || '';
-
-    // Tồn kho tổng (cột hiển thị)
-    const stock = parseFloat(opt.dataset.stock) || 0;
-    const stockEl = tr.querySelector('.stock-display');
-    stockEl.textContent = stock.toLocaleString('vi-VN');
-    stockEl.dataset.stock = stock;
-
-    // Reset location & lot
-    const locationSel = tr.querySelector('.location-select');
-    const lotSel = tr.querySelector('.lot-select');
-    locationSel.innerHTML = '<option value="">⏳ Đang tải vị trí...</option>';
-    locationSel.disabled = true;
-    lotSel.innerHTML = '<option value="">— Chọn vị trí trước —</option>';
-
-    if (!productId) {
-        locationSel.innerHTML = '<option value="">— Chọn sản phẩm trước —</option>';
-        locationSel.disabled = false;
-        return;
-    }
-
-    // Fetch vị trí có tồn kho khả dụng
-    fetch(`/issues/stock-locations/${productId}`)
-        .then(r => r.json())
-        .then(stocks => {
-            // Gom nhóm theo location_id
-            const locMap = {};
-            stocks.forEach(s => {
-                if (!locMap[s.location_id]) {
-                    locMap[s.location_id] = {
-                        id: s.location_id,
-                        code: s.location_code,
-                        name: s.location_name,
-                        available_qty: 0,
-                        lots: [],
-                        serials: [],
-                    };
-                }
-                locMap[s.location_id].available_qty += s.available_qty;
-                if (s.lot_id) {
-                    locMap[s.location_id].lots.push({
-                        id: s.lot_id,
-                        lot_number: s.lot_number,
-                        expiry_date: s.expiry_date,
-                        available_qty: s.available_qty,
-                    });
-                }
-                if (s.serial_id) {
-                    locMap[s.location_id].serials.push({
-                        id: s.serial_id,
-                        serial_number: s.serial_number,
-                        available_qty: s.available_qty,
-                        lot_id: s.lot_id ? parseInt(s.lot_id) : null,
-                    });
-                }
-            });
-
-            // Lưu stockMap vào tr để dùng khi đổi location
-            tr.dataset.stockMap = JSON.stringify(locMap);
-
-            const locs = Object.values(locMap);
-            if (locs.length === 0) {
-                locationSel.innerHTML = '<option value="">⚠ Không có tồn kho khả dụng</option>';
-            } else {
-                locationSel.innerHTML =
-                    '<option value="">— Chọn vị trí lấy hàng —</option>' +
-                    locs.map(l =>
-                        `<option value="${l.id}">` +
-                        `${l.code}${l.name ? ' — ' + l.name : ''} ` +
-                        `(Khả dụng: ${l.available_qty.toLocaleString('vi-VN')})` +
-                        `</option>`
-                    ).join('');
-
-                // Tự động chọn vị trí đầu tiên (gợi ý FIFO/FEFO đã được sort ở service)
-                if (locs.length === 1) {
-                    locationSel.value = locs[0].id;
-                    onLocationChange(locationSel);
-                }
-            }
-            locationSel.disabled = false;
-        })
-        .catch(() => {
-            locationSel.innerHTML = '<option value="">— Lỗi tải vị trí —</option>';
-            locationSel.disabled = false;
-        });
-
-    checkStock(tr.querySelector('.qty-input'));
-}
-
-
-// ── Khi chọn vị trí → cập nhật lot/serial tương ứng ──────────────
-window.onLocationChange = function(locationSel) {
-    const tr = locationSel.closest('tr');
-    const lotSel = tr.querySelector('.lot-select');
-    const serialSel = tr.querySelector('.serial-select');
-    const lotHidden = tr.querySelector('.lot-id-hidden');
-    const serialHidden = tr.querySelector('.serial-id-hidden');
-    const locationId = parseInt(locationSel.value);
-    const stockMap = tr.dataset.stockMap ? JSON.parse(tr.dataset.stockMap) : {};
-
-    if (lotHidden) lotHidden.value = '';
-    if (serialHidden) serialHidden.value = '';
-
-    if (!locationId || !stockMap[locationId]) {
-        lotSel.innerHTML = '<option value="">— Không chọn —</option>';
-        serialSel.innerHTML = '<option value="">— Không chọn —</option>';
-        return;
-    }
-
-    const lots = stockMap[locationId].lots || [];
-    const serials = stockMap[locationId].serials || [];
-
-    // Lot / Batch
-    lotSel.innerHTML = '<option value="">— Không chọn —</option>' +
-        lots.map(l =>
-            `<option value="${l.id}">${l.lot_number}` +
-            `${l.expiry_date ? ' · HSD: ' + l.expiry_date : ''}` +
-            ` · Tồn: ${l.available_qty.toLocaleString('vi-VN')}</option>`
-        ).join('');
-
-    const tracking = parseInt(tr.dataset.tracking) || 1;
-
-    if (tracking === 4) {
-        // LotAndSerial: serial phụ thuộc vào lot → để trống, chờ chọn lot
-        serialSel.innerHTML = '<option value="">— Chọn lot trước —</option>';
-    } else {
-        // Tracking khác: hiện tất cả serial
-        serialSel.innerHTML = '<option value="">— Không chọn —</option>' +
-            serials.map(s =>
-                `<option value="${s.id}">${s.serial_number} · Tồn: ${s.available_qty.toLocaleString('vi-VN')}</option>`
-            ).join('');
-    }
-
-    // Tự động chọn nếu chỉ có đúng 1 lot
-    if (lots.length === 1) {
-        lotSel.selectedIndex = 1;
-        if (lotHidden) lotHidden.value = lots[0].id;
-        lotSel.dispatchEvent(new Event('change', {
-            bubbles: true
-        })); // ← trigger filter serial cho tracking=4
-    }
-    // Tự động chọn nếu chỉ có đúng 1 serial (chỉ áp dụng tracking != 4)
-    if (tracking !== 4 && serials.length === 1) {
-        serialSel.selectedIndex = 1;
-        if (serialHidden) serialHidden.value = serials[0].id;
-        serialSel.dispatchEvent(new Event('change'));
+function clearFieldError(input) {
+    input.classList.remove('is-invalid');
+    if (!document.querySelector('.lot-input.is-invalid, .serial-input.is-invalid')) {
+        document.getElementById('lotSerialAlertContainer').innerHTML = '';
     }
 }
 
-// ── Nạp dữ liệu vị trí/lot/serial cho các dòng đã có sẵn (Edit) ───
-function initExistingRow(tr) {
-    const productSel = tr.querySelector('.product-select');
-    const productId = parseInt(productSel.value);
-    if (!productId) return;
+// ── Client-side validate Lot/Serial ───────────────────────────────
+function validateLotSerial() {
+    const errors = [];
 
-    const opt = productSel.options[productSel.selectedIndex];
-    tr.dataset.tracking = opt.dataset.tracking || 1;
+    // ── Bước 1: validate từng dòng bắt buộc nhập lot/serial ──────────
+    document.querySelectorAll('#detailBody tr').forEach((tr, i) => {
+        const productInput = tr.querySelector('.product-input');
+        const tracking = parseInt(productInput?.dataset?.tracking) || TRACKING_NONE;
+        const lotInput = tr.querySelector('.lot-input');
+        const serialInput = tr.querySelector('.serial-input');
+        [lotInput, serialInput].forEach(el => el?.classList.remove('is-invalid'));
 
-    const locationSel = tr.querySelector('.location-select');
-    const lotSel = tr.querySelector('.lot-select');
-    const serialSel = tr.querySelector('.serial-select');
-
-    const currentLocation = tr.dataset.currentLocation;
-    const currentLotId = tr.dataset.currentLotId;
-    const currentSerialId = tr.dataset.currentSerialId;
-
-    fetch(`/issues/stock-locations/${productId}`)
-        .then(r => r.json())
-        .then(stocks => {
-            const locMap = {};
-            stocks.forEach(s => {
-                if (!locMap[s.location_id]) {
-                    locMap[s.location_id] = {
-                        id: s.location_id,
-                        code: s.location_code,
-                        name: s.location_name,
-                        available_qty: 0,
-                        lots: [],
-                        serials: [],
-                    };
-                }
-                locMap[s.location_id].available_qty += s.available_qty;
-                if (s.lot_id) {
-                    locMap[s.location_id].lots.push({
-                        id: s.lot_id,
-                        lot_number: s.lot_number,
-                        expiry_date: s.expiry_date,
-                        available_qty: s.available_qty,
-                    });
-                }
-                if (s.serial_id) {
-                    locMap[s.location_id].serials.push({
-                        id: s.serial_id,
-                        serial_number: s.serial_number,
-                        available_qty: s.available_qty,
-                        lot_id: s.lot_id ? parseInt(s.lot_id) : null,
-                    });
-                }
-            });
-
-            // Đảm bảo vị trí/lot/serial hiện tại của dòng luôn xuất hiện trong danh sách
-            if (currentLocation && !locMap[currentLocation]) {
-                locMap[currentLocation] = {
-                    id: parseInt(currentLocation),
-                    code: '(vị trí hiện tại)',
-                    name: '',
-                    available_qty: 0,
-                    lots: [],
-                    serials: [],
-                };
+        if (tracking === TRACKING_LOT && !lotInput.value.trim()) {
+            lotInput.classList.add('is-invalid');
+            errors.push(`Dòng ${i+1}: Hàng theo <strong>Lô</strong> - chưa nhập Số Lot.`);
+        } else if (tracking === TRACKING_SERIAL && !serialInput.value.trim()) {
+            serialInput.classList.add('is-invalid');
+            errors.push(`Dòng ${i+1}: Hàng theo <strong>Serial</strong> - chưa nhập Mã Serial.`);
+        } else if (tracking === TRACKING_LOT_AND_SERIAL) {
+            if (!lotInput.value.trim()) {
+                lotInput.classList.add('is-invalid');
+                errors.push(`Dòng ${i+1}: Hàng theo <strong>Lô+Serial</strong> - chưa nhập Số Lot.`);
             }
-            if (currentLocation && currentLotId &&
-                !locMap[currentLocation].lots.find(l => String(l.id) === String(currentLotId))) {
-                locMap[currentLocation].lots.push({
-                    id: parseInt(currentLotId),
-                    lot_number: tr.dataset.currentLotNumber || `Lot #${currentLotId}`,
-                    expiry_date: null,
-                    available_qty: 0,
-                });
-            }
-            if (currentLocation && currentSerialId &&
-                !locMap[currentLocation].serials.find(s => String(s.id) === String(currentSerialId))) {
-                locMap[currentLocation].serials.push({
-                    id: parseInt(currentSerialId),
-                    serial_number: tr.dataset.currentSerialNumber || `Serial #${currentSerialId}`,
-                    available_qty: 0,
-                });
-            }
-
-            tr.dataset.stockMap = JSON.stringify(locMap);
-
-            const locs = Object.values(locMap);
-            locationSel.innerHTML = locs.map(l =>
-                `<option value="${l.id}">${l.code}${l.name ? ' — ' + l.name : ''} ` +
-                `(Khả dụng: ${l.available_qty.toLocaleString('vi-VN')})</option>`
-            ).join('');
-            locationSel.disabled = false;
-
-            if (currentLocation) {
-                locationSel.value = currentLocation;
-
-                // Populate lot/serial options mà không reset hidden fields
-                const stockMap = tr.dataset.stockMap ? JSON.parse(tr.dataset.stockMap) : {};
-                const locationId = parseInt(currentLocation);
-                const lots = stockMap[locationId]?.lots || [];
-                const serials = stockMap[locationId]?.serials || [];
-
-                const lotHidden = tr.querySelector('.lot-id-hidden');
-                const serialHidden = tr.querySelector('.serial-id-hidden');
-
-                lotSel.innerHTML = '<option value="">— Không chọn —</option>' +
-                    lots.map(l =>
-                        `<option value="${l.id}">${l.lot_number}` +
-                        `${l.expiry_date ? ' · HSD: ' + l.expiry_date : ''}` +
-                        ` · Tồn: ${l.available_qty.toLocaleString('vi-VN')}</option>`
-                    ).join('');
-
-                const tracking = parseInt(tr.dataset.tracking) || 1;
-
-                if (tracking === 4) {
-                    // tracking=4 (LotAndSerial): serial phụ thuộc lot → để trống, chờ dispatch lot change
-                    serialSel.innerHTML = '<option value="">— Chọn lot trước —</option>';
-                } else {
-                    serialSel.innerHTML = '<option value="">— Không chọn —</option>' +
-                        serials.map(s =>
-                            `<option value="${s.id}">${s.serial_number} · Tồn: ${s.available_qty.toLocaleString('vi-VN')}</option>`
-                        ).join('');
-                }
-
-                if (currentLotId) {
-                    lotSel.value = currentLotId;
-                    if (lotHidden) lotHidden.value = currentLotId;
-                    // Dispatch change để trigger filter serial (phải bubble để delegated listener bắt được)
-                    lotSel.dispatchEvent(new Event('change', {
-                        bubbles: true
-                    }));
-                }
-                if (tracking !== 4 && currentSerialId) {
-                    serialSel.value = currentSerialId;
-                    if (serialHidden) serialHidden.value = currentSerialId;
-                }
-            }
-            lotSel.disabled = false;
-            serialSel.disabled = false;
-        })
-        .catch(() => {
-            locationSel.innerHTML = '<option value="">— Lỗi tải vị trí —</option>';
-            locationSel.disabled = false;
-            lotSel.disabled = false;
-            serialSel.disabled = false;
-        });
-}
-
-// ── Khi chọn Lot/Batch hoặc Serial → cập nhật hidden fields ───────
-document.addEventListener('change', function(e) {
-    if (e.target.classList.contains('lot-select')) {
-        const tr = e.target.closest('tr');
-        const lotHidden = tr.querySelector('.lot-id-hidden');
-        const serialSel = tr.querySelector('.serial-select');
-        const serialHidden = tr.querySelector('.serial-id-hidden');
-        const selectedLotId = parseInt(e.target.value) || null;
-
-        if (lotHidden) lotHidden.value = e.target.value;
-
-        // Reset serial khi đổi lot
-        if (serialHidden) serialHidden.value = '';
-
-        // Lọc serial theo lot vừa chọn (tracking=4)
-        const tracking = parseInt(tr.dataset.tracking) || 1;
-        if (tracking === 4 && serialSel) {
-            const locationSel = tr.querySelector('.location-select');
-            const locationId = parseInt(locationSel?.value) || null;
-            const stockMap = tr.dataset.stockMap ? JSON.parse(tr.dataset.stockMap) : {};
-            const allSerials = stockMap[locationId]?.serials || [];
-
-            // Mỗi serial trong stockMap cần có lot_id — xem phần AJAX endpoint bên dưới
-            const filtered = selectedLotId ?
-                allSerials.filter(s => s.lot_id === selectedLotId) :
-                allSerials;
-
-            serialSel.innerHTML = '<option value="">— Chọn serial —</option>' +
-                filtered.map(s =>
-                    `<option value="${s.id}">${s.serial_number} · Tồn: ${s.available_qty.toLocaleString('vi-VN')}</option>`
-                ).join('');
-            serialSel.disabled = false;
-
-            // Tự động chọn nếu chỉ còn 1 serial
-            if (filtered.length === 1) {
-                serialSel.selectedIndex = 1;
-                if (serialHidden) serialHidden.value = filtered[0].id;
+            if (!serialInput.value.trim()) {
+                serialInput.classList.add('is-invalid');
+                errors.push(`Dòng ${i+1}: Hàng theo <strong>Lô+Serial</strong> - chưa nhập Mã Serial.`);
             }
         }
-    }
-    if (e.target.classList.contains('serial-select')) {
-        const tr = e.target.closest('tr');
-        const serialHidden = tr.querySelector('.serial-id-hidden');
-        if (serialHidden) serialHidden.value = e.target.value;
-        checkDuplicateSerials();
-    }
-});
+    });
 
-// ── SL hàng quản lý theo Serial → tự sinh thêm dòng (mỗi dòng = 1 serial) ──
-window.handleQtyInput = function(qtyInput) {
-    const tr = qtyInput.closest('tr');
-    const tracking = parseInt(tr.dataset.tracking) || 1;
-    const isSerialManaged = (tracking === 3 || tracking === 4); // SERIAL hoặc LOT+SERIAL
+    // ── Bước 2: kiểm tra serial trùng trong cùng phiếu (theo product_id) ──
+    const serialMap = {}; // { product_id: { serial_value: rowIndex } }
+    document.querySelectorAll('#detailBody tr').forEach((tr, i) => {
+        const productId = tr.querySelector('.product-id-hidden')?.value;
+        const serialInput = tr.querySelector('.serial-input');
+        const serialVal = serialInput?.value.trim();
+        if (!productId || !serialVal) return;
 
-    if (isSerialManaged) {
-        const qty = parseInt(qtyInput.value) || 0;
-
-        if (qty > 1) {
-            const productSel = tr.querySelector('.product-select');
-            const productOpt = productSel.options[productSel.selectedIndex];
-            const locationSel = tr.querySelector('.location-select');
-            const locationVal = locationSel.value;
-            const stockMapStr = tr.dataset.stockMap || '';
-
-            qtyInput.value = 1;
-
-            for (let n = 1; n < qty; n++) {
-                addRow();
-                const newTr = document.getElementById('detailBody').lastElementChild;
-
-                // Copy hàng hóa, ĐVT, tồn, tracking
-                const newProductSel = newTr.querySelector('.product-select');
-                newProductSel.value = productSel.value;
-                newTr.querySelector('.uom-label').textContent = productOpt.dataset.uom || '—';
-                newTr.querySelector('.uom-hidden').value = productOpt.dataset.uomId || '';
-                const stockEl = newTr.querySelector('.stock-display');
-                stockEl.textContent = (parseFloat(productOpt.dataset.stock) || 0).toLocaleString('vi-VN');
-                stockEl.dataset.stock = productOpt.dataset.stock || 0;
-                newTr.dataset.tracking = tracking;
-                newTr.querySelector('.qty-input').value = 1;
-
-                // Copy danh sách vị trí/lot/serial đã fetch (không gọi lại API)
-                if (stockMapStr) {
-                    newTr.dataset.stockMap = stockMapStr;
-                    const locMap = JSON.parse(stockMapStr);
-                    const locs = Object.values(locMap);
-                    const newLocationSel = newTr.querySelector('.location-select');
-                    newLocationSel.innerHTML =
-                        '<option value="">— Chọn vị trí lấy hàng —</option>' +
-                        locs.map(l =>
-                            `<option value="${l.id}">${l.code}${l.name ? ' — ' + l.name : ''} ` +
-                            `(Khả dụng: ${l.available_qty.toLocaleString('vi-VN')})</option>`
-                        ).join('');
-                    newLocationSel.disabled = false;
-
-                    if (locationVal) {
-                        newLocationSel.value = locationVal;
-                        onLocationChange(newLocationSel);
-                    }
-                }
-            }
-        }
-    }
-
-    checkStock(qtyInput);
-    updateTotals();
-}
-
-// ── Kiểm tra SL xuất so với tồn ───────────────────────────────────
-window.checkStock = function(qtyInput) {
-    if (!qtyInput) return;
-    const tr = qtyInput.closest('tr');
-    const stock = parseFloat(tr.querySelector('.stock-display')?.dataset.stock) || 0;
-    const qty = parseFloat(qtyInput.value) || 0;
-
-    if (qty > 0 && stock > 0 && qty > stock) {
-        qtyInput.classList.add('is-invalid');
-    } else {
-        qtyInput.classList.remove('is-invalid');
-    }
-    checkAllStock();
-    updateTotals();
-}
-
-function checkAllStock() {
-    const hasWarning = document.querySelector('.qty-input.is-invalid') !== null;
-    document.getElementById('stockWarning').classList.toggle('d-none', !hasWarning);
-}
-
-// ── Hiện/ẩn trường hạn trả theo loại xuất ────────────────────────
-document.getElementById('issueType').addEventListener('change', function() {
-    document.getElementById('returnDateGroup').style.display = this.value == '3' ? '' : 'none';
-});
-
-function checkDuplicateSerials() {
-    const seen = {};
-    let hasDup = false;
-
-    document.querySelectorAll('#detailBody tr').forEach(tr => {
-        const serialSel = tr.querySelector('.serial-select');
-        const val = serialSel?.value;
-        if (!val) return;
-
-        if (seen[val]) {
-            serialSel.classList.add('is-invalid');
-            seen[val].classList.add('is-invalid');
-            hasDup = true;
+        if (!serialMap[productId]) serialMap[productId] = {};
+        if (serialMap[productId][serialVal] !== undefined) {
+            serialInput.classList.add('is-invalid');
+            const firstRow = serialMap[productId][serialVal] + 1;
+            errors.push(
+                `Dòng ${i+1}: Số Serial <strong>"${serialVal}"</strong> đã nhập ở dòng ${firstRow} (cùng sản phẩm).`
+            );
         } else {
-            seen[val] = serialSel;
-            serialSel.classList.remove('is-invalid');
+            serialMap[productId][serialVal] = i;
         }
     });
 
-    const btn = document.querySelector('button[name="action"]');
-    if (btn) btn.disabled = hasDup;
+    // ── Bước 3: LotAndSerial - các dòng cùng product phải dùng cùng 1 lot ──
+    const lotMap = {}; // { product_id: { lot_value: rowIndex } }
+    document.querySelectorAll('#detailBody tr').forEach((tr, i) => {
+        const productInput = tr.querySelector('.product-input');
+        const tracking = parseInt(productInput?.dataset?.tracking) || TRACKING_NONE;
+        if (tracking !== TRACKING_LOT_AND_SERIAL) return;
 
-    let warn = document.getElementById('serialDupWarning');
-    if (hasDup) {
-        if (!warn) {
-            warn = document.createElement('div');
-            warn.id = 'serialDupWarning';
-            warn.className = 'alert alert-danger mt-3';
-            warn.innerHTML = '<strong>Lỗi:</strong> Có số Serial bị chọn trùng nhau trong cùng phiếu.';
-            document.getElementById('detailTable').closest('.card').after(warn);
+        const productId = tr.querySelector('.product-id-hidden')?.value;
+        const lotInput = tr.querySelector('.lot-input');
+        const lotVal = lotInput?.value.trim();
+        if (!productId || !lotVal) return;
+
+        if (!lotMap[productId]) lotMap[productId] = null;
+
+        if (lotMap[productId] === null) {
+            lotMap[productId] = {
+                value: lotVal,
+                row: i
+            };
+        } else if (lotMap[productId].value !== lotVal) {
+            lotInput.classList.add('is-invalid');
+            const firstRow = lotMap[productId].row + 1;
+            errors.push(`Nhiều serial trong cùng 1 lô thì nhập cùng mã lot.`);
         }
-    } else {
-        warn?.remove();
-    }
+    });
+
+    return errors;
 }
 
+document.getElementById('issueForm').addEventListener('submit', function(e) {
+    const errors = validateLotSerial();
+    if (!errors.length) return;
+
+    e.preventDefault();
+    const container = document.getElementById('lotSerialAlertContainer');
+    const ul = errors.map(msg => `<li>${msg}</li>`).join('');
+    container.innerHTML = `
+        <div class="alert alert-danger alert-dismissible mx-3 mt-3 mb-0" role="alert">
+            <strong>Vui lòng kiểm tra lại thông tin Lot / Serial:</strong>
+            <ul class="mb-0 mt-1">${ul}</ul>
+            <button type="button" class="btn-close" data-coreui-dismiss="alert"></button>
+        </div>`;
+    container.scrollIntoView({
+        behavior: 'smooth',
+        block: 'nearest'
+    });
+    document.querySelector('.lot-input.is-invalid, .serial-input.is-invalid')?.focus();
+});
+
+// ── Init ──────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('#detailBody tr').forEach(tr => {
+        const productInput = tr.querySelector('.product-input');
+        if (productInput?.value) onProductInput(productInput);
+    });
+
     toggleEmptyState();
     updateTotals();
-    document.querySelectorAll('#detailBody tr.existing-row').forEach(initExistingRow);
-    @if(!$isEdit) addRow();
-    @endif
+
+    <?php if ($rows->count() === 0): ?>
+    addRow();
+    <?php endif; ?>
 });
 </script>
 @endpush

@@ -1,7 +1,10 @@
 <?php
 
-namespace App\Models;
+namespace App\Models\Inventory;
 
+use App\Models\Master\Product;
+use App\Models\Master\Supplier;
+use App\Models\Master\Brand;
 use App\Enums\LotSerialStatus;
 use Illuminate\Database\Eloquent\Model;
 
@@ -12,6 +15,8 @@ class Lot extends Model
     protected $fillable = [
         'product_id',
         'supplier_id',
+        'brand_id',
+        'lot_code',
         'lot_number',
         'received_date',
         'manufacture_date',
@@ -27,6 +32,10 @@ class Lot extends Model
             'manufacture_date' => 'date',
             'expiry_date'      => 'date',
             'status'           => LotSerialStatus::class,
+            'product_id'       => 'integer',
+            'supplier_id'      => 'integer',
+            'brand_id'         => 'integer',
+            'lot_number'       => 'integer',
         ];
     }
 
@@ -40,6 +49,11 @@ class Lot extends Model
     public function supplier()
     {
         return $this->belongsTo(Supplier::class, 'supplier_id');
+    }
+
+    public function brand()
+    {
+        return $this->belongsTo(Brand::class, 'brand_id');
     }
 
     public function serials()

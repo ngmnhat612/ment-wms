@@ -211,13 +211,13 @@
             Đơn vị tính
           </a>
         </li>
-        <li class="nav-item">
+        {{-- <li class="nav-item">
           <a class="nav-link {{ request()->routeIs('master.brand.*') ? 'active' : '' }}"
              href="{{ route('master.brand.index') }}">
             <span class="nav-icon"><span class="nav-icon-bullet"></span></span>
             Thương hiệu
           </a>
-        </li>
+        </li> --}}
         <li class="nav-item">
           <a class="nav-link {{ request()->routeIs('master.department.*') ? 'active' : '' }}"
              href="{{ route('master.department.index') }}">

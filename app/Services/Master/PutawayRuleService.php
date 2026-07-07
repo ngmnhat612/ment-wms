@@ -89,7 +89,7 @@ class PutawayRuleService
      */
     public function deleteForProduct(int $productId): void
     {
-        $rule = \App\Models\PutawayRule::where('product_id', $productId)->first();
+        $rule = PutawayRule::where('product_id', $productId)->first();
         if ($rule) {
             $this->delete($rule);
         }
