@@ -9,11 +9,12 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Factories\HasFactory;   // UPDATE
 
 class Product extends Model
 {
-    use SoftDeletes;
-    
+    use SoftDeletes, HasFactory; // UPDATE
+
     protected $table = 'products';
 
     protected $fillable = [
