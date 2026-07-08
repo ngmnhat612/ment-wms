@@ -36,11 +36,11 @@ class StockService
     public function suggestStockForIssue(int $productId, float $quantity, ?int $locationId = null): array
     {
         $query = Stock::query()
-            ->where('product_id', $productId)
-            ->where('status', LotSerialStatus::InStock->value)
-            ->whereRaw('(quantity - reserved_qty) > 0')
-            ->when($locationId, fn ($q) => $q->where('current_location_id', $locationId))
             ->join('lots', 'stocks.lot_id', '=', 'lots.id')
+            ->where('stocks.product_id', $productId)
+            ->where('stocks.status', LotSerialStatus::InStock->value)
+            ->whereRaw('(stocks.quantity - stocks.reserved_qty) > 0')
+            ->when($locationId, fn ($q) => $q->where('stocks.current_location_id', $locationId))
             ->orderByRaw('CASE WHEN lots.expiry_date IS NULL THEN 1 ELSE 0 END')
             ->orderBy('lots.expiry_date')
             ->orderBy('lots.received_date')

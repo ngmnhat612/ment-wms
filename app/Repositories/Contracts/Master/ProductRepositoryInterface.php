@@ -29,6 +29,13 @@ interface ProductRepositoryInterface
     public function findById(int $id, array $with = []): ?Product;
 
     /**
+     * Lấy nhiều sản phẩm theo danh sách ID, index theo id.
+     * Dùng để validate business (vd: đọc tracking_type) mà không query
+     * Model trực tiếp trong FormRequest/Controller.
+     */
+    public function findManyByIds(array $ids): Collection;
+
+    /**
      * Tạo mới sản phẩm.
      */
     public function create(array $data): Product;
@@ -62,4 +69,5 @@ interface ProductRepositoryInterface
      * Tìm vật tư gốc theo code.
      */
     public function findRootByCode(string $code): ?Product;
+
 }

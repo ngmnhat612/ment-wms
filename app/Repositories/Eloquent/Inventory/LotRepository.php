@@ -32,4 +32,15 @@ class LotRepository implements LotRepositoryInterface
     {
         return preg_match('/(\d+)$/', $lotCode, $m) ? (int) $m[1] : 0;
     }
+
+    public function findByLotNumber(int $lotNumber, int $productId): ?Lot
+    {
+        // BẮT BUỘC lọc theo product_id: lot_number chỉ duy nhất trong phạm vi
+        // 1 sản phẩm, không phải toàn hệ thống (2 sản phẩm khác nhau có thể
+        // cùng có "Lô số 6"). Bỏ sót điều kiện này từng khiến validate/service
+        // lấy nhầm lô của sản phẩm khác khi 2 sản phẩm trùng lot_number.
+        return Lot::where('lot_number', $lotNumber)
+            ->where('product_id', $productId)
+            ->first();
+    }
 }

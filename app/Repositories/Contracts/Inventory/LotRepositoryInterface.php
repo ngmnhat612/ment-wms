@@ -19,4 +19,13 @@ interface LotRepositoryInterface
      * Dùng để CodeGeneratorService sinh lot_code/lot_number tiếp theo.
      */
     public function maxLotNumber(): int;
+
+    /**
+     * Tìm lô theo (lot_number, product_id).
+     * QUAN TRỌNG: lot_number CHỈ duy nhất TRONG PHẠM VI 1 sản phẩm (mỗi sản
+     * phẩm có dãy số lô riêng, xem Lot::product_id) — KHÔNG được bỏ qua
+     * $productId khi tìm, nếu không sẽ có thể trả về lô của SẢN PHẨM KHÁC
+     * có cùng lot_number, dẫn đến validate sai hoặc trừ nhầm tồn kho.
+     */
+    public function findByLotNumber(int $lotNumber, int $productId): ?Lot;
 }

@@ -18,6 +18,7 @@
 
 {{-- Custom CSS của project --}}
 <link rel="stylesheet" href="{{ asset('css/breadcrumb.css') }}">
+<link rel="stylesheet" href="{{ asset('css/serial-tag.css') }}">
 
 {{-- Stack CSS riêng từng trang --}}
 @stack('styles')

@@ -3,6 +3,7 @@
 namespace App\Repositories\Contracts\StockMovement;
 
 use App\Models\StockMovement\StockReceipt;
+use App\Models\StockMovement\StockReceiptDetail;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 
@@ -34,4 +35,10 @@ interface StockReceiptRepositoryInterface
      * (không phân trang) để gộp chung với StockIssue.
      */
     public function allForMovementList(array $filters): Collection;
+
+    /**
+     * Cập nhật actual_qty thật sau khi duyệt (approve).
+     * Tách riêng khỏi update() header vì đây là field ở tầng detail.
+     */
+    public function updateDetailActualQty(StockReceiptDetail $detail, float $qty): void;
 }

@@ -4,17 +4,17 @@ namespace App\Services\StockMovement;
 
 use App\Models\Inventory\Lot;
 use App\Models\Master\Product;
+use App\Models\StockMovement\StockReceipt;
 use App\Models\Inventory\Serial;
 use App\Enums\DocumentStatus;
 use App\Enums\LotSerialStatus;
-use App\Models\StockMovement\StockReceipt;
-use App\Repositories\Contracts\StockMovement\StockReceiptRepositoryInterface;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use App\Services\StockService;
 use App\Repositories\Contracts\Master\ProductRepositoryInterface;
 use App\Repositories\Contracts\Inventory\LotRepositoryInterface;
 use App\Repositories\Contracts\Inventory\SerialRepositoryInterface;
+use App\Repositories\Contracts\StockMovement\StockReceiptRepositoryInterface;
 use App\Services\Concerns\CodeGeneratorService;
 
 class StockReceiptService
@@ -39,13 +39,13 @@ class StockReceiptService
     {
         return DB::transaction(function () use ($header, $lineRows) {
             $receipt = $this->receiptRepository->create([
-                'warehouse_id'     => $header['warehouse_id'],
-                'stock_request_id' => $header['stock_request_id'] ?? null,
-                'code'             => $header['code'] ?: $this->receiptRepository->generateCode(),
-                'created_by'       => Auth::id(),
-                'status'           => DocumentStatus::Draft->value,
-                'note'             => $header['note'] ?? null,
-                'receipt_date'     => $header['receipt_date'],
+                'warehouse_id'        => $header['warehouse_id'],
+                'stock_in_request_id' => $header['stock_in_request_id'] ?? null,
+                'code'                => $header['code'] ?: $this->receiptRepository->generateCode(),
+                'created_by'          => Auth::id(),
+                'status'              => DocumentStatus::Draft->value,
+                'note'                => $header['note'] ?? null,
+                'receipt_date'        => $header['receipt_date'],
             ]);
 
             $this->receiptRepository->replaceDetails($receipt, $this->prepareLineRows($lineRows, $receipt));
@@ -59,15 +59,13 @@ class StockReceiptService
         $this->assertDraft($receipt, 'chỉnh sửa');
 
         return DB::transaction(function () use ($receipt, $header, $lineRows) {
-            // Lưu lại lot_id cũ TRƯỚC khi replaceDetails() xóa chi tiết,
-            // để biết lô nào không còn được dòng nào tham chiếu sau khi cập nhật.
-            // $receipt->details() là hasManyThrough (lines -> details), vẫn dùng được nguyên vẹn.
             $oldLotIds = $receipt->details()->whereNotNull('lot_id')->pluck('lot_id')->unique()->all();
 
             $this->receiptRepository->update($receipt, [
-                'stock_request_id' => $header['stock_request_id'] ?? null,
-                'note'             => $header['note'] ?? null,
-                'receipt_date'     => $header['receipt_date'],
+                // - 'stock_request_id' => $header['stock_request_id'] ?? null,
+                'stock_in_request_id' => $header['stock_in_request_id'] ?? null,
+                'note'                => $header['note'] ?? null,
+                'receipt_date'        => $header['receipt_date'],
             ]);
 
             $this->receiptRepository->replaceDetails($receipt, $this->prepareLineRows($lineRows, $receipt));
@@ -96,7 +94,7 @@ class StockReceiptService
      * Giờ phải loop 2 tầng: lines -> details, vì product_id/uom_id nằm ở
      * line (cha), còn actual_qty/lot_id/serial_id/location_id nằm ở detail (con).
      */
-    public function approve(StockReceipt $receipt): void
+public function approve(StockReceipt $receipt): void
     {
         if ($receipt->status !== DocumentStatus::Draft) {
             throw new \DomainException('Chỉ có thể duyệt phiếu đang ở trạng thái Nháp.');
@@ -129,7 +127,7 @@ class StockReceiptService
                         'created_by'       => Auth::id(),
                     ]);
 
-                    $detail->update(['actual_qty' => $qty]);
+                    $this->receiptRepository->updateDetailActualQty($detail, $qty); // + qua Repository
                 }
             }
 
@@ -142,11 +140,11 @@ class StockReceiptService
 
     public function cancel(StockReceipt $receipt): void
     {
-        if ($receipt->status === DocumentStatus::Completed->value) {
+        if ($receipt->status === DocumentStatus::Completed) {
             throw new \DomainException('Không thể hủy phiếu đã hoàn thành. Vui lòng tạo phiếu điều chỉnh.');
         }
 
-        if ($receipt->status === DocumentStatus::Cancelled->value) {
+        if ($receipt->status === DocumentStatus::Cancelled) {
             throw new \DomainException('Phiếu đã được hủy trước đó.');
         }
 

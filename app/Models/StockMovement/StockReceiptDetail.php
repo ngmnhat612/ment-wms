@@ -7,9 +7,12 @@ use App\Models\Master\Location;
 use App\Models\Inventory\Lot;
 use App\Models\Inventory\Serial;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class StockReceiptDetail extends Model
 {
+    use SoftDeletes;
+
     protected $table = 'stock_receipt_detail';
 
     protected $fillable = [

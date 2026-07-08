@@ -49,7 +49,7 @@ class StockMovementController extends Controller
 
     /**
      * Sort collection đã gộp theo cột được chọn từ query string (?sort=...&dir=...).
-     * Mặc định (không sort): mới nhất theo ngày trước, giữ hành vi cũ.
+     * Mặc định (không sort): theo thời gian tạo giảm dần.
      */
     private function sortMovements(Collection $all, ?string $sort, ?string $dir): Collection
     {
@@ -59,7 +59,7 @@ class StockMovementController extends Controller
         $allowedSorts = ['code', 'created_by', 'approved_by', 'doc_date', 'note'];
 
         if ($sort === '' || ! in_array($sort, $allowedSorts, true) || $dir === '') {
-            return $all->sortByDesc('doc_date')->values();
+            return $all->sortByDesc('created_at')->values();
         }
 
         $sorted = $all->sortBy(
@@ -84,6 +84,7 @@ class StockMovementController extends Controller
             'doc_date'           => $receipt->receipt_date,
             'note'               => $receipt->note,
             'status'             => $receipt->status,
+            'created_at'         => $receipt->created_at,
         ];
     }
 
@@ -94,12 +95,13 @@ class StockMovementController extends Controller
             'movement_type'      => 'issue',
             'code'               => $issue->code,
             'created_by'         => $issue->createdBy?->display_name,
-            'created_by_username'=> $issue->createdBy?->username,
+            'created_by_code'    => $issue->createdBy?->employee?->code,
             'approved_by'        => $issue->approvedBy?->display_name,
-            'approved_by_username'=> $issue->approvedBy?->username,
+            'approved_by_code'   => $issue->approvedBy?->employee?->code,
             'doc_date'           => $issue->issue_date,
             'note'               => $issue->note,
             'status'             => $issue->status,
+            'created_at'         => $issue->created_at,
         ];
     }
 

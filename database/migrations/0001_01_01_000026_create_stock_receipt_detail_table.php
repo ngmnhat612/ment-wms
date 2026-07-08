@@ -23,7 +23,7 @@ return new class extends Migration
 
             $table->foreign('stock_receipt_line_id')
                   ->references('id')->on('stock_receipt_line')
-                  ->onDelete('cascade');
+                  ->onDelete('no action');
 
             $table->foreign('lot_id')
                   ->references('id')->on('lots')

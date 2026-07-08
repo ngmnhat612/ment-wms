@@ -7,9 +7,12 @@ use App\Models\Inventory\Serial;
 use App\Models\Master\Employee;
 use App\Models\Master\Location;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class StockIssueDetail extends Model
 {
+    use SoftDeletes;
+
     protected $table = 'stock_issue_detail';
 
     protected $fillable = [

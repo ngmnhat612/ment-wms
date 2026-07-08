@@ -34,14 +34,30 @@ class StockReceiptRepository implements StockReceiptRepositoryInterface
         return $receipt->fresh();
     }
 
+    /**
+     * Xóa MỀM phiếu (StockReceipt dùng SoftDeletes từ migration 000098) —
+     * $receipt->delete() giờ chỉ set deleted_at, không xóa cứng khỏi DB.
+     */
     public function delete(StockReceipt $receipt): bool
     {
         return (bool) $receipt->delete();
     }
 
+    /**
+     * Xóa MỀM toàn bộ lines/details cũ rồi tạo lại mới, dùng khi sửa phiếu
+     * Draft (StockReceiptService::update()). Trước migration 000098, bảng
+     * này chưa có deleted_at nên $receipt->lines()->delete() là XÓA CỨNG;
+     * giờ StockReceiptLine/StockReceiptDetail đã dùng SoftDeletes nên
+     * delete() ở đây chỉ set deleted_at — nhưng Eloquent KHÔNG tự cascade
+     * soft delete xuống quan hệ con, nên phải soft-delete details TRƯỚC,
+     * rồi mới soft-delete lines (đối xứng với FK 'no action' ở migration
+     * 000098b — DB không còn tự cascade cứng nữa).
+     */
     public function replaceDetails(StockReceipt $receipt, array $lineRows): void
     {
-        $receipt->lines()->delete(); // cascade FK sẽ tự xóa detail con (kiểm tra migration 000026 có onDelete cascade chưa)
+        $lineIds = $receipt->lines()->pluck('id');
+        StockReceiptDetail::whereIn('stock_receipt_line_id', $lineIds)->delete(); // soft delete
+        $receipt->lines()->delete(); // soft delete
 
         foreach ($lineRows as $line) {
             $detailRows = $line['details'] ?? [];
@@ -108,5 +124,10 @@ class StockReceiptRepository implements StockReceiptRepositoryInterface
         if (! empty($filters['date_to'])) {
             $query->where('receipt_date', '<=', $filters['date_to']);
         }
+    }
+
+    public function updateDetailActualQty(StockReceiptDetail $detail, float $qty): void
+    {
+        $detail->update(['actual_qty' => $qty]);
     }
 }

@@ -20,6 +20,7 @@ use App\Repositories\Contracts\StockMovement\StockIssueRepositoryInterface;
 use App\Repositories\Contracts\StockMovement\StockMovementFormDataRepositoryInterface;
 use App\Repositories\Contracts\Inventory\LotRepositoryInterface;
 use App\Repositories\Contracts\Inventory\SerialRepositoryInterface;
+use App\Repositories\Contracts\Inventory\StockRepositoryInterface;
 
 use App\Repositories\Eloquent\Master\CategoryRepository;
 use App\Repositories\Eloquent\Master\ProductRepository;
@@ -39,6 +40,7 @@ use App\Repositories\Eloquent\StockMovement\StockIssueRepository;
 use App\Repositories\Eloquent\StockMovement\StockMovementFormDataRepository;
 use App\Repositories\Eloquent\Inventory\LotRepository;
 use App\Repositories\Eloquent\Inventory\SerialRepository;
+use App\Repositories\Eloquent\Inventory\StockRepository;
 
 use Illuminate\Support\ServiceProvider;
 
@@ -129,5 +131,9 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->bind(LotRepositoryInterface::class, LotRepository::class);
         $this->app->bind(SerialRepositoryInterface::class, SerialRepository::class);
 
+        $this->app->bind(
+            StockRepositoryInterface::class,
+            StockRepository::class
+        );
     }
 }

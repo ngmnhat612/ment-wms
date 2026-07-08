@@ -7,12 +7,13 @@ use App\Models\Master\Account;
 use App\Models\Master\Warehouse;
 use App\Models\StockRequest\StockOutRequest;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
 class StockIssue extends Model
 {
-    use LogsActivity;
+    use LogsActivity, SoftDeletes;
 
     protected $table = 'stock_issue';
 

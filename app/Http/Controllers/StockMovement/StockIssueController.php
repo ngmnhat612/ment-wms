@@ -6,23 +6,18 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StockMovement\StockIssueRequest;
 use App\Enums\DocumentStatus;
 use App\Models\StockMovement\StockIssue;
-use App\Models\Master\Location;
-use App\Models\Master\Product;
-use App\Models\Master\Employee;
-use App\Models\Master\Warehouse;
-use App\Models\Inventory\Stock;
-use App\Models\Inventory\Lot;
 use App\Repositories\Contracts\StockMovement\StockIssueRepositoryInterface;
+use App\Repositories\Contracts\StockMovement\StockMovementFormDataRepositoryInterface;
 use App\Services\StockMovement\StockIssueService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
-use App\Models\Inventory\Serial;
 
 class StockIssueController extends Controller
 {
     public function __construct(
         private StockIssueService $issueService,
         private StockIssueRepositoryInterface $issueRepository,
+        private StockMovementFormDataRepositoryInterface $formDataRepository,
     ) {}
 
     public function index(Request $request)
@@ -34,7 +29,7 @@ class StockIssueController extends Controller
 
         return view('stock-movement.issue.index', [
             'issues'         => $issues,
-            'totalCount'     => StockIssue::count(),
+            'totalCount'     => $this->issueRepository->totalCount(),
             'draftCount'     => $this->issueRepository->countByStatus(DocumentStatus::Draft->value),
             'completedCount' => $this->issueRepository->countByStatus(DocumentStatus::Completed->value),
             'cancelledCount' => $this->issueRepository->countByStatus(DocumentStatus::Cancelled->value),
@@ -53,8 +48,8 @@ class StockIssueController extends Controller
         Gate::authorize('create', StockIssue::class);
 
         $issue = $this->issueService->create(
-            $request->only(['warehouse_id', 'code', 'note', 'issue_date']),
-            $request->input('details', [])
+            $request->only(['warehouse_id', 'stock_out_request_id', 'code', 'note', 'issue_date']),
+            $request->input('lines', [])
         );
 
         return $request->input('action') === 'save_and_new'
@@ -75,7 +70,7 @@ class StockIssueController extends Controller
     {
         Gate::authorize('update', $issue);
 
-        if ($issue->status !== DocumentStatus::Draft->value) {
+        if ($issue->status !== DocumentStatus::Draft) {
             return redirect()->route('issues.show', $issue)
                 ->with('error', 'Chỉ có thể chỉnh sửa phiếu ở trạng thái Nháp.');
         }
@@ -93,8 +88,8 @@ class StockIssueController extends Controller
         try {
             $this->issueService->update(
                 $issue,
-                $request->only(['note', 'issue_date']),
-                $request->input('details', [])
+                $request->only(['stock_out_request_id', 'note', 'issue_date']),
+                $request->input('lines', [])
             );
         } catch (\DomainException $e) {
             return redirect()->route('issues.show', $issue)->with('error', $e->getMessage());
@@ -156,75 +151,31 @@ class StockIssueController extends Controller
     }
 
     /**
-     * AJAX: vị trí + lot/serial có tồn khả dụng theo sản phẩm — giữ nguyên
-     * hành vi cũ. Về lâu dài nên chuyển query Stock này vào StockRepository,
-     * hiện để tạm ở Controller vì thuộc phạm vi "tra cứu", không phải nghiệp vụ.
+     * AJAX: vị trí + lot/serial có tồn khả dụng theo sản phẩm.
+     * Toàn bộ logic (gợi ý, bung serial theo tracking_type...) nằm ở
+     * StockIssueService::getAvailableStockForIssue() — Controller chỉ gọi
+     * và trả JSON.
      */
     public function stockLocations(int $productId)
     {
-        $product  = Product::find($productId);
-        $tracking = (int) ($product?->tracking_type ?? 1);
-
-        $stocks = Stock::with(['location', 'lot', 'serial'])
-            ->where('product_id', $productId)
-            ->whereHas('location', fn ($q) => $q->where('type', Location::TYPE_INTERNAL))
-            ->where(fn ($q) => $q->where('available_qty', '>', 0)
-                ->orWhereRaw('(quantity - reserved_qty) > 0'))
-            ->get();
-
-        $result = collect();
-
-        foreach ($stocks as $s) {
-            $baseRow = [
-                'location_id'   => $s->location_id,
-                'location_code' => $s->location?->code ?? '?',
-                'location_name' => $s->location?->name ?? '',
-                'lot_id'        => $s->lot_id,
-                'lot_number'    => $s->lot?->lot_number,
-                'expiry_date'   => $s->lot?->expiry_date?->format('Y-m-d'),
-                'serial_id'     => $s->serial_id,
-                'serial_number' => $s->serial?->serial_number,
-            ];
-
-            if ($tracking === Product::TRACKING_LOT_AND_SERIAL && $s->lot_id && ! $s->serial_id) {
-                $serials = Serial::where('product_id', $productId)
-                    ->where('lot_id', $s->lot_id)
-                    ->where('status', Serial::STATUS_INSTOCK)
-                    ->get();
-
-                if ($serials->isNotEmpty()) {
-                    foreach ($serials as $serial) {
-                        $result->push(array_merge($baseRow, [
-                            'serial_id'     => $serial->id,
-                            'serial_number' => $serial->serial_number,
-                        ]));
-                    }
-                    continue;
-                }
-            }
-
-            $result->push($baseRow);
-        }
-
-        return response()->json($result->values());
+        return response()->json($this->issueService->getAvailableStockForIssue($productId));
     }
 
     private function formData(): array
     {
-        $products  = Product::with('uom')->where('status', 1)->orderBy('code')->get();
-        $locations = Location::where('type', 1)->orderBy('code')->get();
-        $employees = Employee::where('status', 1)->orderBy('name')->get();
-        $sns       = \App\Models\Master\Sn::orderBy('code')->get();
+        $products  = $this->formDataRepository->activeProducts();
+        $locations = $this->formDataRepository->issuingLocations();
+        $employees = $this->formDataRepository->activeEmployees();
+        $sns       = $this->formDataRepository->sns();
 
         return [
             'products'   => $products,
             'locations'  => $locations,
             'employees'  => $employees,
             'sns'        => $sns,
-            'warehouses' => Warehouse::orderBy('name')->get(),
-            'lots'       => Lot::inStock()
-                ->select('id', 'product_id', 'lot_number', 'expiry_date')
-                ->orderBy('lot_number')->get()->groupBy('product_id'),
+            'warehouses' => $this->formDataRepository->warehouses(),
+            'lots'       => $this->formDataRepository->lotsInStockGroupedByProduct(),
+            'stockOutRequests' => $this->formDataRepository->stockOutRequests(),
 
             'productsJson' => $products->map(fn ($p) => [
                 'id'            => $p->id,
