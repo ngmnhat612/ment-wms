@@ -1,0 +1,63 @@
+.serial-tag-box {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px;
+    min-height: calc(1.5em + 0.75rem + 2px);
+    padding: 4px 8px;
+    border: 1px solid var(--cui-border-color, #b1b7c1);
+    border-radius: 6px;
+    background-color: var(--cui-body-bg, #fff);
+    cursor: text;
+}
+
+.serial-tag-box.disabled {
+    background-color: var(--cui-tertiary-bg, #f8f9fa);
+    cursor: not-allowed;
+}
+
+.serial-tag-box.is-invalid {
+    border-color: var(--cui-form-invalid-color, #e55353);
+}
+
+.serial-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background-color: var(--cui-primary, #321fdb);
+    color: #fff;
+    font-size: 0.8125rem;
+    line-height: 1.2;
+    padding: 3px 6px 3px 8px;
+    border-radius: 4px;
+    white-space: nowrap;
+}
+
+.serial-tag .tag-remove {
+    border: 0;
+    background: transparent;
+    color: #fff;
+    opacity: 0.8;
+    line-height: 1;
+    padding: 0 2px;
+    font-size: 0.9rem;
+    cursor: pointer;
+}
+
+.serial-tag .tag-remove:hover {
+    opacity: 1;
+}
+
+.serial-tag-typer {
+    flex: 1 1 100px;
+    min-width: 100px;
+    border: 0;
+    outline: none;
+    background: transparent;
+    font-size: 0.875rem;
+    padding: 2px 0;
+}
+
+.serial-tag-box.disabled .serial-tag-typer {
+    cursor: not-allowed;
+}

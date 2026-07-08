@@ -3,6 +3,7 @@
 namespace App\Repositories\Eloquent\StockMovement;
 
 use App\Models\StockMovement\StockIssue;
+use App\Models\StockMovement\StockIssueLine;
 use App\Models\StockMovement\StockIssueDetail;
 use App\Repositories\Contracts\StockMovement\StockIssueRepositoryInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
@@ -26,13 +27,11 @@ class StockIssueRepository implements StockIssueRepositoryInterface
     public function findWithDetails(int $id): ?StockIssue
     {
         return StockIssue::with([
-            'createdBy', 'approvedBy',
-            'details.product.uom',
-            'details.location',
-            'details.lot',
-            'details.serial',
-            'details.uom',
-            'details.receiver',
+            'createdBy', 'approvedBy', 'stockOutRequest',
+            'lines.product.uom', 'lines.product.category',
+            'lines.uom', 'lines.sn',
+            'lines.details.location', 'lines.details.lot',
+            'lines.details.serial', 'lines.details.receiver',
         ])->find($id);
     }
 
@@ -47,18 +46,42 @@ class StockIssueRepository implements StockIssueRepositoryInterface
         return $issue->fresh();
     }
 
+    /**
+     * Xóa MỀM phiếu (StockIssue dùng SoftDeletes từ migration 000098) —
+     * $issue->delete() giờ chỉ set deleted_at, không xóa cứng khỏi DB.
+     */
     public function delete(StockIssue $issue): bool
     {
         return (bool) $issue->delete();
     }
 
-    public function replaceDetails(StockIssue $issue, array $detailRows): void
+    /**
+     * Xóa MỀM toàn bộ lines/details cũ rồi tạo lại mới, dùng khi sửa phiếu
+     * Draft (StockIssueService::update()). Trước migration 000098, bảng này
+     * chưa có deleted_at nên $issue->lines()->delete() là XÓA CỨNG; giờ
+     * StockIssueLine/StockIssueDetail đã dùng SoftDeletes nên delete() ở
+     * đây chỉ set deleted_at — nhưng Eloquent KHÔNG tự cascade soft delete
+     * xuống quan hệ con, nên phải soft-delete details TRƯỚC, rồi mới
+     * soft-delete lines (đối xứng với FK 'no action' ở migration 000098b —
+     * DB không còn tự cascade cứng nữa).
+     */
+    public function replaceDetails(StockIssue $issue, array $lineRows): void
     {
-        $issue->details()->delete();
+        $lineIds = $issue->lines()->pluck('id');
+        StockIssueDetail::whereIn('stock_issue_line_id', $lineIds)->delete(); // soft delete
+        $issue->lines()->delete(); // soft delete
 
-        foreach ($detailRows as $row) {
-            $row['stock_issue_id'] = $issue->id;
-            StockIssueDetail::create($row);
+        foreach ($lineRows as $line) {
+            $detailRows = $line['details'] ?? [];
+            unset($line['details']);
+
+            $line['stock_issue_id'] = $issue->id;
+            $createdLine = StockIssueLine::create($line);
+
+            foreach ($detailRows as $detail) {
+                $detail['stock_issue_line_id'] = $createdLine->id;
+                StockIssueDetail::create($detail);
+            }
         }
     }
 
@@ -108,5 +131,15 @@ class StockIssueRepository implements StockIssueRepositoryInterface
         if (! empty($filters['date_to'])) {
             $query->where('issue_date', '<=', $filters['date_to']);
         }
+    }
+
+    public function updateDetailActualQty(StockIssueDetail $detail, float $qty): void
+    {
+        $detail->update(['actual_qty' => $qty]);
+    }
+
+    public function totalCount(): int
+    {
+        return StockIssue::count();
     }
 }

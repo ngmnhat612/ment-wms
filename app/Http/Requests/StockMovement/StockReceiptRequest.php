@@ -3,13 +3,24 @@
 namespace App\Http\Requests\StockMovement;
 
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
+use Illuminate\Validation\Rule;
 use App\Models\Inventory\Lot;
 use App\Models\Inventory\Serial;
+use App\Repositories\Contracts\Inventory\LotRepositoryInterface;
+use App\Repositories\Contracts\Inventory\SerialRepositoryInterface;
+use App\Repositories\Contracts\Master\ProductRepositoryInterface;
 
 class StockReceiptRequest extends FormRequest
 {
+    public function __construct(
+        private LotRepositoryInterface $lotRepository,
+        private SerialRepositoryInterface $serialRepository,
+        private ProductRepositoryInterface $productRepository,
+    ) {
+        parent::__construct();
+    }
+
     public function authorize(): bool
     {
         return true; // Gate::authorize() đã xử lý ở Controller, không lặp lại ở đây.
@@ -89,8 +100,9 @@ class StockReceiptRequest extends FormRequest
     {
         $validator->after(function (Validator $validator) {
             $lines = $this->input('lines', []);
-            $products = \App\Models\Master\Product::whereIn('id', collect($lines)->pluck('product_id')->filter())
-                ->get()->keyBy('id');
+            $products = $this->productRepository->findManyByIds(
+                collect($lines)->pluck('product_id')->filter()->all()
+            );
 
             $serialSeen = [];    // ['product_id|serial_value' => 'Dòng N']
             $lotNumberSeen = []; // [lotNumberInt => ['line' => n, 'product_id' => id]]
@@ -154,9 +166,8 @@ class StockReceiptRequest extends FormRequest
                 // ── Serial trùng với Serial ĐÃ TỒN TẠI trong hệ thống (bảng serials) ──
                 // trừ các serial đang gán cho chính phiếu này (khi update).
                 if ($serialNumbers->isNotEmpty()) {
-                    $existingSerials = Serial::whereIn('serial_number', $serialNumbers->all())
-                        ->whereNotIn('lot_id', $excludedLotIds)
-                        ->pluck('serial_number');
+                    $existingSerials = $this->serialRepository
+                        ->findExistingSerialNumbers($serialNumbers->all(), $excludedLotIds);
 
                     foreach ($existingSerials as $existingSerial) {
                         $validator->errors()->add(
@@ -190,7 +201,10 @@ class StockReceiptRequest extends FormRequest
                         $lotNumberSeen[$lotNumberInt] = ['line' => $line, 'product_id' => $row['product_id']];
                     }
 
-                    $existingLot = Lot::where('lot_number', $lotNumberInt)->first();
+                    $existingLot = $this->lotRepository->findByLotNumber(
+                        $lotNumberInt,
+                        (int) $row['product_id']
+                    );
                     if ($existingLot && ! in_array($existingLot->id, $excludedLotIds)) {
                         $validator->errors()->add(
                             "lines.{$i}.lot_number",

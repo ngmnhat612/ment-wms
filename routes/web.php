@@ -135,6 +135,8 @@ Route::middleware('auth')->group(function () {
         ->name('receipts.suggest-putaway');
 
     // ── XUẤT KHO ─────────────────────────────────────────────────────────────
+    Route::get('issues/stock-locations/{product}', [StockIssueController::class, 'stockLocations'])
+        ->name('issues.stock-locations');
     Route::resource('issues', StockIssueController::class)->except(['index']);
     Route::get('issues/{issue}/print', [StockIssueController::class, 'printPdf'])
         ->name('issues.print');

@@ -4,7 +4,10 @@ namespace App\Repositories\Eloquent\StockMovement;
 
 use App\Models\Master\{Account, Brand, Employee, Location, Product, Sn, Supplier, Uom, Warehouse};
 use App\Enums\DocumentStatus;
+use App\Enums\LocationType;
+use App\Models\Inventory\Lot;
 use App\Models\StockRequest\StockInRequest;
+use App\Models\StockRequest\StockOutRequest;
 use App\Repositories\Contracts\StockMovement\StockMovementFormDataRepositoryInterface;
 use Illuminate\Support\Collection;
 
@@ -22,7 +25,10 @@ class StockMovementFormDataRepository implements StockMovementFormDataRepository
 
     public function issuingLocations(): Collection
     {
-        return Location::where('type', 2)->orderBy('code')->get();
+        // Sửa: vị trí xuất cũng phải là vị trí thực (Internal), giống receivingLocations().
+        // Giữ lại 2 method riêng (không dùng chung 1 method) vì Nhập/Xuất có thể áp thêm
+        // điều kiện khác nhau trong tương lai (vd. Xuất chỉ cho vị trí có tồn > 0).
+        return Location::where('type', LocationType::Internal->value)->orderBy('code')->get();
     }
 
     // Loại nhân viên có tài khoản role Admin ra khỏi danh sách
@@ -48,5 +54,23 @@ class StockMovementFormDataRepository implements StockMovementFormDataRepository
         return StockInRequest::where('status', '!=', DocumentStatus::Cancelled)
             ->orderByDesc('id')
             ->get();
+    }
+
+    // Phiếu yêu cầu xuất vật tư — dùng cho ô "Phiếu liên kết" trong form Phiếu xuất,
+    // tương tự stockInRequests() dùng cho form Phiếu nhập.
+    public function stockOutRequests(): Collection
+    {
+        return StockOutRequest::where('status', '!=', DocumentStatus::Cancelled)
+            ->orderByDesc('id')
+            ->get();
+    }
+
+    public function lotsInStockGroupedByProduct(): Collection
+    {
+        return Lot::inStock()
+            ->select('id', 'product_id', 'lot_number', 'expiry_date')
+            ->orderBy('lot_number')
+            ->get()
+            ->groupBy('product_id');
     }
 }

@@ -16,4 +16,6 @@ interface StockMovementFormDataRepositoryInterface
     public function warehouses(): Collection;
     public function sns(): Collection;
     public function stockInRequests(): Collection;
+    public function stockOutRequests(): Collection;
+    public function lotsInStockGroupedByProduct(): Collection;
 }
