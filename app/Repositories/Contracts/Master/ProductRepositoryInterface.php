@@ -66,6 +66,13 @@ interface ProductRepositoryInterface
     public function allRootActive(): Collection;
 
     /**
+     * Lấy TOÀN BỘ vật tư (kể cả biến thể, kể cả inactive), sắp theo tên —
+     * dùng cho dropdown filter ở màn Tồn kho (không chỉ root/active như
+     * allRootActive(), vì tồn kho có thể thuộc bất kỳ vật tư nào).
+     */
+    public function allOrdered(): Collection;
+
+    /**
      * Tìm vật tư gốc theo code.
      */
     public function findRootByCode(string $code): ?Product;

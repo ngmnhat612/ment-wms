@@ -10,7 +10,7 @@ use App\Enums\DocumentStatus;
 use App\Enums\LotSerialStatus;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use App\Services\StockService;
+use App\Services\Inventory\StockService;
 use App\Repositories\Contracts\Master\ProductRepositoryInterface;
 use App\Repositories\Contracts\Inventory\LotRepositoryInterface;
 use App\Repositories\Contracts\Inventory\SerialRepositoryInterface;
@@ -183,8 +183,8 @@ public function approve(StockReceipt $receipt): void
         }
 
         foreach ($lotIds as $lotId) {
-            $stillUsed = \App\Models\StockMovement\StockReceiptDetail::where('lot_id', $lotId)->exists()
-                || \App\Models\StockMovement\StockIssueDetail::where('lot_id', $lotId)->exists()
+            $stillUsed = \App\Models\StockMovement\StockReceiptDetail::withTrashed()->where('lot_id', $lotId)->exists()
+                || \App\Models\StockMovement\StockIssueDetail::withTrashed()->where('lot_id', $lotId)->exists()
                 || \App\Models\Inventory\Stock::where('lot_id', $lotId)->exists()
                 || Serial::where('lot_id', $lotId)->exists();
 
@@ -266,7 +266,7 @@ public function approve(StockReceipt $receipt): void
         // Lô luôn được resolve 1 LẦN cho cả line (dùng chung cho mọi serial con).
         if (! $lotId) {
             if ($lotNumberInput === '') {
-                $generated = $this->generateUniqueLot();
+                $generated = $this->generateUniqueLot($productId);
                 $lotNumber = $generated['number'];
                 $lotCode   = $generated['code'];
             } else {
@@ -301,7 +301,7 @@ public function approve(StockReceipt $receipt): void
             return [array_merge($commonAttrs, [
                 'lot_id'     => $lotId,
                 'serial_id'  => null,
-                'actual_qty' => $line['actual_qty'] ?? null,
+                'actual_qty' => is_numeric($line['actual_qty'] ?? null) ? $line['actual_qty'] : 0,
             ])];
         }
 
@@ -340,11 +340,11 @@ public function approve(StockReceipt $receipt): void
      * tránh vi phạm ràng buộc khi generateLotCode() trả cùng 1 giá trị do
      * chưa kịp ghi xuống DB giữa các lần lặp.
      */
-    private function generateUniqueLot(): array
+    private function generateUniqueLot(int $productId): array
     {
         do {
-            $generated = $this->codeGenerator->generateLotCode();
-        } while (Lot::where('lot_number', $generated['number'])->exists());
+            $generated = $this->codeGenerator->generateLotCode($productId);
+        } while (Lot::where('lot_number', $generated['number'])->where('product_id', $productId)->exists());
 
         return $generated;
     }

@@ -1,11 +1,14 @@
 <?php
 
-namespace App\Services;
+namespace App\Services\Inventory;
 
 use App\Enums\LotSerialStatus;
 use App\Models\Inventory\Stock;
+use App\Models\Inventory\Lot;
+use App\Models\Inventory\Serial;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use App\Models\Master\Product;
 
 /**
  * Service DUY NHẤT được phép ghi/đọc trực tiếp lên bảng `stocks`.
@@ -90,7 +93,7 @@ class StockService
 
             if ($available < (float) $params['quantity']) {
                 throw new \DomainException(
-                    "Không đủ tồn khả dụng để giữ chỗ cho sản phẩm ID {$params['product_id']}."
+                    "Không đủ tồn khả dụng để giữ chỗ cho vật tư {$this->productLabel($params['product_id'])}."
                 );
             }
 
@@ -125,15 +128,44 @@ class StockService
 
             if ((float) $stock->quantity < (float) $params['quantity']) {
                 throw new \DomainException(
-                    "Không đủ tồn kho thật để trừ cho sản phẩm ID {$params['product_id']}."
+                    "Không đủ tồn kho thật để trừ cho vật tư {$this->productLabel($params['product_id'])}."
                 );
             }
 
+            $newQuantity = (float) $stock->quantity - (float) $params['quantity'];
+
             $stock->update([
-                'quantity'   => (float) $stock->quantity - (float) $params['quantity'],
+                'quantity'   => $newQuantity,
+                'status'     => $newQuantity <= 0.0001
+                    ? LotSerialStatus::Consumed->value
+                    : LotSerialStatus::InStock->value,
                 'updated_at' => now(),
             ]);
+
+            // Sê-ri hết hàng ngay khi bị xuất hết (mỗi serial_id ứng với 1 dòng stock, qty=1)
+            if (! empty($params['serial_id']) && $newQuantity <= 0.0001) {
+                Serial::whereKey($params['serial_id'])
+                    ->update(['status' => LotSerialStatus::Consumed->value]);
+            }
+
+            $this->syncLotStatus($params['lot_id']);
         });
+    }
+
+    /**
+     * Đồng bộ status của Lot dựa trên tổng tồn thật (quantity) của TẤT CẢ dòng
+     * stock thuộc lot_id đó, trên toàn hệ thống (mọi kho/vị trí).
+     * Tổng = 0 → Lot chuyển Consumed (Hết hàng).
+     */
+    private function syncLotStatus(int $lotId): void
+    {
+        $totalQty = (float) Stock::query()
+            ->where('lot_id', $lotId)
+            ->sum('quantity');
+
+        if ($totalQty <= 0.0001) {
+            Lot::whereKey($lotId)->update(['status' => LotSerialStatus::Consumed->value]);
+        }
     }
 
     /**
@@ -183,6 +215,47 @@ class StockService
     }
 
     /**
+     * Chuyển vị trí kho cho TẤT CẢ dòng stock khớp product_id + lot_id + vị trí cũ,
+     * KHÔNG qua phiếu chuyển kho (dùng cho "Chỉnh sửa vị trí nhanh" ở màn Tồn kho).
+     * Set previous_location_id = vị trí cũ, current_location_id = vị trí mới.
+     * Không thay đổi quantity/reserved_qty — chỉ đổi vị trí vật lý.
+     *
+     * Lưu ý: 1 dòng hiển thị trên bảng Tồn kho (group by product+lot+location)
+     * có thể ứng với NHIỀU dòng `stocks` thật nếu sản phẩm theo dõi sê-ri
+     * (mỗi serial_id là 1 dòng riêng). Vì vậy phải chuyển toàn bộ, không chỉ 1 dòng.
+     *
+     * @return int Số dòng đã được chuyển vị trí.
+     * @throws \DomainException nếu không có dòng stock nào khớp.
+     */
+    public function relocate(array $params): int
+    {
+        return DB::transaction(function () use ($params) {
+            $stocks = Stock::query()
+                ->where('product_id', $params['product_id'])
+                ->where('current_location_id', $params['from_location_id'])
+                ->where('lot_id', $params['lot_id'])
+                ->lockForUpdate()
+                ->get();
+ 
+            if ($stocks->isEmpty()) {
+                throw new \DomainException(
+                    "Không tìm thấy tồn kho tương ứng cho vật tư {$this->productLabel($params['product_id'])} tại vị trí hiện tại."
+                );
+            }
+ 
+            foreach ($stocks as $stock) {
+                $stock->update([
+                    'previous_location_id' => $params['from_location_id'],
+                    'current_location_id'  => $params['to_location_id'],
+                    'updated_at'            => now(),
+                ]);
+            }
+ 
+            return $stocks->count();
+        });
+    }
+
+    /**
      * Khóa (lockForUpdate) đúng 1 dòng stock khớp tổ hợp product+location+lot+serial.
      * Dùng chung cho reserve()/release()/decrease() — các thao tác luôn tác động
      * lên 1 dòng đã tồn tại sẵn (không tự tạo mới, khác với increase()).
@@ -205,7 +278,7 @@ class StockService
 
         if (! $stock) {
             throw new \DomainException(
-                "Không tìm thấy dòng tồn kho tương ứng cho sản phẩm ID {$params['product_id']}."
+                "Không tìm thấy dòng tồn kho tương ứng cho vật tư {$this->productLabel($params['product_id'])}."
             );
         }
 
@@ -222,5 +295,19 @@ class StockService
             ->where('warehouse_id', $warehouseId)
             ->selectRaw('COALESCE(SUM(quantity - reserved_qty), 0) as total')
             ->value('total');
+    }
+
+    /**
+     * Nhãn hiển thị "Mã vật tư - Tên vật tư" cho thông báo lỗi, thay vì
+     * lộ product_id kỹ thuật ra ngoài UI. Fallback về ID nếu không tìm
+     * thấy sản phẩm (trường hợp hiếm, tránh crash khi báo lỗi).
+     */
+    private function productLabel(int $productId): string
+    {
+        $product = Product::find($productId);
+
+        return $product
+            ? "{$product->code} - {$product->name}"
+            : "ID {$productId}";
     }
 }

@@ -48,6 +48,11 @@ class CategoryRepository implements CategoryRepositoryInterface
         return Category::active()->orderBy('name')->get();
     }
 
+    public function allOrdered(): Collection
+    {
+        return Category::orderBy('name')->get();
+    }
+
     public function getParentOptions(): Collection
     {
         return Category::where('status', ActiveStatus::Active->value)

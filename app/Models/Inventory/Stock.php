@@ -13,8 +13,6 @@ class Stock extends Model
 {
     protected $table = 'stocks';
 
-    public $timestamps = false;
-
     protected $fillable = [
         'warehouse_id',
         'product_id',
@@ -24,7 +22,6 @@ class Stock extends Model
         'serial_id',
         'quantity',
         'reserved_qty',
-        'updated_at',
         'status',
     ];
 
@@ -33,6 +30,7 @@ class Stock extends Model
         return [
             'quantity'     => 'decimal:3',
             'reserved_qty' => 'decimal:3',
+            'created_at'   => 'datetime',
             'updated_at'   => 'datetime',
             'status'       => LotSerialStatus::class,
         ];

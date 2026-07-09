@@ -328,16 +328,16 @@ $action = $isEdit ? route('receipts.update', $receipt->id) : route('receipts.sto
     {{-- ── NÚT LƯU ── --}}
     <div class="d-flex gap-2 justify-content-end mt-3">
         @if(!$isEdit)
-        <button type="submit" class="btn btn-outline-primary" name="action" value="save_and_new">
-            <svg class="icon me-1"><use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-plus') }}"></use></svg>
-            Lưu & Thêm mới
+        <button type="submit" id="receiptSubmitBtnNew" class="btn btn-outline-primary" name="action" value="save_and_new">
+            <span class="spinner-border spinner-border-sm me-1 d-none" role="status" aria-hidden="true"></span>
+            <svg class="icon me-1 submit-icon"><use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-plus') }}"></use></svg>
+            <span class="submit-label">Lưu &amp; Thêm mới</span>
         </button>
         @endif
-        <button type="submit" class="btn btn-primary" name="action" value="save">
-            <svg class="icon me-1">
-                <use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-save') }}"></use>
-            </svg>
-            Lưu
+        <button type="submit" id="receiptSubmitBtnSave" class="btn btn-primary" name="action" value="save">
+            <span class="spinner-border spinner-border-sm me-1 d-none" role="status" aria-hidden="true"></span>
+            <svg class="icon me-1 submit-icon"><use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-save') }}"></use></svg>
+            <span class="submit-label">Lưu</span>
         </button>
     </div>
 
@@ -357,6 +357,7 @@ const TRACKING_LOT = 1;
 const TRACKING_LOT_AND_SERIAL = 2;
 
 let rowIndex = <?php echo $rows->count(); ?>;
+let submitting = false;
 
 // ── Đếm số serial trong 1 chuỗi "SN0001 SN0002 ..." ────────────────
 function countSerials(str) {
@@ -656,18 +657,22 @@ function validateLotSerial() {
         });
     });
 
-    // ── Bước 3: Số Lô trùng — mỗi dòng giờ = 1 lô riêng, trùng luôn là lỗi ──
-    const lotNumberMap = {}; // { lotNumber: rowIndex }
+    // ── Bước 3: Số Lô trùng — chỉ trùng trong CÙNG 1 sản phẩm mới là lỗi ──
+    const lotNumberMap = {}; // { productId: { lotNumber: rowIndex } }
     document.querySelectorAll('#detailBody tr').forEach((tr, i) => {
         const lotInput = tr.querySelector('.lot-input');
         const lotVal = lotInput?.value.trim();
-        if (!lotVal) return; // để trống -> backend tự sinh, bỏ qua
+        const productId = tr.querySelector('.product-id-hidden')?.value;
+        if (!lotVal || !productId) return; // để trống -> backend tự sinh, bỏ qua
 
-        if (lotNumberMap[lotVal] !== undefined) {
+        if (!lotNumberMap[productId]) lotNumberMap[productId] = {};
+
+        if (lotNumberMap[productId][lotVal] !== undefined) {
             lotInput.classList.add('is-invalid');
-            errors.push(`Dòng ${i+1}: Số Lô <strong>"${lotVal}"</strong> đã dùng ở dòng ${lotNumberMap[lotVal] + 1}.`);
+            const firstRow = lotNumberMap[productId][lotVal] + 1;
+            errors.push(`Dòng ${i+1}: Số Lô <strong>"${lotVal}"</strong> đã dùng ở dòng ${firstRow} (cùng vật tư).`);
         } else {
-            lotNumberMap[lotVal] = i;
+            lotNumberMap[productId][lotVal] = i;
         }
     });
 
@@ -676,22 +681,40 @@ function validateLotSerial() {
 
 document.getElementById('receiptForm').addEventListener('submit', function(e) {
     const errors = validateLotSerial();
-    if (!errors.length) return;
+    if (errors.length) {
+        e.preventDefault();
+        const container = document.getElementById('lotSerialAlertContainer');
+        const ul = errors.map(msg => `<li>${msg}</li>`).join('');
+        container.innerHTML = `
+            <div class="alert alert-danger alert-dismissible mx-3 mt-3 mb-3" role="alert">
+                <strong>Vui lòng kiểm tra lại thông tin:</strong>
+                <ul class="mb-0 mt-1">${ul}</ul>
+                <button type="button" class="btn-close" data-coreui-dismiss="alert"></button>
+            </div>`;
+        container.scrollIntoView({
+            behavior: 'smooth',
+            block: 'nearest'
+        });
+        document.querySelector('.lot-input.is-invalid, .serial-input.is-invalid')?.focus();
+        return; // Có lỗi → dừng, KHÔNG disable nút
+    }
 
-    e.preventDefault();
-    const container = document.getElementById('lotSerialAlertContainer');
-    const ul = errors.map(msg => `<li>${msg}</li>`).join('');
-    container.innerHTML = `
-        <div class="alert alert-danger alert-dismissible mx-3 mt-3 mb-0" role="alert">
-            <strong>Vui lòng kiểm tra lại thông tin Lot / Serial:</strong>
-            <ul class="mb-0 mt-1">${ul}</ul>
-            <button type="button" class="btn-close" data-coreui-dismiss="alert"></button>
-        </div>`;
-    container.scrollIntoView({
-        behavior: 'smooth',
-        block: 'nearest'
+    // Không có lỗi Lot/Serial → mới cho phép disable nút và hiện "Đang lưu..."
+    if (submitting) {
+        e.preventDefault();
+        return;
+    }
+    submitting = true;
+
+    this.querySelectorAll('button[type="submit"]').forEach(function (btn) {
+        btn.disabled = true;
+        const spinner = btn.querySelector('.spinner-border');
+        const icon    = btn.querySelector('.submit-icon');
+        const label   = btn.querySelector('.submit-label');
+        if (spinner) spinner.classList.remove('d-none');
+        if (icon) icon.classList.add('d-none');
+        if (label) label.textContent = 'Đang lưu...';
     });
-    document.querySelector('.lot-input.is-invalid, .serial-input.is-invalid')?.focus();
 });
 
 // ── Init ──────────────────────────────────────────────────────────

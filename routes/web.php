@@ -9,7 +9,7 @@ use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ActivityLogController;
-use App\Http\Controllers\InventoryController;
+use App\Http\Controllers\Inventory\InventoryController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\ReportAlertController;
 
@@ -147,7 +147,8 @@ Route::middleware('auth')->group(function () {
 
     // ── TỒN KHO ─────────────────────────────────────────────────────────────
     Route::get('inventory', [InventoryController::class, 'index'])->name('inventory.index');
-    Route::resource('inventory', InventoryController::class)->except(['index']);
+    Route::get('inventory/lot-serials', [InventoryController::class, 'lotSerials'])->name('inventory.lotSerials');
+    Route::post('inventory/update-location', [InventoryController::class, 'updateLocation'])->name('inventory.updateLocation');
 
     Route::get('under-construction', fn() => view('under-construction'))
         ->name('under-construction');

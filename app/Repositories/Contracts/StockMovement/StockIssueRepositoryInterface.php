@@ -38,4 +38,6 @@ interface StockIssueRepositoryInterface
     public function updateDetailActualQty(StockIssueDetail $detail, float $qty): void;
 
     public function totalCount(): int;
+
+    public function reservedQtyByLotLocation(int $issueId, int $productId): array;
 }

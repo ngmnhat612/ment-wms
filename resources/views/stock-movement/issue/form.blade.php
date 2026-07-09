@@ -358,16 +358,16 @@ $action = $isEdit ? route('issues.update', $issue->id) : route('issues.store');
     {{-- ── NÚT LƯU ── --}}
     <div class="d-flex gap-2 justify-content-end mt-3">
         @if(!$isEdit)
-        <button type="submit" class="btn btn-outline-primary" name="action" value="save_and_new">
-            <svg class="icon me-1"><use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-plus') }}"></use></svg>
-            Lưu & Thêm mới
+        <button type="submit" id="issueSubmitBtnNew" class="btn btn-outline-primary" name="action" value="save_and_new">
+            <span class="spinner-border spinner-border-sm me-1 d-none" role="status" aria-hidden="true"></span>
+            <svg class="icon me-1 submit-icon"><use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-plus') }}"></use></svg>
+            <span class="submit-label">Lưu &amp; Thêm mới</span>
         </button>
         @endif
-        <button type="submit" class="btn btn-primary" name="action" value="save">
-            <svg class="icon me-1">
-                <use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-save') }}"></use>
-            </svg>
-            Lưu
+        <button type="submit" id="issueSubmitBtnSave" class="btn btn-primary" name="action" value="save">
+            <span class="spinner-border spinner-border-sm me-1 d-none" role="status" aria-hidden="true"></span>
+            <svg class="icon me-1 submit-icon"><use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-save') }}"></use></svg>
+            <span class="submit-label">Lưu</span>
         </button>
     </div>
 
@@ -383,13 +383,14 @@ const SNS = @json($snsJson ?? []);
 
 // URL AJAX lấy danh sách Vị trí đang có tồn khả dụng cho 1 vật tư.
 // Ví dụ route: Route::get('issues/stock-locations/{product}', [StockIssueController::class, 'stockLocations'])->name('issues.stock-locations');
-const STOCK_LOCATIONS_URL_BASE = "{{ route('issues.stock-locations', ['product' => '__PRODUCT_ID__']) }}";
+const STOCK_LOCATIONS_URL_BASE = "{{ route('issues.stock-locations', ['product' => '__PRODUCT_ID__']) }}{{ $isEdit ? '?issue_id=' . $issue->id : '' }}";
 
 // TRACKING constants (mirrors PHP TrackingType enum: chỉ còn 2 giá trị)
 const TRACKING_LOT = 1;
 const TRACKING_LOT_AND_SERIAL = 2;
 
 let rowIndex = <?php echo $rows->count(); ?>;
+let submitting = false;
 
 // ── Đếm số serial trong 1 chuỗi "SN0001 SN0002 ..." ────────────────
 function countSerials(str) {
@@ -777,7 +778,7 @@ async function loadLotsForRow(tr, productId, locationId) {
     tr.dataset.availableByLot = JSON.stringify(availableByLot);
 
     if (previousLabel) {
-        const stillValid = lotsInLocation.some(row => row.lot_number === previousLabel);
+        const stillValid = lotsInLocation.some(row => String(row.lot_number) === previousLabel);
         lotInput.classList.toggle('is-invalid', !stillValid);
         if (!stillValid) {
             tr.querySelector('.lot-id-hidden').value = '';
@@ -818,7 +819,7 @@ async function loadSerialsForRow(tr, productId, locationId, lotId) {
 }
 
 // ── Khi gõ/chọn Tên vật tư ─────────────────────────────────────────
-function onProductInput(input, preserveSelection = false) {
+async function onProductInput(input, preserveSelection = false) {
     const tr = input.closest('tr');
     const hidden = tr.querySelector('.product-id-hidden');
     const p = findProductByLabel(input.value.trim());
@@ -833,7 +834,7 @@ function onProductInput(input, preserveSelection = false) {
         tr.querySelector('.tskt-label').value = p.specification ?? '';
 
         applyTracking(tr, parseInt(p.tracking_type) || TRACKING_LOT);
-        loadLocationsForRow(tr, p.id);
+        await loadLocationsForRow(tr, p.id);
     } else {
         hidden.value = '';
         delete input.dataset.tracking;
@@ -841,7 +842,7 @@ function onProductInput(input, preserveSelection = false) {
         tr.querySelector('.uom-label').textContent = '-';
         tr.querySelector('.uom-hidden').value = '';
         tr.querySelector('.tskt-label').value = '';
-        loadLocationsForRow(tr, null);
+        await loadLocationsForRow(tr, null);
     }
 
     // Đổi vật tư -> Vị trí/Lô/Sê-ri đã chọn trước đó không còn ý nghĩa, xóa hết.
@@ -857,22 +858,20 @@ function onLocationInput(input) {
     const hidden = tr.querySelector('.location-id-hidden');
     const dl = tr.querySelector('.location-datalist');
     const label = input.value.trim();
-    const opt = dl ? [...dl.options].find(o => o.value === label) : null;
+    const opt = dl
+        ? [...dl.options].find(o => o.value === label || o.dataset.label === label)
+        : null;
     const productId = tr.querySelector('.product-id-hidden')?.value;
 
     if (opt) {
         hidden.value = opt.dataset.id;
         input.classList.remove('is-invalid');
-        // opt.value gộp chung "(còn X)" để hiện trong gợi ý dropdown, nhưng
-        // hiển thị trong ô nên là nhãn sạch (dataset.label) — ghi lại ngay
-        // khi vừa chọn xong, giống cách xử lý ở onLotInput().
         input.value = opt.dataset.label;
     } else {
         hidden.value = '';
         input.classList.toggle('is-invalid', label !== '');
     }
 
-    // Đổi Vị trí -> Lô/Sê-ri đã chọn trước đó không còn hợp lệ, xóa và nạp lại Lô.
     clearLotSelection(tr);
     loadLotsForRow(tr, productId, hidden.value || null);
 }
@@ -884,7 +883,9 @@ function onLotInput(input) {
     const hidden = tr.querySelector('.lot-id-hidden');
     const dl = tr.querySelector('.lot-datalist');
     const label = input.value.trim();
-    const opt = dl ? [...dl.options].find(o => o.value === label) : null;
+    const opt = dl
+        ? [...dl.options].find(o => o.value === label || o.dataset.label === label)
+        : null;
     const productId = tr.querySelector('.product-id-hidden')?.value;
     const locationId = tr.querySelector('.location-id-hidden')?.value;
 
@@ -1165,22 +1166,40 @@ function validateLotSerial() {
 
 document.getElementById('issueForm').addEventListener('submit', function(e) {
     const errors = validateLotSerial();
-    if (!errors.length) return;
+    if (errors.length) {
+        e.preventDefault();
+        const container = document.getElementById('lotSerialAlertContainer');
+        const ul = errors.map(msg => `<li>${msg}</li>`).join('');
+        container.innerHTML = `
+            <div class="alert alert-danger alert-dismissible mx-3 mt-3 mb-3" role="alert">
+                <strong>Vui lòng kiểm tra lại thông tin:</strong>
+                <ul class="mb-0 mt-1">${ul}</ul>
+                <button type="button" class="btn-close" data-coreui-dismiss="alert"></button>
+            </div>`;
+        container.scrollIntoView({
+            behavior: 'smooth',
+            block: 'nearest'
+        });
+        document.querySelector('.lot-input.is-invalid, .serial-tag-box.is-invalid .serial-tag-typer')?.focus();
+        return; // Có lỗi → dừng, KHÔNG disable nút
+    }
 
-    e.preventDefault();
-    const container = document.getElementById('lotSerialAlertContainer');
-    const ul = errors.map(msg => `<li>${msg}</li>`).join('');
-    container.innerHTML = `
-        <div class="alert alert-danger alert-dismissible mx-3 mt-3 mb-0" role="alert">
-            <strong>Vui lòng kiểm tra lại thông tin Lot / Serial:</strong>
-            <ul class="mb-0 mt-1">${ul}</ul>
-            <button type="button" class="btn-close" data-coreui-dismiss="alert"></button>
-        </div>`;
-    container.scrollIntoView({
-        behavior: 'smooth',
-        block: 'nearest'
+    // Không có lỗi Lot/Serial → mới cho phép disable nút và hiện "Đang lưu..."
+    if (submitting) {
+        e.preventDefault();
+        return;
+    }
+    submitting = true;
+
+    this.querySelectorAll('button[type="submit"]').forEach(function (btn) {
+        btn.disabled = true;
+        const spinner = btn.querySelector('.spinner-border');
+        const icon    = btn.querySelector('.submit-icon');
+        const label   = btn.querySelector('.submit-label');
+        if (spinner) spinner.classList.remove('d-none');
+        if (icon) icon.classList.add('d-none');
+        if (label) label.textContent = 'Đang lưu...';
     });
-    document.querySelector('.lot-input.is-invalid, .serial-tag-box.is-invalid .serial-tag-typer')?.focus();
 });
 
 // ── Init ──────────────────────────────────────────────────────────
@@ -1195,7 +1214,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (productInput?.value) {
             // preserveSelection=true: đây là dữ liệu đã lưu, không phải người dùng vừa gõ.
-            onProductInput(productInput, true);
+            await onProductInput(productInput, true);
         }
 
         // Vẽ badge cho các serial đã có sẵn (dữ liệu cũ khi sửa phiếu / old()).

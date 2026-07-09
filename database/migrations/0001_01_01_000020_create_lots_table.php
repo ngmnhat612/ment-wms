@@ -13,8 +13,14 @@ return new class extends Migration
             $table->unsignedBigInteger('product_id');
             $table->unsignedBigInteger('supplier_id')->nullable()->comment('Tạm thời không dùng đến');
             $table->unsignedBigInteger('brand_id')->nullable();
-            $table->string('lot_code', 100)->unique()->comment('Mã lô, tự sinh. VD: LO9, LO10...');
-            $table->unsignedInteger('lot_number')->comment('Số lô (phần số thứ tự), tự sinh. VD: 9, 10...');
+
+            // lot_code / lot_number được sinh và duy nhất TRONG PHẠM VI 1 sản
+            // phẩm (mỗi sản phẩm có dãy số Lô riêng: SP A có LO1, LO2...; SP B
+            // cũng có LO1, LO2... độc lập). Vì vậy KHÔNG dùng unique() toàn cục
+            // trên lot_code — dùng unique composite (product_id, lot_code) bên
+            // dưới để cho phép 2 sản phẩm khác nhau cùng có cùng lot_code.
+            $table->string('lot_code', 100)->comment('Mã lô, tự sinh trong phạm vi 1 sản phẩm. VD: LO9, LO10...');
+            $table->unsignedInteger('lot_number')->comment('Số lô (phần số thứ tự), tự sinh trong phạm vi 1 sản phẩm. VD: 9, 10...');
             $table->date('received_date')->nullable()->comment('Ngày nhận');
             $table->date('manufacture_date')->nullable()->comment('Ngày sản xuất');
             $table->date('expiry_date')->nullable()->comment('Ngày hết hạn');
@@ -34,6 +40,10 @@ return new class extends Migration
             $table->foreign('brand_id')
                   ->references('id')->on('brands')
                   ->onDelete('no action');
+
+            // Unique composite: lot_code chỉ cần duy nhất TRONG PHẠM VI 1 sản
+            // phẩm, không phải toàn hệ thống.
+            $table->unique(['product_id', 'lot_code']);
         });
     }
 

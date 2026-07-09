@@ -17,6 +17,7 @@ use App\Models\Master\Department;
 use App\Models\Master\Sn;
 use App\Models\StockMovement\StockIssue;
 use App\Models\StockMovement\StockReceipt;
+use App\Models\Inventory\Stock;
 use App\Models\InventoryCheck;
 use App\Models\StockAdjustment;
 use App\Models\StockRequest;
@@ -34,9 +35,9 @@ use App\Policies\Master\LocationPolicy;
 use App\Policies\Master\SupplierPolicy;
 use App\Policies\Master\DepartmentPolicy;
 use App\Policies\Master\SnPolicy;
-use App\Policies\StockRequest\StockIssuePolicy;
-use App\Policies\StockRequest\StockReceiptPolicy;
-use App\Policies\StockMovement\StockRequestPolicy;
+use App\Policies\StockMovement\StockIssuePolicy;
+use App\Policies\StockMovement\StockReceiptPolicy;
+use App\Policies\Inventory\StockPolicy;
 use App\Policies\Stocktake\InventoryCheckPolicy;
 use App\Policies\Stocktake\InventoryFreezePolicy;
 use App\Policies\Stocktake\StockAdjustmentPolicy;
@@ -64,7 +65,8 @@ class AuthServiceProvider extends ServiceProvider
         // Inbound / Outbound
         StockReceipt::class => StockReceiptPolicy::class,
         StockIssue::class   => StockIssuePolicy::class,
-        // StockRequest::class => StockRequestPolicy::class,
+
+        Stock::class => StockPolicy::class,
 
         // Stocktake
         // InventoryCheck::class      => InventoryCheckPolicy::class,

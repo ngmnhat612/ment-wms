@@ -105,6 +105,13 @@ class ProductRepository implements ProductRepositoryInterface
             ->get();
     }
 
+    public function allOrdered(): Collection
+    {
+        return Product::select('id', 'code', 'name')
+            ->orderBy('name')
+            ->get();
+    }
+
     public function findRootByCode(string $code): ?Product
     {
         return Product::where('code', $code)
