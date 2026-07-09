@@ -10,7 +10,7 @@ class LotRepository implements LotRepositoryInterface
     public function firstOrCreate(int $productId, string $lotCode, array $attributes): Lot
     {
         return Lot::firstOrCreate(
-            ['lot_code' => $lotCode],
+            ['lot_code' => $lotCode, 'product_id' => $productId],
             array_merge(
                 ['lot_number' => $this->extractLotNumber($lotCode)],
                 $attributes,
@@ -19,9 +19,9 @@ class LotRepository implements LotRepositoryInterface
         );
     }
 
-    public function maxLotNumber(): int
+    public function maxLotNumber(int $productId): int
     {
-        return (int) (Lot::max('lot_number') ?? 0);
+        return (int) (Lot::where('product_id', $productId)->max('lot_number') ?? 0);
     }
 
     /**

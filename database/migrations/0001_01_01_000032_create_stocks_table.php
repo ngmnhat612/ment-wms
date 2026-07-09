@@ -21,7 +21,7 @@ return new class extends Migration
             $table->decimal('reserved_qty', 18, 3)->default(0)->comment('Đã đặt chưa xuất');
             // available_qty: computed column, thêm bằng raw SQL bên dưới (SQL Server PERSISTED)
             $table->tinyInteger('status')->default(1)->comment('1=InStock, 2=Expired, 3=OutOfStock');
-            $table->timestamp('updated_at')->nullable();
+            $table->timestamps();
 
             $table->foreign('warehouse_id')
                   ->references('id')->on('warehouses')

@@ -13,7 +13,7 @@ use App\Repositories\Contracts\StockMovement\StockIssueRepositoryInterface;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use App\Services\StockService;
+use App\Services\Inventory\StockService;
 
 class StockIssueService
 {
@@ -176,11 +176,14 @@ class StockIssueService
                         $remaining -= $take;
                     }
 
-                    if ($remaining > 0.001) {
-                        throw new \DomainException(
-                            "Không đủ tồn kho để xuất sản phẩm ID {$line->product_id}. Còn thiếu: {$remaining}."
-                        );
-                    }
+                if ($remaining > 0.001) {
+                    $product = $line->product;
+                    $productLabel = $product ? "{$product->code} - {$product->name}" : "ID {$line->product_id}";
+
+                    throw new \DomainException(
+                        "Không đủ tồn kho để xuất vật tư {$productLabel}. Còn thiếu: {$remaining}."
+                    );
+                }
 
                     $this->issueRepository->updateDetailActualQty($detail, $qty);
                 }
@@ -386,7 +389,7 @@ class StockIssueService
             return [array_merge($commonAttrs, [
                 'lot_id'     => $lotId,
                 'serial_id'  => null,
-                'actual_qty' => $line['actual_qty'] ?? null,
+                'actual_qty' => is_numeric($line['actual_qty'] ?? null) ? $line['actual_qty'] : 0,
             ])];
         }
 
@@ -426,12 +429,12 @@ class StockIssueService
      *     serial_id:?int, serial_number:?string, available_qty:float,
      * }>
      */
-    public function getAvailableStockForIssue(int $productId): Collection
+    public function getAvailableStockForIssue(int $productId, ?int $issueId = null): Collection
     {
         $product  = $this->productRepository->findById($productId);
         $tracking = (int) ($product?->tracking_type?->value ?? TrackingType::Lot->value);
 
-        $stocks = $this->stockRepository->availableForIssue($productId);
+        $stocks = $this->stockRepository->availableForIssue($productId, $issueId);
         $result = collect();
 
         foreach ($stocks as $s) {
@@ -444,16 +447,15 @@ class StockIssueService
                 'expiry_date'   => $s->lot?->expiry_date?->format('Y-m-d'),
                 'serial_id'     => $s->serial_id,
                 'serial_number' => $s->serial?->serial_number,
-                // available_qty = quantity - reserved_qty (cột computed).
-                'available_qty' => (float) $s->quantity - (float) $s->reserved_qty,
+                // available_qty = quantity - reserved_qty + phần chính phiếu này đang
+                // giữ chỗ (sẽ được release và reserve lại đúng số mới khi Lưu) — để
+                // người sửa phiếu thấy đúng "khả dụng thật nếu bỏ giữ chỗ cũ", tránh
+                // báo "vượt khả dụng" sai với chính giá trị đã lưu trước đó.
+                'available_qty' => (float) $s->quantity - (float) $s->reserved_qty + (float) ($s->own_reserved ?? 0),
             ];
 
-            // Sản phẩm theo Lô + Sê-ri: 1 dòng tồn theo Lô cần "bung" thành
-            // nhiều dòng, mỗi dòng 1 serial đang tồn thật, để UI gợi ý đúng
-            // luồng Vị trí -> Lô -> Sê-ri.
             if ($tracking === TrackingType::LotAndSerial->value && $s->lot_id && ! $s->serial_id) {
                 $serials = $this->stockRepository->serialsInStock($productId, $s->lot_id);
-
                 if ($serials->isNotEmpty()) {
                     foreach ($serials as $serial) {
                         $result->push(array_merge($baseRow, [

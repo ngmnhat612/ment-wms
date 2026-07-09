@@ -18,7 +18,7 @@ interface LotRepositoryInterface
      * Lấy lot_number (số thứ tự) lớn nhất hiện có trong bảng lots.
      * Dùng để CodeGeneratorService sinh lot_code/lot_number tiếp theo.
      */
-    public function maxLotNumber(): int;
+    public function maxLotNumber(int $productId): int;
 
     /**
      * Tìm lô theo (lot_number, product_id).

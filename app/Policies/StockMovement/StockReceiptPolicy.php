@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Policies\StockRequest;
+namespace App\Policies\StockMovement;
 
 use App\Models\Master\Account;
 use App\Models\StockMovement\StockReceipt;

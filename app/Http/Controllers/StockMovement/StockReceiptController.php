@@ -36,18 +36,24 @@ class StockReceiptController extends Controller
     }
 
     public function store(StockReceiptRequest $request)
-        {
-            Gate::authorize('create', StockReceipt::class);
+    {
+        Gate::authorize('create', StockReceipt::class);
 
+        try {
             $receipt = $this->receiptService->create(
                 $request->only(['warehouse_id', 'stock_in_request_id', 'code', 'note', 'receipt_date']),
                 $request->input('lines', [])
             );
-
-            return $request->input('action') === 'save_and_new'
-                ? redirect()->route('receipts.create')->with('success', 'Đã tạo phiếu nhập thành công.')
-                : redirect()->route('receipts.show', $receipt)->with('success', 'Đã tạo phiếu nhập thành công.');
+        } catch (\DomainException $e) {
+            return redirect()->route('receipts.create')
+                ->withInput()
+                ->with('error', $e->getMessage());
         }
+
+        return $request->input('action') === 'save_and_new'
+            ? redirect()->route('receipts.create')->with('success', 'Đã tạo phiếu nhập thành công.')
+            : redirect()->route('receipts.show', $receipt)->with('success', 'Đã tạo phiếu nhập thành công.');
+    }
 
     public function show(StockReceipt $receipt)
     {
@@ -84,7 +90,9 @@ class StockReceiptController extends Controller
                 $request->input('lines', [])
             );
         } catch (\DomainException $e) {
-            return redirect()->route('receipts.show', $receipt)->with('error', $e->getMessage());
+            return redirect()->route('receipts.edit', $receipt)
+                ->withInput()
+                ->with('error', $e->getMessage());
         }
 
         return redirect()->route('receipts.show', $receipt)

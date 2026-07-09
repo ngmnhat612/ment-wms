@@ -142,4 +142,39 @@ class StockIssueRepository implements StockIssueRepositoryInterface
     {
         return StockIssue::count();
     }
+
+    /**
+     * Tổng reserved_qty mà CHÍNH phiếu $issueId (Draft) đang giữ chỗ, gộp theo
+     * (location_id, lot_id) — dùng để loại trừ khỏi available_qty khi tính gợi ý
+     * tồn kho lúc SỬA phiếu, tránh trừ đúp phần tự giữ chỗ của chính nó.
+     *
+     * @return array<string, float> key = "{location_id}:{lot_id}"
+     */
+    public function reservedQtyByLotLocation(int $issueId, int $productId): array
+    {
+        $lines = StockIssueLine::where('stock_issue_id', $issueId)
+            ->where('product_id', $productId)
+            ->with('details')
+            ->get();
+
+        $result = [];
+
+        foreach ($lines as $line) {
+            $details = $line->details;
+            $isSerialTracked = $details->count() > 1 || $details->first()?->serial_id;
+
+            foreach ($details as $detail) {
+                if (! $detail->location_id || ! $detail->lot_id) continue;
+
+                $qty = $isSerialTracked
+                    ? (float) ($detail->actual_qty ?: 1)
+                    : (float) $line->expected_qty;
+
+                $key = $detail->location_id . ':' . $detail->lot_id;
+                $result[$key] = ($result[$key] ?? 0) + $qty;
+            }
+        }
+
+        return $result;
+    }
 }

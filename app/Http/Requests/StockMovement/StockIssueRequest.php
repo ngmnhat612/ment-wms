@@ -4,6 +4,7 @@ namespace App\Http\Requests\StockMovement;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Validator;
+use Illuminate\Validation\Rule;
 use App\Models\Inventory\Serial;
 use App\Repositories\Contracts\Inventory\LotRepositoryInterface;
 use App\Repositories\Contracts\Inventory\StockRepositoryInterface;
@@ -24,6 +25,27 @@ class StockIssueRequest extends FormRequest
         return true; // Gate::authorize() đã xử lý ở Controller.
     }
 
+    /**
+     * Chuẩn hoá dữ liệu trước khi validate: nếu actual_qty (Thực xuất)
+     * bị bỏ trống, tự động coi là 0 thay vì để null gây lỗi ở bước sau.
+     */
+    protected function prepareForValidation(): void
+    {
+        if (! is_array($this->input('lines'))) {
+            return;
+        }
+
+        $lines = collect($this->input('lines'))->map(function ($line) {
+            if (! isset($line['actual_qty']) || $line['actual_qty'] === '' || $line['actual_qty'] === null) {
+                $line['actual_qty'] = 0;
+            }
+
+            return $line;
+        })->all();
+
+        $this->merge(['lines' => $lines]);
+    }
+
     public function rules(): array
     {
         $isUpdate = $this->route('issue') !== null;
@@ -31,8 +53,11 @@ class StockIssueRequest extends FormRequest
         return [
             'warehouse_id'         => 'required|exists:warehouses,id',
             'stock_out_request_id' => 'nullable|exists:stock_out_request,id',
-            'code'                 => $isUpdate
-                ? 'nullable|string|max:50'
+            'code' => $isUpdate
+                ? [
+                    'nullable', 'string', 'max:50',
+                    Rule::unique('stock_issue', 'code')->ignore($this->route('issue')),
+                ]
                 : 'nullable|string|max:50|unique:stock_issue,code',
             'issue_date' => 'required|date',
             'note'       => 'nullable|string|max:500',
@@ -45,7 +70,7 @@ class StockIssueRequest extends FormRequest
             'lines.*.product_id'     => 'required|exists:products,id',
             'lines.*.uom_id'         => 'required|exists:uoms,id',
             'lines.*.expected_qty'   => 'required|numeric|min:0.001',
-            'lines.*.actual_qty'     => 'nullable|numeric|min:0',
+            'lines.*.actual_qty'     => 'required|numeric|min:0',
             'lines.*.location_id'    => 'required|exists:locations,id',
             'lines.*.receiver_id'    => 'required|exists:employees,id',
             'lines.*.sn_id'          => 'nullable|exists:sns,id',
@@ -106,7 +131,10 @@ class StockIssueRequest extends FormRequest
             // để tránh 2 nơi có 2 "sự thật" khác nhau về tồn kho.
             $stockCache = [];
             $stocksFor = function (int $productId) use (&$stockCache) {
-                return $stockCache[$productId] ??= $this->stockRepository->availableForIssue($productId);
+                return $stockCache[$productId] ??= $this->stockRepository->availableForIssue(
+                    $productId,
+                    $this->route('issue')?->id
+                );
             };
 
             $serialSeen = []; // ['product_id|serial_value' => 'Dòng N']

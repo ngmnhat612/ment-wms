@@ -47,10 +47,16 @@ class StockIssueController extends Controller
     {
         Gate::authorize('create', StockIssue::class);
 
-        $issue = $this->issueService->create(
-            $request->only(['warehouse_id', 'stock_out_request_id', 'code', 'note', 'issue_date']),
-            $request->input('lines', [])
-        );
+        try {
+            $issue = $this->issueService->create(
+                $request->only(['warehouse_id', 'stock_out_request_id', 'code', 'note', 'issue_date']),
+                $request->input('lines', [])
+            );
+        } catch (\DomainException $e) {
+            return redirect()->route('issues.create')
+                ->withInput()
+                ->with('error', $e->getMessage());
+        }
 
         return $request->input('action') === 'save_and_new'
             ? redirect()->route('issues.create')->with('success', 'Đã tạo phiếu xuất thành công.')
@@ -92,7 +98,9 @@ class StockIssueController extends Controller
                 $request->input('lines', [])
             );
         } catch (\DomainException $e) {
-            return redirect()->route('issues.show', $issue)->with('error', $e->getMessage());
+            return redirect()->route('issues.edit', $issue)
+                ->withInput()
+                ->with('error', $e->getMessage());
         }
 
         return redirect()->route('issues.show', $issue)
@@ -156,9 +164,11 @@ class StockIssueController extends Controller
      * StockIssueService::getAvailableStockForIssue() — Controller chỉ gọi
      * và trả JSON.
      */
-    public function stockLocations(int $productId)
+    public function stockLocations(Request $request, int $productId)
     {
-        return response()->json($this->issueService->getAvailableStockForIssue($productId));
+        $issueId = $request->integer('issue_id') ?: null;
+
+        return response()->json($this->issueService->getAvailableStockForIssue($productId, $issueId));
     }
 
     private function formData(): array

@@ -26,6 +26,27 @@ class StockReceiptRequest extends FormRequest
         return true; // Gate::authorize() đã xử lý ở Controller, không lặp lại ở đây.
     }
 
+    /**
+     * Chuẩn hoá dữ liệu trước khi validate: nếu actual_qty (Thực xuất)
+     * bị bỏ trống, tự động coi là 0 thay vì để null gây lỗi ở bước sau.
+     */
+    protected function prepareForValidation(): void
+    {
+        if (! is_array($this->input('lines'))) {
+            return;
+        }
+
+        $lines = collect($this->input('lines'))->map(function ($line) {
+            if (! isset($line['actual_qty']) || $line['actual_qty'] === '' || $line['actual_qty'] === null) {
+                $line['actual_qty'] = 0;
+            }
+
+            return $line;
+        })->all();
+
+        $this->merge(['lines' => $lines]);
+    }
+
     public function rules(): array
     {
         $isUpdate = $this->route('receipt') !== null;
@@ -33,9 +54,12 @@ class StockReceiptRequest extends FormRequest
         return [
             'warehouse_id'        => 'required|exists:warehouses,id',
             'stock_in_request_id' => 'nullable|exists:stock_in_request,id',
-            'code'                => $isUpdate
-                ? 'nullable|string|max:50'
-                : 'nullable|string|max:50|unique:stock_receipts,code',
+            'code' => $isUpdate
+                ? [
+                    'nullable', 'string', 'max:50',
+                    Rule::unique('stock_receipt', 'code')->ignore($this->route('receipt')),
+                ]
+                : 'nullable|string|max:50|unique:stock_receipt,code',
             'receipt_date'        => 'required|date',
             'note'                => 'nullable|string|max:500',
 
@@ -48,7 +72,7 @@ class StockReceiptRequest extends FormRequest
             'lines.*.product_id'       => 'required|exists:products,id',
             'lines.*.uom_id'           => 'required|exists:uoms,id',
             'lines.*.expected_qty'     => 'required|numeric|min:0.001',
-            'lines.*.actual_qty'       => 'nullable|numeric|min:0',
+            'lines.*.actual_qty'       => 'required|numeric|min:0',
             'lines.*.location_id'      => 'required|exists:locations,id',
             'lines.*.receiver_id'      => 'required|exists:employees,id',
             'lines.*.sn_id'            => 'nullable|exists:sns,id',
@@ -105,7 +129,7 @@ class StockReceiptRequest extends FormRequest
             );
 
             $serialSeen = [];    // ['product_id|serial_value' => 'Dòng N']
-            $lotNumberSeen = []; // [lotNumberInt => ['line' => n, 'product_id' => id]]
+            $lotNumberSeen = []; // ["{product_id}:{lotNumberInt}" => ['line' => n]]
 
             $currentReceipt = $this->route('receipt');
             $excludedLotIds = $currentReceipt
@@ -190,15 +214,17 @@ class StockReceiptRequest extends FormRequest
                     }
 
                     $lotNumberInt = (int) $lotNumberInput;
+                    $productId    = (int) $row['product_id'];
+                    $lotSeenKey   = $productId . ':' . $lotNumberInt;
 
-                    if (isset($lotNumberSeen[$lotNumberInt])) {
-                        $prevRow = $lotNumberSeen[$lotNumberInt];
+                    if (isset($lotNumberSeen[$lotSeenKey])) {
+                        $prevRow = $lotNumberSeen[$lotSeenKey];
                         $validator->errors()->add(
                             "lines.{$i}.lot_number",
-                            "Dòng {$line}: Số Lô \"{$lotNumberInt}\" đã dùng ở dòng {$prevRow['line']}."
+                            "Dòng {$line}: Số Lô \"{$lotNumberInt}\" đã dùng ở dòng {$prevRow['line']} (cùng vật tư)."
                         );
                     } else {
-                        $lotNumberSeen[$lotNumberInt] = ['line' => $line, 'product_id' => $row['product_id']];
+                        $lotNumberSeen[$lotSeenKey] = ['line' => $line];
                     }
 
                     $existingLot = $this->lotRepository->findByLotNumber(

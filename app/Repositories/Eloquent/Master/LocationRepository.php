@@ -118,6 +118,11 @@ class LocationRepository implements LocationRepositoryInterface
             ->get();
     }
 
+    public function allOrdered(): Collection
+    {
+        return Location::orderBy('code')->get();
+    }
+
     public function create(array $data): Location
     {
         return Location::create($data);
