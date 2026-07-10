@@ -9,7 +9,7 @@ enum InventoryCheckScope: int
     use HasOptions;
 
     case EntireWarehouse = 1;
-    case ByArea           = 2;
+    case ByArea          = 2;
 
     public function label(): string
     {

@@ -145,15 +145,23 @@ class StockIssueRequest extends FormRequest
             // đổi gì) vẫn báo thiếu tồn vì tồn kho đang coi lượng đã giữ chỗ
             // của chính phiếu là "không khả dụng".
             $issue = $this->route('issue');
+
             $ownReservedByKey = []; // 'productId|locationId|lotId|serialId' => qty
             if ($issue) {
                 $issue->loadMissing('lines.details');
+
                 foreach ($issue->lines as $existingLine) {
                     foreach ($existingLine->details as $existingDetail) {
                         if (empty($existingDetail->location_id) || empty($existingDetail->lot_id)) {
                             continue;
                         }
-                        $qty = (float) ($existingDetail->actual_qty ?: $existingLine->expected_qty);
+                        // BUG ĐÃ SỬA: actual_qty cast 'decimal:3' trả về STRING (vd "0.000").
+                        // Chuỗi "0.000" là TRUTHY trong PHP (chỉ "" và "0" mới falsy),
+                        // nên (actual_qty ?: expected_qty) KHÔNG BAO GIỜ fallback về
+                        // expected_qty khi actual_qty = "0.000" — luôn trả về "0.000",
+                        // ép về (float) = 0.0. Phải ép kiểu (float) TRƯỚC khi đánh giá ?:.
+                        $actualQty = (float) $existingDetail->actual_qty;
+                        $qty = $actualQty ?: (float) $existingLine->expected_qty;
                         $key = $existingLine->product_id . '|' . $existingDetail->location_id . '|'
                             . $existingDetail->lot_id . '|' . ($existingDetail->serial_id ?? '0');
                         $ownReservedByKey[$key] = ($ownReservedByKey[$key] ?? 0) + $qty;

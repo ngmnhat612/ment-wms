@@ -1,10 +1,10 @@
 @extends('layouts.app')
 
-@section('title', 'Yêu cầu Nhập/Xuất kho')
+@section('title', 'Kiểm kê kho')
 
 @section('breadcrumb')
   <li class="breadcrumb-item">Nghiệp vụ kho</li>
-  <li class="breadcrumb-item active">Yêu cầu Nhập/Xuất kho</li>
+  <li class="breadcrumb-item active">Kiểm kê</li>
 @endsection
 
 @section('content')
@@ -37,15 +37,10 @@
 
   {{-- HEADER --}}
   <div class="d-flex justify-content-end gap-2 mb-4">
-    <a href="{{ Route::has('stock-in-requests.create') ? route('stock-in-requests.create') : '#' }}"
-       class="btn btn-primary {{ Route::has('stock-in-requests.create') ? '' : 'disabled' }}">
+    <a href="{{ Route::has('stocktakes.create') ? route('stocktakes.create') : '#' }}"
+       class="btn btn-primary {{ Route::has('stocktakes.create') ? '' : 'disabled' }}">
       <svg class="icon me-1"><use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-plus') }}"></use></svg>
-      Yêu cầu nhập
-    </a>
-    <a href="{{ Route::has('stock-out-requests.create') ? route('stock-out-requests.create') : '#' }}"
-       class="btn btn-primary {{ Route::has('stock-out-requests.create') ? '' : 'disabled' }}">
-      <svg class="icon me-1"><use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-plus') }}"></use></svg>
-      Yêu cầu xuất
+      Tạo phiếu kiểm kê
     </a>
   </div>
 
@@ -56,7 +51,7 @@
 
         {{-- CỘT 1: Tiêu đề --}}
         <div class="flex-shrink-0">
-        <span class="fw-semibold text-nowrap">Yêu cầu Nhập/Xuất kho</span>
+        <span class="fw-semibold text-nowrap">Kiểm kê kho</span>
         </div>
 
         {{-- CỘT 2 + CỘT 3: chiếm hết khoảng trống giữa, chia đều nhau --}}
@@ -70,21 +65,24 @@
                 <svg class="icon"><use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-search') }}"></use></svg>
                 </span>
                 <input type="text" class="form-control" name="search"
-                    value="{{ request('search') }}" placeholder="Mã phiếu...">
+                    value="{{ request('search') }}" placeholder="Mã phiếu, mục đích...">
             </div>
             </div>
 
-            {{-- CỘT 3: Loại + Trạng thái (dòng 1), Từ - Đến ngày (dòng 2) --}}
+            {{-- CỘT 3: Phạm vi + Trạng thái (dòng 1), Từ - Đến ngày (dòng 2) --}}
             <div class="col-6 d-flex flex-column gap-2">
             <div class="d-flex gap-2">
-                <select class="form-select" name="request_type" onchange="this.form.submit()">
-                <option value="">Yêu cầu Nhập/Xuất</option>
-                <option value="in" {{ request('request_type') == 'in' ? 'selected' : '' }}>Yêu cầu nhập</option>
-                <option value="out" {{ request('request_type') == 'out' ? 'selected' : '' }}>Yêu cầu xuất</option>
+                <select class="form-select" name="check_scope" onchange="this.form.submit()">
+                <option value="">Phạm vi</option>
+                @foreach (\App\Enums\InventoryCheckScope::cases() as $case)
+                  <option value="{{ $case->value }}" {{ request('check_scope') == $case->value ? 'selected' : '' }}>
+                    {{ $case->label() }}
+                  </option>
+                @endforeach
                 </select>
                 <select class="form-select" name="status" onchange="this.form.submit()">
                 <option value="">Trạng thái</option>
-                @foreach (\App\Enums\DocumentStatus::cases() as $case)
+                @foreach (\App\Enums\InventoryCheckStatus::cases() as $case)
                   <option value="{{ $case->value }}" {{ request('status') == $case->value ? 'selected' : '' }}>
                     {{ $case->label() }}
                   </option>
@@ -109,7 +107,7 @@
         {{-- CỘT 4: Nút Lọc --}}
         <div class="flex-shrink-0">
         @php
-            $hasFilter = request('search') || request('request_type') || request('status') || request('date_from') || request('date_to');
+            $hasFilter = request('search') || request('check_scope') || request('status') || request('date_from') || request('date_to');
         @endphp
         @if ($hasFilter)
             <a href="{{ url()->current() }}" class="btn btn-outline-secondary">
@@ -125,87 +123,105 @@
     </form>
     </div>
 
+    @if(session('success'))
+      <div class="alert alert-success alert-dismissible mx-3 mt-3 mb-0" role="alert">
+        <svg class="icon me-1"><use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-check') }}"></use></svg>
+        {{ session('success') }}
+        <button type="button" class="btn-close" data-coreui-dismiss="alert"></button>
+      </div>
+    @endif
+    @if(session('error'))
+      <div class="alert alert-danger alert-dismissible mx-3 mt-3 mb-0" role="alert">
+        <svg class="icon me-1"><use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-warning') }}"></use></svg>
+        {{ session('error') }}
+        <button type="button" class="btn-close" data-coreui-dismiss="alert"></button>
+      </div>
+    @endif
+
     <div class="card-body p-0">
       <div class="table-responsive">
         <table class="table table-hover align-middle mb-0">
           <thead class="table-light">
             <tr>
                 <th class="text-center" style="width:4%">#</th>
-                <th style="width:8%">Loại</th>
-                <th style="width:12%">
+                <th style="width:10%">
                     <a href="{{ $sortUrl('code') }}" class="text-decoration-none text-reset d-inline-flex align-items-center">
                         Mã phiếu {!! $sortIcon('code') !!}
                     </a>
                 </th>
-                <th style="width:12%">Kho</th>
+                <th style="width:10%">Phạm vi</th>
+                <th style="width:12%">Loại kiểm kê</th>
                 <th>
                     <a href="{{ $sortUrl('created_by') }}" class="text-decoration-none text-reset d-inline-flex align-items-center">
                         Người tạo {!! $sortIcon('created_by') !!}
                     </a>
                 </th>
                 <th style="width:10%">
-                    <a href="{{ $sortUrl('doc_date') }}" class="text-decoration-none text-reset d-inline-flex align-items-center">
-                        Ngày tạo {!! $sortIcon('doc_date') !!}
+                    <a href="{{ $sortUrl('check_date') }}" class="text-decoration-none text-reset d-inline-flex align-items-center">
+                        Ngày kiểm {!! $sortIcon('check_date') !!}
                     </a>
                 </th>
-                <th style="width:18%">
-                    <a href="{{ $sortUrl('note') }}" class="text-decoration-none text-reset d-inline-flex align-items-center">
-                        Ghi chú {!! $sortIcon('note') !!}
+                <th class="text-center" style="width:6%">Dòng</th>
+                <th style="width:14%">
+                    <a href="{{ $sortUrl('purpose') }}" class="text-decoration-none text-reset d-inline-flex align-items-center">
+                        Mục đích {!! $sortIcon('purpose') !!}
                     </a>
                 </th>
                 <th class="text-center" style="width:8%">Trạng thái</th>
+                <th class="text-center" style="width:6%">Đóng băng</th>
                 <th class="text-center" style="width:10%">Thao tác</th>
             </tr>
           </thead>
           <tbody>
             {{--
-                TODO (Controller/Service): gộp $stockInRequests và $stockOutRequests
-                thành 1 collection chung tên $requests, mỗi item cần thêm 1 thuộc
-                tính phân biệt, ví dụ 'request_type' = 'in' | 'out', để Blade biết
-                render badge và route nào (stock-in-requests.show/edit hay
-                stock-out-requests.show/edit). Xem StockMovementController::index()
-                làm mẫu (mapReceipt/mapIssue + sortMovements + paginateCollection).
+                TODO (Controller/Service): mỗi item $checks cần kèm thêm các thuộc tính
+                phái sinh sau (giống StockMovementController::index()):
+                  - created_by / created_by_code : join accounts để hiển thị tên + mã NV
+                  - lines_count                  : withCount('details')
+                  - active_freeze                : eager-load quan hệ freeze đang isActive()
+                        (hoặc thêm quan hệ InventoryCheck::activeFreeze() dạng hasOne
+                        ->where('unfrozen_at', null)->latestOfMany())
+                Xem InventoryCheckController::index() để áp dụng tương tự StockMovementController.
             --}}
-            @forelse ($requests as $index => $stockRequest)
+            @forelse ($checks as $index => $check)
               @php
-                  $status = $stockRequest->status;
-                  $isIn = $stockRequest->request_type === 'in';
-                  $showRoute = $isIn ? 'stock-in-requests.show' : 'stock-out-requests.show';
-                  $deleteUrl = $isIn ? "/stock-in-requests/{$stockRequest->id}" : "/stock-out-requests/{$stockRequest->id}";
+                  $status     = $check->status;
+                  $scope      = $check->check_scope;
+                  $type       = $check->check_type;
+                  $isFrozen   = optional($check->active_freeze)->isActive();
               @endphp
               <tr>
                 <td class="text-center text-body-secondary">
-                  {{ ($requests->currentPage() - 1) * $requests->perPage() + $index + 1 }}
-                </td>
-                <td class="fw-medium">
-                  @if ($isIn)
-                      Yêu cầu nhập
-                  @else
-                      Yêu cầu xuất
-                  @endif
+                  {{ ($checks->currentPage() - 1) * $checks->perPage() + $index + 1 }}
                 </td>
                 <td>
-                  <a href="{{ Route::has($showRoute) ? route($showRoute, $stockRequest->id) : '#' }}"
+                  <a href="{{ Route::has('stocktakes.show') ? route('stocktakes.show', $check->id) : '#' }}"
                      class="fw-medium text-primary text-decoration-none">
-                    <code>{{ $stockRequest->code }}</code>
+                    <code>{{ $check->code }}</code>
                   </a>
                 </td>
                 <td class="small">
-                  {{ $stockRequest->warehouse_name ?? '-' }}
+                  {{ $scope?->label() ?? '-' }}
+                </td>
+                <td class="small">
+                  {{ $type?->label() ?? '-' }}
                 </td>
                 <td>
-                    @if($stockRequest->created_by)
-                    <div class="fw-medium">{{ $stockRequest->created_by }}</div>
-                    <div class="small text-body-secondary font-monospace">{{ $stockRequest->created_by_code }}</div>
+                    @if($check->created_by)
+                    <div class="fw-medium">{{ $check->created_by }}</div>
+                    <div class="small text-body-secondary font-monospace">{{ $check->created_by_code }}</div>
                     @else
                     -
                     @endif
                 </td>
                 <td class="small">
-                  {{ $stockRequest->doc_date ? \Carbon\Carbon::parse($stockRequest->doc_date)->format('d/m/Y') : '-' }}
+                  {{ $check->check_date ? \Carbon\Carbon::parse($check->check_date)->format('d/m/Y') : '-' }}
                 </td>
-                <td class="small text-body-secondary text-truncate" style="max-width:200px" title="{{ $stockRequest->note }}">
-                  {{ $stockRequest->note ?? '-' }}
+                <td class="text-center">
+                  <span class="badge bg-primary-subtle text-primary-emphasis">{{ $check->lines_count ?? 0 }}</span>
+                </td>
+                <td class="small text-body-secondary text-truncate" style="max-width:180px" title="{{ $check->purpose }}">
+                  {{ $check->purpose ?? '-' }}
                 </td>
                 <td class="text-center">
                   <span class="{{ $status->badgeClass() }}" style="font-size:11px">
@@ -213,13 +229,22 @@
                   </span>
                 </td>
                 <td class="text-center">
-                  <a href="{{ Route::has($showRoute) ? route($showRoute, $stockRequest->id) : '#' }}"
+                  @if($isFrozen)
+                    <svg class="icon text-danger" title="Đang đóng băng">
+                      <use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-lock-locked') }}"></use>
+                    </svg>
+                  @else
+                    <span class="text-body-secondary small">-</span>
+                  @endif
+                </td>
+                <td class="text-center">
+                  <a href="{{ Route::has('stocktakes.show') ? route('stocktakes.show', $check->id) : '#' }}"
                      class="btn btn-sm btn-outline-primary me-1" title="Xem chi tiết">
                     <svg class="icon"><use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-list-rich') }}"></use></svg>
                   </a>
-                  @if ($status === \App\Enums\DocumentStatus::Draft)
+                  @if ($status === \App\Enums\InventoryCheckStatus::Draft)
                     <button class="btn btn-sm btn-outline-danger"
-                            onclick="confirmDelete('{{ $deleteUrl }}', '{{ addslashes($stockRequest->code) }}')"
+                            onclick="confirmDelete('/stocktakes/{{ $check->id }}', '{{ addslashes($check->code) }}')"
                             title="Xóa">
                       <svg class="icon"><use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-trash') }}"></use></svg>
                     </button>
@@ -228,11 +253,11 @@
               </tr>
             @empty
               <tr>
-                <td colspan="9" class="text-center text-body-secondary py-5">
+                <td colspan="10" class="text-center text-body-secondary py-5">
                   <svg class="icon icon-3xl d-block mx-auto mb-2 opacity-25">
-                    <use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-truck') }}"></use>
+                    <use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-clipboard') }}"></use>
                   </svg>
-                  Chưa có yêu cầu nhập/xuất nào
+                  Chưa có phiếu kiểm kê nào
                 </td>
               </tr>
             @endforelse
@@ -243,10 +268,10 @@
 
     <div class="card-footer d-flex justify-content-between align-items-center py-2">
       <small class="text-body-secondary">
-        Hiển thị <strong>{{ $requests->firstItem() ?? 0 }}</strong>-<strong>{{ $requests->lastItem() ?? 0 }}</strong>
-        trong tổng số <strong>{{ $requests->total() }}</strong> phiếu
+        Hiển thị <strong>{{ $checks->firstItem() ?? 0 }}</strong>-<strong>{{ $checks->lastItem() ?? 0 }}</strong>
+        trong tổng số <strong>{{ $checks->total() }}</strong> phiếu
       </small>
-      {{ $requests->appends(request()->query())->links('pagination::bootstrap-5') }}
+      {{ $checks->appends(request()->query())->links('pagination::bootstrap-5') }}
       <style>
         .card-footer .pagination { margin-bottom: 0; }
       </style>
