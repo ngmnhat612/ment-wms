@@ -36,7 +36,9 @@ use App\Http\Controllers\StockMovement\StockReceiptController;
 use App\Http\Controllers\StockMovement\StockIssueController;
 
 // ── STOCK-REQUEST ─────────────────────────────────────────────────────────────
-use App\Http\Controllers\Outbound\StockRequestController;
+use App\Http\Controllers\StockRequest\StockRequestController;
+use App\Http\Controllers\StockRequest\StockInRequestController;
+use App\Http\Controllers\StockRequest\StockOutRequestController;
 
 // ── STOCKTAKE ─────────────────────────────────────────────────────────────────
 use App\Http\Controllers\Stocktake\InventoryCheckController;
@@ -150,32 +152,64 @@ Route::middleware('auth')->group(function () {
     Route::get('inventory/lot-serials', [InventoryController::class, 'lotSerials'])->name('inventory.lotSerials');
     Route::post('inventory/update-location', [InventoryController::class, 'updateLocation'])->name('inventory.updateLocation');
 
+    // ── YÊU CẦU NHẬP / XUẤT KHO (trang gộp) ──
+    Route::get('stock-requests', [StockRequestController::class, 'index'])
+        ->name('stock-requests.index');
+
+    // ── YÊU CẦU NHẬP KHO ──
+    Route::resource('stock-in-requests', StockInRequestController::class)->except(['index']);
+    Route::post('stock-in-requests/{stock_in_request}/complete', [StockInRequestController::class, 'complete'])
+        ->name('stock-in-requests.complete');
+    Route::post('stock-in-requests/{stock_in_request}/cancel', [StockInRequestController::class, 'cancel'])
+        ->name('stock-in-requests.cancel');
+
+    // ── YÊU CẦU XUẤT KHO ──
+    Route::resource('stock-out-requests', StockOutRequestController::class)->except(['index']);
+    Route::post('stock-out-requests/{stock_out_request}/complete', [StockOutRequestController::class, 'complete'])
+        ->name('stock-out-requests.complete');
+    Route::post('stock-out-requests/{stock_out_request}/cancel', [StockOutRequestController::class, 'cancel'])
+        ->name('stock-out-requests.cancel');
+
+    // ── KIỂM KÊ KHO ──────────────────────────────────────────────────────────
+    // Route::resource('stocktakes', InventoryCheckController::class)->except(['destroy']);
+ 
+    // Route::post('stocktakes/{stocktake}/start', [InventoryCheckController::class, 'start'])
+    //     ->name('stocktakes.start');
+    // Route::post('stocktakes/{stocktake}/complete', [InventoryCheckController::class, 'complete'])
+    //     ->name('stocktakes.complete');
+    // Route::post('stocktakes/{stocktake}/cancel', [InventoryCheckController::class, 'cancel'])
+    //     ->name('stocktakes.cancel');
+    // Route::put('stocktakes/{stocktake}/details', [InventoryCheckController::class, 'updateDetails'])
+    //     ->name('stocktakes.details.update');
+ 
+    // // ── ĐÓNG BĂNG KHO ────────────────────────────────────────────────────────
+    // Route::post('stocktakes/{stocktake}/freeze', [InventoryFreezeController::class, 'store'])
+    //     ->name('stocktakes.freeze');
+    // Route::post('stocktakes/{stocktake}/freeze/{freeze}/unfreeze', [InventoryFreezeController::class, 'unfreeze'])
+    //     ->name('stocktakes.unfreeze');
+ 
+    // // ── PHIẾU ĐIỀU CHỈNH ──────────────────────────────────────────────────────
+    // Route::get('stocktakes/{stocktake}/adjustment/create', [StockAdjustmentController::class, 'create'])
+    //     ->name('stocktakes.adjustment.create');
+    // Route::post('stocktakes/{stocktake}/adjustment', [StockAdjustmentController::class, 'store'])
+    //     ->name('stocktakes.adjustment.store');
+    // Route::get('stocktakes/{stocktake}/adjustment/{adjustment}', [StockAdjustmentController::class, 'show'])
+    //     ->name('stocktakes.adjustment.show');
+    // Route::post('stocktakes/{stocktake}/adjustment/{adjustment}/complete', [StockAdjustmentController::class, 'complete'])
+    //     ->name('stocktakes.adjustment.complete');
+    // Route::post('stocktakes/{stocktake}/adjustment/{adjustment}/cancel', [StockAdjustmentController::class, 'cancel'])
+    //     ->name('stocktakes.adjustment.cancel');
+
     Route::get('under-construction', fn() => view('under-construction'))
         ->name('under-construction');
 
     // ── PENDING — trỏ tạm về under-construction ───────────────────────────────
     $pending = [
         // Nghiệp vụ kho
-        'stock-requests.index'  => 'stock-requests',
-        // 'receipts.index'        => 'receipts',
-        // 'issues.index'          => 'issues',
         'stocktakes.index'      => 'stocktakes',
 
         // Tồn kho
-        // 'inventory.index'       => 'inventory',
-
-        // Master data
-        // 'master.uom.index'          => 'master/uom',
         'master.uom-conversion.index' => 'master/uom-conversion',
-        // 'master.category.index'     => 'master/category',
-        // 'master.supplier.index'     => 'master/supplier',
-        // 'master.employee.index'     => 'master/employee',
-        // 'master.location.index'     => 'master/location',
-        // 'master.reorder-rule.index' => 'master/reorder-rule',
-        // 'master.putaway-rule.index' => 'master/putaway-rule',
-        // 'master.brand.index'        => 'master/brand',
-        // 'master.warehouse.index'    => 'master/warehouse',
-        // 'master.department.index'   => 'master/department',
 
 
         // Báo cáo

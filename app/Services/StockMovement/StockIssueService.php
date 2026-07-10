@@ -139,7 +139,15 @@ class StockIssueService
                 foreach ($details as $detail) {
                     // Số lượng THỰC XUẤT dùng để trừ tồn thật (decrease) — có
                     // thể khác với số lượng đã GIỮ CHỖ lúc Draft (expected_qty).
-                    $qty = (float) ($detail->actual_qty ?: $line->expected_qty);
+                    // LƯU Ý: actual_qty cast 'decimal:3' trả về STRING (vd "0.000"),
+                    // và chuỗi "0.000" là TRUTHY trong PHP (chỉ "" và "0" mới falsy) —
+                    // nên PHẢI ép kiểu (float) actual_qty TRƯỚC khi đánh giá ?:,
+                    // nếu không biểu thức không bao giờ fallback về expected_qty khi
+                    // actual_qty = "0.000" (mặc định lúc Draft chưa nhập Thực xuất),
+                    // khiến $qty luôn = 0 và toàn bộ dòng bị bỏ qua (continue) —
+                    // hàng KHÔNG được trừ tồn dù phiếu vẫn chuyển Completed thành công.
+                    $actualQty = (float) $detail->actual_qty;
+                    $qty = $actualQty ?: (float) $line->expected_qty;
                     if ($qty <= 0) continue;
 
                     // Bỏ giữ chỗ đã đặt lúc Draft cho đúng dòng stock này —

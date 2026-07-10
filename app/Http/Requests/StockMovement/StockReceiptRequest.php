@@ -82,6 +82,7 @@ class StockReceiptRequest extends FormRequest
             'lines.*.reference_no'     => 'nullable|string|max:100',
             'lines.*.note'             => 'nullable|string|max:500',
             'lines.*.lot_number'       => 'nullable|string|max:50',
+            'lines.*.old_lot_id'       => 'nullable|integer',
             'lines.*.serial_numbers'   => 'nullable|string|max:5000',
             'lines.*.expiry_date'      => 'nullable|date',
         ];
@@ -136,12 +137,31 @@ class StockReceiptRequest extends FormRequest
                 ? $currentReceipt->details()->whereNotNull('lot_id')->pluck('lot_id')->all()
                 : [];
 
+            \Illuminate\Support\Facades\Log::info('[stock-receipt][validate] bắt đầu', [
+                'receipt_id'      => $currentReceipt?->id,
+                'excludedLotIds'  => $excludedLotIds,
+                'lines_raw'       => $lines,
+            ]);
+
             foreach ($lines as $i => $row) {
                 if (empty($row['product_id'])) continue;
 
                 $product  = $products->get($row['product_id']);
                 $tracking = (int) ($product?->tracking_type?->value ?? 1);
                 $line     = $i + 1;
+
+                // ── old_lot_id (nếu có) PHẢI thuộc chính phiếu đang sửa ──
+                // Đây là "chỗ dựa" để Service tái sử dụng lại đúng số Lô cũ
+                // khi người dùng để trống ô Lô — không được tin mù giá trị
+                // client gửi lên, vì có thể bị giả mạo để "cướp" số Lô của
+                // phiếu/dòng khác không thuộc quyền của dòng này.
+                $oldLotId = $row['old_lot_id'] ?? null;
+                if ($oldLotId && ! in_array((int) $oldLotId, $excludedLotIds, true)) {
+                    $validator->errors()->add(
+                        "lines.{$i}.old_lot_id",
+                        "Dòng {$line}: Dữ liệu Lô cũ không hợp lệ."
+                    );
+                }
 
                 $serialNumbers = collect(preg_split('/\s+/', trim((string) ($row['serial_numbers'] ?? ''))))
                     ->filter(fn ($s) => $s !== '')
@@ -231,6 +251,18 @@ class StockReceiptRequest extends FormRequest
                         $lotNumberInt,
                         (int) $row['product_id']
                     );
+
+                    \Illuminate\Support\Facades\Log::info('[stock-receipt][validate] check trùng lô', [
+                        'row_index'       => $i,
+                        'lot_number_input'=> $lotNumberInt,
+                        'product_id'      => $row['product_id'],
+                        'existingLot_id'  => $existingLot?->id,
+                        'existingLot_code'=> $existingLot?->lot_code,
+                        'excludedLotIds'  => $excludedLotIds,
+                        'is_excluded'     => $existingLot ? in_array($existingLot->id, $excludedLotIds) : null,
+                        'will_error'      => $existingLot && ! in_array($existingLot->id, $excludedLotIds),
+                    ]);
+
                     if ($existingLot && ! in_array($existingLot->id, $excludedLotIds)) {
                         $validator->errors()->add(
                             "lines.{$i}.lot_number",

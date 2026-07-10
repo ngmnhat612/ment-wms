@@ -45,7 +45,7 @@
         <svg class="nav-icon">
           <use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-truck') }}"></use>
         </svg>
-        Nhập/Xuất kho
+        Nhập/Xuất
       </a>
     </li>
 

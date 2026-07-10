@@ -268,8 +268,16 @@ $action = $isEdit ? route('receipts.update', $receipt->id) : route('receipts.sto
                                     @endforeach
                                 </select>
                             </td>
-                            {{-- Lot field: 1 lô dùng chung cho cả dòng (và mọi serial con) --}}
+                            {{-- Lot field: 1 lô dùng chung cho cả dòng (và mọi serial con).
+                                 old_lot_id: lot_id ĐANG GÁN cho dòng này TRƯỚC KHI sửa (chỉ có
+                                 giá trị ở chế độ Edit) — dùng để Service tái sử dụng lại đúng
+                                 Lô cũ nếu người dùng XÓA TRẮNG ô Lô (không phải sinh Lô mới),
+                                 tránh "nhảy cóc" số Lô khi không có gì thay đổi thực sự. --}}
                             <td>
+                                <input type="hidden"
+                                    name="lines[{{ $i }}][old_lot_id]"
+                                    class="old-lot-id-hidden"
+                                    value="{{ is_array($lineRow) ? ($lineRow['old_lot_id'] ?? '') : ($firstDetail->lot_id ?? '') }}">
                                 <input type="number"
                                     class="form-control lot-input"
                                     name="lines[{{ $i }}][lot_number]" value="{{ $lotNumber }}"
@@ -531,6 +539,7 @@ function rowTemplate(i) {
     </select>
   </td>
   <td>
+    <input type="hidden" name="lines[${i}][old_lot_id]" class="old-lot-id-hidden" value="">
     <input type="number" class="form-control lot-input"
         name="lines[${i}][lot_number]" placeholder="Tự động" min="1" step="1"
         oninput="clearFieldError(this)">

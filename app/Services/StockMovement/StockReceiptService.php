@@ -2,10 +2,16 @@
 
 namespace App\Services\StockMovement;
 
-use App\Models\Inventory\Lot;
 use App\Models\Master\Product;
-use App\Models\StockMovement\StockReceipt;
+use App\Models\Inventory\Stock;
+use App\Models\Inventory\Lot;
 use App\Models\Inventory\Serial;
+use App\Models\StockMovement\StockReceipt;
+use App\Models\StockMovement\StockReceiptLine;
+use App\Models\StockMovement\StockReceiptDetail;
+use App\Models\StockMovement\StockIssueDetail;
+use App\Models\Stocktake\InventoryCheckDetail;
+use App\Models\Stocktake\StockAdjustmentDetail;
 use App\Enums\DocumentStatus;
 use App\Enums\LotSerialStatus;
 use Illuminate\Support\Facades\Auth;
@@ -62,7 +68,6 @@ class StockReceiptService
             $oldLotIds = $receipt->details()->whereNotNull('lot_id')->pluck('lot_id')->unique()->all();
 
             $this->receiptRepository->update($receipt, [
-                // - 'stock_request_id' => $header['stock_request_id'] ?? null,
                 'stock_in_request_id' => $header['stock_in_request_id'] ?? null,
                 'note'                => $header['note'] ?? null,
                 'receipt_date'        => $header['receipt_date'],
@@ -70,7 +75,7 @@ class StockReceiptService
 
             $this->receiptRepository->replaceDetails($receipt, $this->prepareLineRows($lineRows, $receipt));
 
-            $this->releaseUnusedLots($oldLotIds);
+            $this->releaseUnusedLots($oldLotIds, $receipt);
 
             return $receipt->fresh();
         });
@@ -175,23 +180,92 @@ public function approve(StockReceipt $receipt): void
      * Chỉ gọi khi Hủy/Xóa phiếu Nháp (hoặc dọn lô cũ sau khi Update) —
      * phiếu Draft chưa từng chạy qua StockService::increase() nên chắc chắn
      * chưa có dòng nào trong `stocks` cho các lô này (an toàn để xóa).
+     *
+     * QUAN TRỌNG (bug đã sửa): khi gọi từ update() (đổi Lô cũ -> Lô khác),
+     * $lotIds là các Lô của CHÍNH PHIẾU $receipt đang sửa, mà replaceDetails()
+     * VỪA soft-delete. Việc check StockReceiptDetail::withTrashed() TRƯỚC ĐÂY
+     * không loại trừ các dòng detail đã-trashed CỦA CHÍNH PHIẾU NÀY, nên luôn
+     * thấy "vẫn còn dùng" (do chính bản ghi vừa xóa mềm) và KHÔNG BAO GIỜ xóa
+     * được Lô cũ — Lô cũ tồn đọng vĩnh viễn trong DB dù không còn ai dùng,
+     * khiến sau này không thể validate/gán lại đúng số Lô đó nữa (báo nhầm
+     * "đã tồn tại"). $receipt (nullable, null khi gọi từ delete()/cancel())
+     * cho phép loại trừ đúng các detail (kể cả đã trashed) CỦA PHIẾU NÀY khỏi
+     * điều kiện "còn dùng" — chỉ tính là "còn dùng" nếu thuộc PHIẾU KHÁC.
      */
-    private function releaseUnusedLots(array $lotIds): void
+    private function releaseUnusedLots(array $lotIds, ?StockReceipt $receipt = null): void
     {
         if (empty($lotIds)) {
             return;
         }
 
         foreach ($lotIds as $lotId) {
-            $stillUsed = \App\Models\StockMovement\StockReceiptDetail::withTrashed()->where('lot_id', $lotId)->exists()
-                || \App\Models\StockMovement\StockIssueDetail::withTrashed()->where('lot_id', $lotId)->exists()
-                || \App\Models\Inventory\Stock::where('lot_id', $lotId)->exists()
-                || Serial::where('lot_id', $lotId)->exists();
+            $usedByReceiptDetail = StockReceiptDetail::where('lot_id', $lotId)->exists();
+            $usedByIssueDetail   = StockIssueDetail::where('lot_id', $lotId)->exists();
+            $usedByCheckDetail   = DB::table('inventory_check_detail')->where('lot_id', $lotId)->exists();
+            $usedByAdjustDetail  = DB::table('stock_adjustment_details')->where('lot_id', $lotId)->exists();
+            $usedByStock         = Stock::where('lot_id', $lotId)->exists();
+            $usedBySerial        = Serial::where('lot_id', $lotId)->exists();
+
+            $stillUsed = $usedByReceiptDetail || $usedByIssueDetail || $usedByCheckDetail
+                || $usedByAdjustDetail || $usedByStock || $usedBySerial;
 
             if (! $stillUsed) {
+                StockReceiptDetail::onlyTrashed()->where('lot_id', $lotId)->forceDelete();
+                StockIssueDetail::onlyTrashed()->where('lot_id', $lotId)->forceDelete();
+                // inventory_check_detail / stock_adjustment_details KHÔNG có cột
+                // deleted_at trong DB (migration thiếu softDeletes()) nên không có
+                // gì để forceDelete — bỏ qua 2 dòng này.
+
                 Lot::where('id', $lotId)->delete();
             }
         }
+    }
+
+    /**
+     * Kiểm tra Lô $oldLotId (đang gán cho dòng vừa bị người dùng XÓA TRẮNG
+     * ô Số Lô khi sửa phiếu Draft) còn AN TOÀN để TÁI SỬ DỤNG lại hay không,
+     * dùng chung tiêu chí an toàn với releaseUnusedLots(): Lô đó chưa phát
+     * sinh tồn kho thật, chưa gắn Serial nào, và không bị dòng nào KHÁC
+     * (ngoài chính phiếu đang sửa — $receipt) tham chiếu tới.
+     *
+     * QUAN TRỌNG: hàm này chạy TRƯỚC replaceDetails() (bên trong
+     * prepareLineRows()), nên các StockReceiptDetail cũ của CHÍNH PHIẾU
+     * ĐANG SỬA vẫn còn "sống" (chưa soft-delete) — phải loại trừ chúng ra
+     * khi kiểm tra "có dòng nào khác đang dùng Lô này", nếu không sẽ luôn
+     * thấy Lô "đang bị chính mình dùng" và không bao giờ tái sử dụng được.
+     *
+     * @return Lot|null Lô nếu còn tồn tại và an toàn để tái sử dụng, null nếu
+     *                   không (đã bị người khác dùng, hoặc đã bị xóa trước đó
+     *                   — trường hợp hiếm, rơi về sinh số mới như bình thường).
+     */
+    private function reusableOldLot(int $oldLotId, int $productId, StockReceipt $receipt): ?Lot
+    {
+        $lot = Lot::where('id', $oldLotId)
+            ->where('product_id', $productId)
+            ->first();
+
+        if (! $lot) {
+            return null;
+        }
+
+        // Tại thời điểm hàm này chạy, replaceDetails() CHƯA chạy (đang trong
+        // prepareLineRows()), nên detail cũ của CHÍNH phiếu này vẫn còn sống.
+        // Phải loại trừ chúng ra, nếu không sẽ luôn thấy "đang bị chính mình dùng".
+        $usedElsewhere = StockReceiptDetail::where('lot_id', $oldLotId)
+                ->whereNotExists(function ($sub) use ($receipt) {
+                    $sub->select(DB::raw(1))
+                        ->from('stock_receipt_line')
+                        ->whereColumn('stock_receipt_line.id', 'stock_receipt_detail.stock_receipt_line_id')
+                        ->where('stock_receipt_line.stock_receipt_id', $receipt->id);
+                })
+                ->exists()
+            || StockIssueDetail::where('lot_id', $oldLotId)->exists()
+            || DB::table('inventory_check_detail')->where('lot_id', $oldLotId)->exists()
+            || DB::table('stock_adjustment_details')->where('lot_id', $oldLotId)->exists()
+            || Stock::where('lot_id', $oldLotId)->exists()
+            || Serial::where('lot_id', $oldLotId)->exists();
+
+        return $usedElsewhere ? null : $lot;
     }
 
     /**
@@ -261,14 +335,29 @@ public function approve(StockReceipt $receipt): void
 
         $lotId          = $line['lot_id'] ?? null;
         $lotNumberInput = trim((string) ($line['lot_number'] ?? ''));
+        $oldLotId       = ! empty($line['old_lot_id']) ? (int) $line['old_lot_id'] : null;
         $supplierId     = $line['supplier_id'] ?? null;
 
         // Lô luôn được resolve 1 LẦN cho cả line (dùng chung cho mọi serial con).
         if (! $lotId) {
             if ($lotNumberInput === '') {
-                $generated = $this->generateUniqueLot($productId);
-                $lotNumber = $generated['number'];
-                $lotCode   = $generated['code'];
+                // Người dùng XÓA TRẮNG ô Lô. Nếu dòng này TRƯỚC ĐÓ đã có sẵn
+                // 1 Lô (old_lot_id, gán lúc mở form Edit) và Lô đó vẫn CÒN AN
+                // TOÀN để tái sử dụng (chưa phát sinh tồn kho/serial/gắn với
+                // dòng nào khác — cùng điều kiện với releaseUnusedLots()), thì
+                // GIỮ LẠI đúng số Lô cũ thay vì sinh số mới — tránh "nhảy cóc"
+                // số Lô (vd Lô 5 -> xóa trắng -> Lô 6) khi thực chất không có
+                // gì thay đổi và Lô 5 chưa từng được ai khác dùng.
+                $reusableLot = $oldLotId ? $this->reusableOldLot($oldLotId, $productId, $receipt) : null;
+
+                if ($reusableLot) {
+                    $lotNumber = $reusableLot->lot_number;
+                    $lotCode   = $reusableLot->lot_code;
+                } else {
+                    $generated = $this->generateUniqueLot($productId);
+                    $lotNumber = $generated['number'];
+                    $lotCode   = $generated['code'];
+                }
             } else {
                 $lotNumber = (int) $lotNumberInput;
                 $lotCode   = 'LO' . $lotNumber;
