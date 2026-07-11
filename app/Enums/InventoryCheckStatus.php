@@ -22,7 +22,7 @@ enum InventoryCheckStatus: int
     {
         return match($this) {
             self::Draft      => 'Nháp',
-            self::InProgress => 'Đang trong quá trình',
+            self::InProgress => 'Đang kiểm kê',
             self::Completed  => 'Hoàn thành',
             self::Cancelled  => 'Đã hủy',
         };

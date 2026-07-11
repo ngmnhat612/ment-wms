@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -18,10 +19,8 @@ return new class extends Migration
             $table->unsignedBigInteger('actual_location_id')->nullable()->comment('Vị trí thực tế');
             $table->unsignedBigInteger('uom_id');
             $table->decimal('system_qty', 18, 3)->default(0)->comment('Tồn hệ thống tại thời điểm bắt đầu kiểm kê');
-            $table->decimal('actual_qty', 18, 3)->default(0)->comment('Tồn thực tế đếm được');
-            $table->decimal('diff_qty', 18, 3)
-                  ->storedAs('[actual_qty] - [system_qty]')
-                  ->comment('Chênh lệch');
+            $table->decimal('actual_qty', 18, 3)->nullable()->comment('Tồn thực tế đếm được (NULL = chưa kiểm)');
+            // diff_qty: computed column, thêm bằng raw SQL bên dưới (SQL Server PERSISTED)
             $table->unsignedBigInteger('assignment_id')->nullable()->comment('Nhân viên được phân công (employees.id)');
             $table->string('note', 500)->nullable();
             $table->timestamps();
@@ -58,6 +57,14 @@ return new class extends Migration
                   ->references('id')->on('employees')
                   ->onDelete('no action');
         });
+
+        // Computed column PERSISTED — SQL Server không hỗ trợ tốt qua Blueprint,
+        // nên thêm bằng raw SQL sau khi bảng đã được tạo.
+        // NULL khi actual_qty NULL (chưa kiểm), tự tính lại mỗi khi actual_qty thay đổi.
+        DB::statement('
+            ALTER TABLE inventory_check_detail
+            ADD diff_qty AS (actual_qty - system_qty) PERSISTED
+        ');
     }
 
     public function down(): void

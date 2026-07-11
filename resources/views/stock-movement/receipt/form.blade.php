@@ -68,8 +68,8 @@ $action = $isEdit ? route('receipts.update', $receipt->id) : route('receipts.sto
                         list="stockInRequestList"
                         placeholder="Nhập hoặc chọn"
                         autocomplete="off"
-                        value="{{ old('stock_in_request_code', ($receipt->stockInRequest->code ?? '')) }}"
-                        {{ $isEdit && isset($receipt->stock_in_request_id) ? 'readonly' : '' }}>
+                        value="{{ old('stock_in_request_code', $receipt->stockInRequest->code ?? ($prefillStockInRequestCode ?? '')) }}"
+                        {{ ($isEdit && isset($receipt->stock_in_request_id)) || isset($prefillStockInRequestId) ? 'readonly' : '' }}>
 
                     <datalist id="stockInRequestList">
                         @foreach($stockInRequests ?? [] as $request)
@@ -78,7 +78,7 @@ $action = $isEdit ? route('receipts.update', $receipt->id) : route('receipts.sto
                     </datalist>
 
                     <input type="hidden" name="stock_in_request_id" id="stock_in_request_id"
-                        value="{{ old('stock_in_request_id', $receipt->stock_in_request_id ?? '') }}">
+                        value="{{ old('stock_in_request_id', $receipt->stock_in_request_id ?? ($prefillStockInRequestId ?? '')) }}">
 
                     @error('stock_in_request_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
                 </div>
@@ -164,6 +164,8 @@ $action = $isEdit ? route('receipts.update', $receipt->id) : route('receipts.sto
                             $rows = collect($linesOld);
                         } elseif ($isEdit) {
                             $rows = $receipt->lines;
+                        } elseif (! empty($prefillLines)) {
+                            $rows = collect($prefillLines);
                         } else {
                             $rows = collect();
                         }

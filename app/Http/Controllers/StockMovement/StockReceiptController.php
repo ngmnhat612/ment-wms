@@ -16,6 +16,7 @@ use App\Models\Master\Warehouse;
 use App\Models\StockMovement\StockReceipt;
 use App\Repositories\Contracts\StockMovement\StockReceiptRepositoryInterface;
 use App\Repositories\Contracts\StockMovement\StockMovementFormDataRepositoryInterface;
+use App\Repositories\Contracts\StockRequest\StockInRequestRepositoryInterface;
 use App\Services\StockMovement\StockReceiptService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -26,13 +27,28 @@ class StockReceiptController extends Controller
         private StockReceiptService $receiptService,
         private StockReceiptRepositoryInterface $receiptRepository,
         private StockMovementFormDataRepositoryInterface $formDataRepository,
+        private StockInRequestRepositoryInterface $inRequestRepository,
     ) {}
 
-    public function create()
+    public function create(Request $request)
     {
         Gate::authorize('create', StockReceipt::class);
 
-        return view('stock-movement.receipt.form', $this->formData());
+        $formData = $this->formData();
+
+        $stockInRequestId = $request->query('stock_in_request_id');
+
+        if ($stockInRequestId) {
+            $stockInRequest = $this->inRequestRepository->findWithDetails((int) $stockInRequestId);
+
+            if ($stockInRequest) {
+                $formData['prefillLines'] = $this->buildPrefillLines($stockInRequest, $formData['products']);
+                $formData['prefillStockInRequestId'] = $stockInRequest->id;
+                $formData['prefillStockInRequestCode'] = $stockInRequest->code;
+            }
+        }
+
+        return view('stock-movement.receipt.form', $formData);
     }
 
     public function store(StockReceiptRequest $request)
@@ -147,6 +163,37 @@ class StockReceiptController extends Controller
         return view('stock-movement.receipt.print', [
             'receipt' => $this->receiptRepository->findWithDetails($receipt->id),
         ]);
+    }
+
+    /**
+     * Chuyển từng dòng của Phiếu yêu cầu nhập (đã Hoàn thành) thành 1 "line"
+     * pre-fill cho form Phiếu nhập (create). Chỉ giữ lại các dòng match được
+     * vật tư có sẵn trong hệ thống theo product_code — dòng khai báo vật tư
+     * mới (new_product_code, chưa tồn tại trong bảng products) sẽ bị bỏ qua,
+     * người dùng tự thêm/chọn lại thủ công trên form.
+     */
+    private function buildPrefillLines($stockInRequest, $products): array
+    {
+        $lines = [];
+
+        foreach ($stockInRequest->details as $detail) {
+            $product = $detail->product_code
+                ? $products->firstWhere('code', $detail->product_code)
+                : null;
+
+            if (! $product) {
+                continue;
+            }
+
+            $lines[] = [
+                'product_id'   => $product->id,
+                'uom_id'       => $product->uom_id,
+                'expected_qty' => (float) $detail->quantity,
+                'lot_number'   => $detail->lot_number,
+            ];
+        }
+
+        return $lines;
     }
 
     /**

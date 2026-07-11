@@ -4,7 +4,7 @@
 
 @section('breadcrumb')
 <li class="breadcrumb-item">Nghiệp vụ kho</li>
-<li class="breadcrumb-item"><a href="{{ route('stock-requests.index') }}">Yêu cầu Nhập/Xuất kho</a></li>
+<li class="breadcrumb-item"><a href="{{ route('stock-requests.index') }}">Yêu cầu Nhập/Xuất</a></li>
 <li class="breadcrumb-item active">{{ isset($stockInRequest) ? $stockInRequest->code : 'Thêm phiếu yêu cầu nhập' }}</li>
 @endsection
 
@@ -48,6 +48,8 @@ $action = $isEdit ? route('stock-in-requests.update', $stockInRequest->id) : rou
         <div class="card-body">
             <div class="row g-3">
 
+                {{-- Hiện chỉ có 1 kho, mặc định lấy kho đầu tiên, không hiển thị input --}}
+                <input type="hidden" name="warehouse_id" value="{{ old('warehouse_id', $stockInRequest->warehouse_id ?? optional($warehouses->first())->id) }}">
                 <div class="col-md-3">
                     <label class="form-label mb-1">Mã phiếu</label>
                     <input type="text"
@@ -74,6 +76,12 @@ $action = $isEdit ? route('stock-in-requests.update', $stockInRequest->id) : rou
         @endforeach
     </datalist>
 
+    <datalist id="productDatalist">
+        @foreach($products as $p)
+        <option value="{{ $p->code }}">{{ $p->name }}</option>
+        @endforeach
+    </datalist>
+
     {{-- ── CHI TIẾT PHIẾU ── --}}
     <div class="card">
         <div class="card-header d-flex justify-content-between align-items-center" style="min-height:44px">
@@ -92,16 +100,21 @@ $action = $isEdit ? route('stock-in-requests.update', $stockInRequest->id) : rou
                         <tr>
                             <th class="text-center" style="width:2%">#</th>
                             <th style="width:8%">Số PO/CU</th>
-                            <th style="width:8%">Ngày nhận</th>
-                            <th style="min-width:100px">Mã vật tư</th>
+                            <th style="width:8%">Ngày về <span class="text-danger">*</span></th>
+                            <th style="min-width:100px">Mã MenT</th>
+                            <th style="min-width:100px">Mã mới</th>
                             <th style="min-width:160px">Tên vật tư <span class="text-danger">*</span></th>
                             <th style="min-width:140px">TSKT</th>
-                            <th style="width:8%">Thương hiệu</th>
+                            <th style="width:8%">Hãng</th>
                             <th style="width:6%">SL <span class="text-danger">*</span></th>
                             <th style="width:6%">ĐVT <span class="text-danger">*</span></th>
-                            <th style="width:6%">Số Lô</th>
-                            <th style="min-width:120px">Người yêu cầu</th>
+                            <th style="width:6%">Lô hàng</th>
+                            <th style="width:8%">Ngày QC</th>
+                            <th style="min-width:120px">Người QC</th>
+                            <th style="min-width:100px">Kết quả</th>
+                            <th style="min-width:140px">Hướng khắc phục</th>
                             <th style="min-width:120px">Ghi chú</th>
+                            <th style="min-width:120px">Người yêu cầu</th>
                             <th style="width:2%"></th>
                         </tr>
                     </thead>
@@ -124,28 +137,39 @@ $action = $isEdit ? route('stock-in-requests.update', $stockInRequest->id) : rou
                             $referenceNo = $row['reference_no'] ?? '';
                             $receivedDate = $row['received_date'] ?? '';
                             $productCode = $row['product_code'] ?? '';
+                            $newProductCode = $row['new_product_code'] ?? '';
                             $productName = $row['product_name'] ?? '';
                             $productSpec = $row['product_specification'] ?? '';
                             $brandName = $row['brand_name'] ?? '';
                             $quantity = isset($row['quantity']) ? $row['quantity'] + 0 : '';
                             $uomName = $row['uom_name'] ?? '';
                             $lotNumber = $row['lot_number'] ?? '';
+                            $qcDate = $row['qc_date'] ?? '';
+                            $qcEmployeeId = $row['qc_employee_id'] ?? '';
+                            $qcResult = $row['qc_result'] ?? '';
+                            $solution = $row['solution'] ?? '';
                             $requesterId = $row['requester_id'] ?? '';
                             $note = $row['note'] ?? '';
                         } else {
                             $referenceNo = $row->reference_no;
                             $receivedDate = $row->received_date ? \Carbon\Carbon::parse($row->received_date)->format('Y-m-d') : '';
                             $productCode = $row->product_code;
+                            $newProductCode = $row->new_product_code;
                             $productName = $row->product_name;
                             $productSpec = $row->product_specification;
                             $brandName = $row->brand_name;
                             $quantity = $row->quantity + 0;
                             $uomName = $row->uom_name;
                             $lotNumber = $row->lot_number;
+                            $qcDate = $row->qc_date ? \Carbon\Carbon::parse($row->qc_date)->format('Y-m-d') : '';
+                            $qcEmployeeId = $row->qc_employee_id;
+                            $qcResult = $row->qc_result;
+                            $solution = $row->solution;
                             $requesterId = $row->requester_id;
                             $note = $row->note;
                         }
                         $selRequester = $employees->firstWhere('id', (int) $requesterId);
+                        $selQcEmployee = $employees->firstWhere('id', (int) $qcEmployeeId);
                         @endphp
                         <tr>
                             <td class="text-center text-body-secondary small">{{ $i + 1 }}</td>
@@ -155,23 +179,32 @@ $action = $isEdit ? route('stock-in-requests.update', $stockInRequest->id) : rou
                                     maxlength="100" placeholder="Số PO/CU">
                             </td>
                             <td>
-                                <input type="date" class="form-control"
-                                    name="details[{{ $i }}][received_date]" value="{{ $receivedDate }}">
+                                <input type="date" class="form-control @error('details.'.$i.'.received_date') is-invalid @enderror"
+                                    name="details[{{ $i }}][received_date]" value="{{ $receivedDate }}" required>
                             </td>
                             <td>
-                                <input type="text" class="form-control"
+                                <input type="text" class="form-control product-code-input" list="productDatalist"
                                     name="details[{{ $i }}][product_code]" value="{{ $productCode }}"
-                                    maxlength="50" placeholder="Mã vật tư">
+                                    maxlength="50" placeholder="Nhập hoặc chọn" autocomplete="off"
+                                    oninput="onProductCodeInput(this)">
                             </td>
                             <td>
-                                <input type="text" class="form-control"
+                                <input type="text" class="form-control new-product-code-input"
+                                    name="details[{{ $i }}][new_product_code]" value="{{ $newProductCode }}"
+                                    maxlength="50" placeholder="Mã mới" oninput="onNewProductCodeInput(this)"
+                                    {{ $productCode !== '' ? 'readonly' : '' }}>
+                            </td>
+                            <td>
+                                <input type="text" class="form-control product-name-input"
                                     name="details[{{ $i }}][product_name]" value="{{ $productName }}"
-                                    maxlength="200" placeholder="Tên vật tư" required>
+                                    maxlength="200" placeholder="Tên vật tư" required
+                                    {{ $productCode !== '' ? 'readonly' : '' }}>
                             </td>
                             <td>
-                                <input type="text" class="form-control"
+                                <input type="text" class="form-control product-spec-input"
                                     name="details[{{ $i }}][product_specification]" value="{{ $productSpec }}"
-                                    maxlength="500" placeholder="Thông số kỹ thuật">
+                                    maxlength="500" placeholder="Thông số kỹ thuật"
+                                    {{ $productCode !== '' ? 'readonly' : '' }}>
                             </td>
                             <td>
                                 <input type="text" class="form-control"
@@ -184,14 +217,42 @@ $action = $isEdit ? route('stock-in-requests.update', $stockInRequest->id) : rou
                                     step="0.001" required>
                             </td>
                             <td>
-                                <input type="text" class="form-control"
+                                <input type="text" class="form-control uom-name-input"
                                     name="details[{{ $i }}][uom_name]" value="{{ $uomName }}"
-                                    maxlength="50" placeholder="ĐVT" required>
+                                    maxlength="50" placeholder="ĐVT" required
+                                    {{ $productCode !== '' ? 'readonly' : '' }}>
                             </td>
                             <td>
-                                <input type="number" class="form-control"
+                                <input type="text" class="form-control"
                                     name="details[{{ $i }}][lot_number]" value="{{ $lotNumber }}"
-                                    placeholder="Tự động" min="1" step="1">
+                                    maxlength="50" placeholder="Lô hàng">
+                            </td>
+                            <td>
+                                <input type="date" class="form-control"
+                                    name="details[{{ $i }}][qc_date]" value="{{ $qcDate }}">
+                            </td>
+                            <td>
+                                <input type="hidden" name="details[{{ $i }}][qc_employee_id]"
+                                    class="qc-employee-id-hidden" value="{{ $qcEmployeeId }}">
+                                <input type="text" class="form-control qc-employee-input" list="employeeDatalist"
+                                    value="{{ $selQcEmployee ? $selQcEmployee->code.' - '.$selQcEmployee->name : '' }}"
+                                    placeholder="Nhập hoặc chọn" autocomplete="off"
+                                    oninput="onQcEmployeeInput(this)">
+                            </td>
+                            <td>
+                                <input type="text" class="form-control"
+                                    name="details[{{ $i }}][qc_result]" value="{{ $qcResult }}"
+                                    maxlength="100" placeholder="Kết quả QC">
+                            </td>
+                            <td>
+                                <input type="text" class="form-control"
+                                    name="details[{{ $i }}][solution]" value="{{ $solution }}"
+                                    maxlength="500" placeholder="Hướng giải quyết">
+                            </td>
+                            <td>
+                                <input type="text" class="form-control"
+                                    name="details[{{ $i }}][note]" value="{{ $note }}"
+                                    placeholder="Ghi chú" maxlength="500">
                             </td>
                             <td>
                                 <input type="hidden" name="details[{{ $i }}][requester_id]"
@@ -200,11 +261,6 @@ $action = $isEdit ? route('stock-in-requests.update', $stockInRequest->id) : rou
                                     value="{{ $selRequester ? $selRequester->code.' - '.$selRequester->name : '' }}"
                                     placeholder="Nhập hoặc chọn" autocomplete="off"
                                     oninput="onRequesterInput(this)">
-                            </td>
-                            <td>
-                                <input type="text" class="form-control"
-                                    name="details[{{ $i }}][note]" value="{{ $note }}"
-                                    placeholder="Ghi chú" maxlength="500">
                             </td>
                             <td class="text-end pe-3" style="align-items:center; justify-content:flex-end;">
                                 <button type="button" class="btn btn-sm btn-outline-danger"
@@ -257,7 +313,22 @@ $action = $isEdit ? route('stock-in-requests.update', $stockInRequest->id) : rou
 
 @push('scripts')
 <script>
-const EMPLOYEES = @json($employeesJson ?? $employees->map(fn($e) => ['id' => $e->id, 'code' => $e->code, 'name' => $e->name])->values());
+@php
+$employeesForJs = $employeesJson ?? $employees->map(fn ($e) => [
+    'id'   => $e->id,
+    'code' => $e->code,
+    'name' => $e->name,
+])->values();
+
+$productsForJs = $productsJson ?? $products->map(fn ($p) => [
+    'code'          => $p->code,
+    'name'          => $p->name,
+    'specification' => $p->specification,
+    'uom_name'      => $p->uom->name ?? '',
+])->values();
+@endphp
+const EMPLOYEES = @json($employeesForJs);
+const PRODUCTS = @json($productsForJs);
 
 let rowIndex = <?php echo $rows->count(); ?>;
 let submitting = false;
@@ -279,6 +350,101 @@ function onRequesterInput(input) {
         input.classList.toggle('is-invalid', input.value.trim() !== '');
     }
 }
+function onQcEmployeeInput(input) {
+    const tr = input.closest('tr');
+    const hidden = tr.querySelector('.qc-employee-id-hidden');
+    const e = findEmployeeByLabel(input.value.trim());
+
+    if (e) {
+        hidden.value = e.id;
+        input.classList.remove('is-invalid');
+    } else {
+        hidden.value = '';
+        input.classList.toggle('is-invalid', input.value.trim() !== '');
+    }
+}
+
+function findProductByCode(code) {
+    return PRODUCTS.find(p => p.code === code);
+}
+
+function setProductFieldsFromProduct(tr, product) {
+    const nameInput = tr.querySelector('.product-name-input');
+    const specInput = tr.querySelector('.product-spec-input');
+    const uomInput  = tr.querySelector('.uom-name-input');
+
+    nameInput.value = product ? product.name : '';
+    specInput.value = product ? product.specification : '';
+    uomInput.value  = product ? product.uom_name : '';
+
+    [nameInput, specInput, uomInput].forEach(el => el.setAttribute('readonly', 'readonly'));
+}
+
+function unlockProductFields(tr) {
+    const nameInput = tr.querySelector('.product-name-input');
+    const specInput = tr.querySelector('.product-spec-input');
+    const uomInput  = tr.querySelector('.uom-name-input');
+
+    [nameInput, specInput, uomInput].forEach(el => el.removeAttribute('readonly'));
+}
+
+function clearProductFields(tr) {
+    const nameInput = tr.querySelector('.product-name-input');
+    const specInput = tr.querySelector('.product-spec-input');
+    const uomInput  = tr.querySelector('.uom-name-input');
+
+    nameInput.value = '';
+    specInput.value = '';
+    uomInput.value  = '';
+
+    unlockProductFields(tr);
+}
+
+function onProductCodeInput(input) {
+    const tr = input.closest('tr');
+    const newCodeInput = tr.querySelector('.new-product-code-input');
+    const code = input.value.trim();
+    const hasValue = code !== '';
+
+    if (hasValue) {
+        newCodeInput.value = '';
+        newCodeInput.setAttribute('readonly', 'readonly');
+
+        setProductFieldsFromProduct(tr, findProductByCode(code));
+    } else {
+        newCodeInput.removeAttribute('readonly');
+        clearProductFields(tr);
+    }
+}
+
+function initProductRow(input) {
+    const tr = input.closest('tr');
+    const code = input.value.trim();
+
+    if (code !== '') {
+        setProductFieldsFromProduct(tr, findProductByCode(code));
+    } else {
+        unlockProductFields(tr);
+    }
+}
+
+function onNewProductCodeInput(input) {
+    const tr = input.closest('tr');
+    const productCodeInput = tr.querySelector('.product-code-input');
+
+    if (productCodeInput.value.trim() !== '') {
+        return;
+    }
+
+    const wasEmpty = input.dataset.wasEmpty !== 'false';
+    const isEmptyNow = input.value.trim() === '';
+
+    if (wasEmpty && !isEmptyNow) {
+        clearProductFields(tr);
+    }
+
+    input.dataset.wasEmpty = isEmptyNow ? 'true' : 'false';
+}
 
 function rowTemplate(i) {
     return `
@@ -288,16 +454,19 @@ function rowTemplate(i) {
     <input type="text" class="form-control" name="details[${i}][reference_no]" maxlength="100" placeholder="Số PO/CU">
   </td>
   <td>
-    <input type="date" class="form-control" name="details[${i}][received_date]">
+    <input type="date" class="form-control" name="details[${i}][received_date]" required>
   </td>
   <td>
-    <input type="text" class="form-control" name="details[${i}][product_code]" maxlength="50" placeholder="Mã vật tư">
+    <input type="text" class="form-control product-code-input" list="productDatalist" name="details[${i}][product_code]" maxlength="50" placeholder="Nhập hoặc chọn" autocomplete="off" oninput="onProductCodeInput(this)">
   </td>
   <td>
-    <input type="text" class="form-control" name="details[${i}][product_name]" maxlength="200" placeholder="Tên vật tư" required>
+    <input type="text" class="form-control new-product-code-input" name="details[${i}][new_product_code]" maxlength="50" placeholder="Mã mới" oninput="onNewProductCodeInput(this)">
   </td>
   <td>
-    <input type="text" class="form-control" name="details[${i}][product_specification]" maxlength="500" placeholder="Thông số kỹ thuật">
+    <input type="text" class="form-control product-name-input" name="details[${i}][product_name]" maxlength="200" placeholder="Tên vật tư" required>
+  </td>
+  <td>
+    <input type="text" class="form-control product-spec-input" name="details[${i}][product_specification]" maxlength="500" placeholder="Thông số kỹ thuật">
   </td>
   <td>
     <input type="text" class="form-control" name="details[${i}][brand_name]" maxlength="200" placeholder="Thương hiệu">
@@ -306,18 +475,32 @@ function rowTemplate(i) {
     <input type="number" class="form-control text-end" name="details[${i}][quantity]" min="0.001" step="0.001" required placeholder="0">
   </td>
   <td>
-    <input type="text" class="form-control" name="details[${i}][uom_name]" maxlength="50" placeholder="ĐVT" required>
+    <input type="text" class="form-control uom-name-input" name="details[${i}][uom_name]" maxlength="50" placeholder="ĐVT" required>
   </td>
   <td>
-    <input type="number" class="form-control" name="details[${i}][lot_number]" placeholder="Tự động" min="1" step="1">
+    <input type="text" class="form-control" name="details[${i}][lot_number]" maxlength="50" placeholder="Lô hàng">
+  </td>
+  <td>
+    <input type="date" class="form-control" name="details[${i}][qc_date]">
+  </td>
+  <td>
+    <input type="hidden" name="details[${i}][qc_employee_id]" class="qc-employee-id-hidden" value="">
+    <input type="text" class="form-control qc-employee-input" list="employeeDatalist"
+           placeholder="Nhập hoặc chọn" autocomplete="off" oninput="onQcEmployeeInput(this)">
+  </td>
+  <td>
+    <input type="text" class="form-control" name="details[${i}][qc_result]" maxlength="100" placeholder="Kết quả QC">
+  </td>
+  <td>
+    <input type="text" class="form-control" name="details[${i}][solution]" maxlength="500" placeholder="Hướng giải quyết">
+  </td>
+  <td>
+    <input type="text" class="form-control" name="details[${i}][note]" placeholder="Ghi chú" maxlength="500">
   </td>
   <td>
     <input type="hidden" name="details[${i}][requester_id]" class="requester-id-hidden" value="">
     <input type="text" class="form-control requester-input" list="employeeDatalist"
            placeholder="Nhập hoặc chọn" autocomplete="off" oninput="onRequesterInput(this)">
-  </td>
-  <td>
-    <input type="text" class="form-control" name="details[${i}][note]" placeholder="Ghi chú" maxlength="500">
   </td>
   <td class="text-end pe-3" style="align-items:center; justify-content:flex-end;">
     <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeRow(this)" title="Xóa dòng">
@@ -371,6 +554,8 @@ document.getElementById('stockInRequestForm').addEventListener('submit', functio
 
 document.addEventListener('DOMContentLoaded', () => {
     toggleEmptyState();
+
+    document.querySelectorAll('.product-code-input').forEach(initProductRow);
 
     <?php if ($rows->count() === 0): ?>
     addRow();

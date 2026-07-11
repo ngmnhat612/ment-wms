@@ -161,26 +161,20 @@
                         Ngày kiểm {!! $sortIcon('check_date') !!}
                     </a>
                 </th>
-                <th class="text-center" style="width:6%">Dòng</th>
                 <th style="width:14%">
                     <a href="{{ $sortUrl('purpose') }}" class="text-decoration-none text-reset d-inline-flex align-items-center">
                         Mục đích {!! $sortIcon('purpose') !!}
                     </a>
                 </th>
                 <th class="text-center" style="width:8%">Trạng thái</th>
-                <th class="text-center" style="width:6%">Đóng băng</th>
                 <th class="text-center" style="width:10%">Thao tác</th>
             </tr>
           </thead>
           <tbody>
             {{--
-                TODO (Controller/Service): mỗi item $checks cần kèm thêm các thuộc tính
+                TODO (Controller/Service): mỗi item $checks cần kèm thêm thuộc tính
                 phái sinh sau (giống StockMovementController::index()):
                   - created_by / created_by_code : join accounts để hiển thị tên + mã NV
-                  - lines_count                  : withCount('details')
-                  - active_freeze                : eager-load quan hệ freeze đang isActive()
-                        (hoặc thêm quan hệ InventoryCheck::activeFreeze() dạng hasOne
-                        ->where('unfrozen_at', null)->latestOfMany())
                 Xem InventoryCheckController::index() để áp dụng tương tự StockMovementController.
             --}}
             @forelse ($checks as $index => $check)
@@ -188,7 +182,6 @@
                   $status     = $check->status;
                   $scope      = $check->check_scope;
                   $type       = $check->check_type;
-                  $isFrozen   = optional($check->active_freeze)->isActive();
               @endphp
               <tr>
                 <td class="text-center text-body-secondary">
@@ -217,9 +210,6 @@
                 <td class="small">
                   {{ $check->check_date ? \Carbon\Carbon::parse($check->check_date)->format('d/m/Y') : '-' }}
                 </td>
-                <td class="text-center">
-                  <span class="badge bg-primary-subtle text-primary-emphasis">{{ $check->lines_count ?? 0 }}</span>
-                </td>
                 <td class="small text-body-secondary text-truncate" style="max-width:180px" title="{{ $check->purpose }}">
                   {{ $check->purpose ?? '-' }}
                 </td>
@@ -227,15 +217,6 @@
                   <span class="{{ $status->badgeClass() }}" style="font-size:11px">
                     {{ $status->label() }}
                   </span>
-                </td>
-                <td class="text-center">
-                  @if($isFrozen)
-                    <svg class="icon text-danger" title="Đang đóng băng">
-                      <use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-lock-locked') }}"></use>
-                    </svg>
-                  @else
-                    <span class="text-body-secondary small">-</span>
-                  @endif
                 </td>
                 <td class="text-center">
                   <a href="{{ Route::has('stocktakes.show') ? route('stocktakes.show', $check->id) : '#' }}"
@@ -253,7 +234,7 @@
               </tr>
             @empty
               <tr>
-                <td colspan="10" class="text-center text-body-secondary py-5">
+                <td colspan="8" class="text-center text-body-secondary py-5">
                   <svg class="icon icon-3xl d-block mx-auto mb-2 opacity-25">
                     <use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-clipboard') }}"></use>
                   </svg>

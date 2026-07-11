@@ -48,6 +48,8 @@ $action = $isEdit ? route('stock-out-requests.update', $stockOutRequest->id) : r
         <div class="card-body">
             <div class="row g-3">
 
+                {{-- Hiện chỉ có 1 kho, mặc định lấy kho đầu tiên, không hiển thị input --}}
+                <input type="hidden" name="warehouse_id" value="{{ old('warehouse_id', $stockOutRequest->warehouse_id ?? optional($warehouses->first())->id) }}">
                 <div class="col-md-3">
                     <label class="form-label mb-1">Mã phiếu</label>
                     <input type="text"
@@ -71,6 +73,12 @@ $action = $isEdit ? route('stock-out-requests.update', $stockOutRequest->id) : r
     <datalist id="employeeDatalist">
         @foreach($employees as $e)
         <option value="{{ $e->code }} - {{ $e->name }}"></option>
+        @endforeach
+    </datalist>
+
+    <datalist id="productDatalist">
+        @foreach($products as $p)
+        <option value="{{ $p->code }}">{{ $p->name }}</option>
         @endforeach
     </datalist>
 
@@ -100,7 +108,7 @@ $action = $isEdit ? route('stock-out-requests.update', $stockOutRequest->id) : r
                             <th style="min-width:120px">Người nhận</th>
                             <th style="width:8%">Mã dự án</th>
                             <th style="width:6%">Số Lô</th>
-                            <th style="min-width:150px">Sê-ri</th>
+                            <th style="min-width:150px">Sê-ri <span class="lot-serial-hint text-body-secondary fw-normal small"></span></th>
                             <th style="min-width:120px">Ghi chú</th>
                             <th style="width:2%"></th>
                         </tr>
@@ -146,6 +154,8 @@ $action = $isEdit ? route('stock-out-requests.update', $stockOutRequest->id) : r
                             $note = $row->note;
                         }
                         $selReceiver = $employees->firstWhere('id', (int) $receiverId);
+                        $productForRow = $products->firstWhere('code', $productCode);
+                        $trackingForRow = (int) ($productForRow->tracking_type?->value ?? 1);
                         @endphp
                         <tr>
                             <td class="text-center text-body-secondary small">{{ $i + 1 }}</td>
@@ -154,14 +164,16 @@ $action = $isEdit ? route('stock-out-requests.update', $stockOutRequest->id) : r
                                     name="details[{{ $i }}][issue_date]" value="{{ $issueDate }}">
                             </td>
                             <td>
-                                <input type="text" class="form-control"
+                                <input type="text" class="form-control product-code-input" list="productDatalist"
                                     name="details[{{ $i }}][product_code]" value="{{ $productCode }}"
-                                    maxlength="50" placeholder="Mã vật tư">
+                                    maxlength="50" placeholder="Nhập hoặc chọn" autocomplete="off"
+                                    oninput="onProductCodeInput(this)">
                             </td>
                             <td>
-                                <input type="text" class="form-control"
+                                <input type="text" class="form-control product-name-input"
                                     name="details[{{ $i }}][product_name]" value="{{ $productName }}"
-                                    maxlength="200" placeholder="Tên vật tư" required>
+                                    maxlength="200" placeholder="Tên vật tư" required
+                                    {{ $productCode !== '' ? 'readonly' : '' }}>
                             </td>
                             <td>
                                 <input type="number" class="form-control text-end"
@@ -169,9 +181,10 @@ $action = $isEdit ? route('stock-out-requests.update', $stockOutRequest->id) : r
                                     step="0.001" required>
                             </td>
                             <td>
-                                <input type="text" class="form-control"
+                                <input type="text" class="form-control uom-name-input"
                                     name="details[{{ $i }}][uom_name]" value="{{ $uomName }}"
-                                    maxlength="50" placeholder="ĐVT" required>
+                                    maxlength="50" placeholder="ĐVT" required
+                                    {{ $productCode !== '' ? 'readonly' : '' }}>
                             </td>
                             <td>
                                 <input type="number" class="form-control text-end"
@@ -197,9 +210,11 @@ $action = $isEdit ? route('stock-out-requests.update', $stockOutRequest->id) : r
                                     placeholder="Số lô" min="1" step="1">
                             </td>
                             <td>
-                                <input type="text" class="form-control"
+                                <input type="text" class="form-control serial-input {{ $trackingForRow === 1 ? 'bg-body-secondary' : '' }}"
                                     name="details[{{ $i }}][serial_number]" value="{{ $serialNumber }}"
-                                    maxlength="500" placeholder="SN0001 SN0002 ...">
+                                    maxlength="500" placeholder="{{ $trackingForRow === 1 ? '-' : 'SN0001 SN0002 ...' }}"
+                                    autocomplete="off"
+                                    {{ $trackingForRow === 1 ? 'readonly' : '' }}>
                             </td>
                             <td>
                                 <input type="text" class="form-control"
@@ -257,7 +272,23 @@ $action = $isEdit ? route('stock-out-requests.update', $stockOutRequest->id) : r
 
 @push('scripts')
 <script>
-const EMPLOYEES = @json($employeesJson ?? $employees->map(fn($e) => ['id' => $e->id, 'code' => $e->code, 'name' => $e->name])->values());
+@php
+$employeesForJs = $employeesJson ?? $employees->map(fn ($e) => [
+    'id'   => $e->id,
+    'code' => $e->code,
+    'name' => $e->name,
+])->values();
+
+$productsForJs = $productsJson ?? $products->map(fn ($p) => [
+    'code'          => $p->code,
+    'name'          => $p->name,
+    'specification' => $p->specification,
+    'uom_name'      => $p->uom->name ?? '',
+    'tracking_type' => $p->tracking_type?->value ?? 1,
+])->values();
+@endphp
+const EMPLOYEES = @json($employeesForJs);
+const PRODUCTS = @json($productsForJs);
 
 let rowIndex = <?php echo $rows->count(); ?>;
 let submitting = false;
@@ -280,6 +311,81 @@ function onReceiverInput(input) {
     }
 }
 
+function findProductByCode(code) {
+    return PRODUCTS.find(p => p.code === code);
+}
+
+function setSerialLockForRow(tr, product) {
+    const serialInput = tr.querySelector('.serial-input');
+    const tracking = product ? (product.tracking_type || 1) : 1;
+
+    if (tracking === 2) {
+        serialInput.removeAttribute('readonly');
+        serialInput.classList.remove('bg-body-secondary');
+        serialInput.placeholder = 'SN0001 SN0002 ...';
+    } else {
+        serialInput.setAttribute('readonly', 'readonly');
+        serialInput.classList.add('bg-body-secondary');
+        serialInput.value = '';
+        serialInput.placeholder = '-';
+    }
+}
+
+function setProductFieldsFromProduct(tr, product) {
+    const nameInput = tr.querySelector('.product-name-input');
+    const uomInput  = tr.querySelector('.uom-name-input');
+
+    nameInput.value = product ? product.name : '';
+    uomInput.value  = product ? product.uom_name : '';
+
+    [nameInput, uomInput].forEach(el => el.setAttribute('readonly', 'readonly'));
+
+    setSerialLockForRow(tr, product);
+}
+
+function unlockProductFields(tr) {
+    const nameInput = tr.querySelector('.product-name-input');
+    const uomInput  = tr.querySelector('.uom-name-input');
+
+    [nameInput, uomInput].forEach(el => el.removeAttribute('readonly'));
+}
+
+function clearProductFields(tr) {
+    const nameInput = tr.querySelector('.product-name-input');
+    const uomInput  = tr.querySelector('.uom-name-input');
+
+    nameInput.value = '';
+    uomInput.value  = '';
+
+    unlockProductFields(tr);
+    setSerialLockForRow(tr, null);
+}
+
+function onProductCodeInput(input) {
+    const tr = input.closest('tr');
+    const code = input.value.trim();
+    const product = findProductByCode(code);
+
+    if (product) {
+        setProductFieldsFromProduct(tr, product);
+    } else {
+        clearProductFields(tr);
+    }
+}
+
+function initProductRow(input) {
+    const tr = input.closest('tr');
+    const code = input.value.trim();
+    const product = findProductByCode(code);
+
+    if (product) {
+        setProductFieldsFromProduct(tr, product);
+    } else {
+        unlockProductFields(tr);
+        setSerialLockForRow(tr, null);
+    }
+}
+
 function rowTemplate(i) {
     return `
 <tr>
@@ -288,16 +394,16 @@ function rowTemplate(i) {
     <input type="date" class="form-control" name="details[${i}][issue_date]">
   </td>
   <td>
-    <input type="text" class="form-control" name="details[${i}][product_code]" maxlength="50" placeholder="Mã vật tư">
+    <input type="text" class="form-control product-code-input" list="productDatalist" name="details[${i}][product_code]" maxlength="50" placeholder="Nhập hoặc chọn" autocomplete="off" oninput="onProductCodeInput(this)">
   </td>
   <td>
-    <input type="text" class="form-control" name="details[${i}][product_name]" maxlength="200" placeholder="Tên vật tư" required>
+    <input type="text" class="form-control product-name-input" name="details[${i}][product_name]" maxlength="200" placeholder="Tên vật tư" required>
   </td>
   <td>
     <input type="number" class="form-control text-end" name="details[${i}][quantity]" min="0.001" step="0.001" required placeholder="0">
   </td>
   <td>
-    <input type="text" class="form-control" name="details[${i}][uom_name]" maxlength="50" placeholder="ĐVT" required>
+    <input type="text" class="form-control uom-name-input" name="details[${i}][uom_name]" maxlength="50" placeholder="ĐVT" required>
   </td>
   <td>
     <input type="number" class="form-control text-end" name="details[${i}][actual_qty]" min="0" step="0.001" placeholder="0">
@@ -314,7 +420,7 @@ function rowTemplate(i) {
     <input type="number" class="form-control" name="details[${i}][lot_number]" placeholder="Số lô" min="1" step="1">
   </td>
   <td>
-    <input type="text" class="form-control" name="details[${i}][serial_number]" maxlength="500" placeholder="SN0001 SN0002 ...">
+    <input type="text" class="form-control serial-input bg-body-secondary" name="details[${i}][serial_number]" maxlength="500" placeholder="-" autocomplete="off" readonly>
   </td>
   <td>
     <input type="text" class="form-control" name="details[${i}][note]" placeholder="Ghi chú" maxlength="500">
@@ -371,6 +477,8 @@ document.getElementById('stockOutRequestForm').addEventListener('submit', functi
 
 document.addEventListener('DOMContentLoaded', () => {
     toggleEmptyState();
+
+    document.querySelectorAll('.product-code-input').forEach(initProductRow);
 
     <?php if ($rows->count() === 0): ?>
     addRow();

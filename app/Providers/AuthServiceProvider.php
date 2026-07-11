@@ -18,9 +18,11 @@ use App\Models\Master\Sn;
 use App\Models\StockMovement\StockIssue;
 use App\Models\StockMovement\StockReceipt;
 use App\Models\Inventory\Stock;
-use App\Models\InventoryCheck;
-use App\Models\StockAdjustment;
-use App\Models\StockRequest;
+use App\Models\StockRequest\StockInRequest;
+use App\Models\StockRequest\StockOutRequest;
+use App\Models\Stocktake\InventoryCheck;
+use App\Models\Stocktake\InventoryFreeze;
+use App\Models\Stocktake\StockAdjustment;
 
 use App\Policies\Master\AccountPolicy;
 use App\Policies\Master\CategoryPolicy;
@@ -38,10 +40,12 @@ use App\Policies\Master\SnPolicy;
 use App\Policies\StockMovement\StockIssuePolicy;
 use App\Policies\StockMovement\StockReceiptPolicy;
 use App\Policies\Inventory\StockPolicy;
+use App\Policies\StockRequest\StockInRequestPolicy;
+use App\Policies\StockRequest\StockOutRequestPolicy;
 use App\Policies\Stocktake\InventoryCheckPolicy;
 use App\Policies\Stocktake\InventoryFreezePolicy;
 use App\Policies\Stocktake\StockAdjustmentPolicy;
-    
+
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
 
 class AuthServiceProvider extends ServiceProvider
@@ -62,15 +66,20 @@ class AuthServiceProvider extends ServiceProvider
         Department::class   => DepartmentPolicy::class,
         Sn::class           => SnPolicy::class,
 
-        // Inbound / Outbound
+        // StockMovement
         StockReceipt::class => StockReceiptPolicy::class,
         StockIssue::class   => StockIssuePolicy::class,
 
         Stock::class => StockPolicy::class,
 
+        // StockRequest
+        StockInRequest::class  => StockInRequestPolicy::class,
+        StockOutRequest::class => StockOutRequestPolicy::class,
+
         // Stocktake
-        // InventoryCheck::class      => InventoryCheckPolicy::class,
-        // StockAdjustment::class     => StockAdjustmentPolicy::class,
+        InventoryCheck::class  => InventoryCheckPolicy::class,
+        InventoryFreeze::class => InventoryFreezePolicy::class,
+        StockAdjustment::class => StockAdjustmentPolicy::class,
     ];
 
     public function boot(): void

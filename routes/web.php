@@ -147,23 +147,23 @@ Route::middleware('auth')->group(function () {
     Route::post('issues/{issue}/cancel', [StockIssueController::class, 'cancel'])
         ->name('issues.cancel');
 
-    // ── TỒN KHO ─────────────────────────────────────────────────────────────
+    // ── TỒN KHO ──────────────────────────────────────────────────────────────
     Route::get('inventory', [InventoryController::class, 'index'])->name('inventory.index');
     Route::get('inventory/lot-serials', [InventoryController::class, 'lotSerials'])->name('inventory.lotSerials');
     Route::post('inventory/update-location', [InventoryController::class, 'updateLocation'])->name('inventory.updateLocation');
 
-    // ── YÊU CẦU NHẬP / XUẤT KHO (trang gộp) ──
+    // ── YÊU CẦU NHẬP / XUẤT KHO ──────────────────────────────────────────────
     Route::get('stock-requests', [StockRequestController::class, 'index'])
         ->name('stock-requests.index');
-
-    // ── YÊU CẦU NHẬP KHO ──
+ 
+    // ── YÊU CẦU NHẬP KHO ─────────────────────────────────────────────────────
     Route::resource('stock-in-requests', StockInRequestController::class)->except(['index']);
     Route::post('stock-in-requests/{stock_in_request}/complete', [StockInRequestController::class, 'complete'])
         ->name('stock-in-requests.complete');
     Route::post('stock-in-requests/{stock_in_request}/cancel', [StockInRequestController::class, 'cancel'])
         ->name('stock-in-requests.cancel');
-
-    // ── YÊU CẦU XUẤT KHO ──
+ 
+    // ── YÊU CẦU XUẤT KHO ─────────────────────────────────────────────────────
     Route::resource('stock-out-requests', StockOutRequestController::class)->except(['index']);
     Route::post('stock-out-requests/{stock_out_request}/complete', [StockOutRequestController::class, 'complete'])
         ->name('stock-out-requests.complete');
@@ -171,34 +171,28 @@ Route::middleware('auth')->group(function () {
         ->name('stock-out-requests.cancel');
 
     // ── KIỂM KÊ KHO ──────────────────────────────────────────────────────────
-    // Route::resource('stocktakes', InventoryCheckController::class)->except(['destroy']);
+    Route::resource('stocktakes', InventoryCheckController::class)->except(['destroy']);
  
-    // Route::post('stocktakes/{stocktake}/start', [InventoryCheckController::class, 'start'])
-    //     ->name('stocktakes.start');
-    // Route::post('stocktakes/{stocktake}/complete', [InventoryCheckController::class, 'complete'])
-    //     ->name('stocktakes.complete');
-    // Route::post('stocktakes/{stocktake}/cancel', [InventoryCheckController::class, 'cancel'])
-    //     ->name('stocktakes.cancel');
-    // Route::put('stocktakes/{stocktake}/details', [InventoryCheckController::class, 'updateDetails'])
-    //     ->name('stocktakes.details.update');
+    Route::post('stocktakes/{stocktake}/start', [InventoryCheckController::class, 'start'])
+        ->name('stocktakes.start');
+    Route::post('stocktakes/{stocktake}/complete', [InventoryCheckController::class, 'complete'])
+        ->name('stocktakes.complete');
+    Route::post('stocktakes/{stocktake}/cancel', [InventoryCheckController::class, 'cancel'])
+        ->name('stocktakes.cancel');
+    Route::put('stocktakes/{stocktake}/details', [InventoryCheckController::class, 'updateDetails'])
+        ->name('stocktakes.details.update');
  
-    // // ── ĐÓNG BĂNG KHO ────────────────────────────────────────────────────────
-    // Route::post('stocktakes/{stocktake}/freeze', [InventoryFreezeController::class, 'store'])
-    //     ->name('stocktakes.freeze');
-    // Route::post('stocktakes/{stocktake}/freeze/{freeze}/unfreeze', [InventoryFreezeController::class, 'unfreeze'])
-    //     ->name('stocktakes.unfreeze');
- 
-    // // ── PHIẾU ĐIỀU CHỈNH ──────────────────────────────────────────────────────
-    // Route::get('stocktakes/{stocktake}/adjustment/create', [StockAdjustmentController::class, 'create'])
-    //     ->name('stocktakes.adjustment.create');
-    // Route::post('stocktakes/{stocktake}/adjustment', [StockAdjustmentController::class, 'store'])
-    //     ->name('stocktakes.adjustment.store');
-    // Route::get('stocktakes/{stocktake}/adjustment/{adjustment}', [StockAdjustmentController::class, 'show'])
-    //     ->name('stocktakes.adjustment.show');
-    // Route::post('stocktakes/{stocktake}/adjustment/{adjustment}/complete', [StockAdjustmentController::class, 'complete'])
-    //     ->name('stocktakes.adjustment.complete');
-    // Route::post('stocktakes/{stocktake}/adjustment/{adjustment}/cancel', [StockAdjustmentController::class, 'cancel'])
-    //     ->name('stocktakes.adjustment.cancel');
+    // ── PHIẾU ĐIỀU CHỈNH ──────────────────────────────────────────────────────
+    Route::get('stocktakes/{stocktake}/adjustment/create', [StockAdjustmentController::class, 'create'])
+        ->name('stocktakes.adjustment.create');
+    Route::post('stocktakes/{stocktake}/adjustment', [StockAdjustmentController::class, 'store'])
+        ->name('stocktakes.adjustment.store');
+    Route::get('stocktakes/{stocktake}/adjustment/{adjustment}', [StockAdjustmentController::class, 'show'])
+        ->name('stocktakes.adjustment.show');
+    Route::post('stocktakes/{stocktake}/adjustment/{adjustment}/complete', [StockAdjustmentController::class, 'complete'])
+        ->name('stocktakes.adjustment.complete');
+    Route::post('stocktakes/{stocktake}/adjustment/{adjustment}/cancel', [StockAdjustmentController::class, 'cancel'])
+        ->name('stocktakes.adjustment.cancel');
 
     Route::get('under-construction', fn() => view('under-construction'))
         ->name('under-construction');
@@ -206,7 +200,7 @@ Route::middleware('auth')->group(function () {
     // ── PENDING — trỏ tạm về under-construction ───────────────────────────────
     $pending = [
         // Nghiệp vụ kho
-        'stocktakes.index'      => 'stocktakes',
+        // 'stocktakes.index'      => 'stocktakes',
 
         // Tồn kho
         'master.uom-conversion.index' => 'master/uom-conversion',

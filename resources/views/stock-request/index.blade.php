@@ -1,10 +1,10 @@
 @extends('layouts.app')
 
-@section('title', 'Yêu cầu Nhập/Xuất kho')
+@section('title', 'Yêu cầu Nhập/Xuất')
 
 @section('breadcrumb')
   <li class="breadcrumb-item">Nghiệp vụ kho</li>
-  <li class="breadcrumb-item active">Yêu cầu Nhập/Xuất kho</li>
+  <li class="breadcrumb-item active">Yêu cầu Nhập/Xuất</li>
 @endsection
 
 @section('content')
@@ -56,7 +56,7 @@
 
         {{-- CỘT 1: Tiêu đề --}}
         <div class="flex-shrink-0">
-        <span class="fw-semibold text-nowrap">Yêu cầu Nhập/Xuất kho</span>
+        <span class="fw-semibold text-nowrap">Yêu cầu Nhập/Xuất</span>
         </div>
 
         {{-- CỘT 2 + CỘT 3: chiếm hết khoảng trống giữa, chia đều nhau --}}
@@ -70,7 +70,7 @@
                 <svg class="icon"><use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-search') }}"></use></svg>
                 </span>
                 <input type="text" class="form-control" name="search"
-                    value="{{ request('search') }}" placeholder="Mã phiếu...">
+                    value="{{ request('search') }}" placeholder="Tìm kiếm theo Mã phiếu">
             </div>
             </div>
 
@@ -78,9 +78,9 @@
             <div class="col-6 d-flex flex-column gap-2">
             <div class="d-flex gap-2">
                 <select class="form-select" name="request_type" onchange="this.form.submit()">
-                <option value="">Yêu cầu Nhập/Xuất</option>
-                <option value="in" {{ request('request_type') == 'in' ? 'selected' : '' }}>Yêu cầu nhập</option>
-                <option value="out" {{ request('request_type') == 'out' ? 'selected' : '' }}>Yêu cầu xuất</option>
+                <option value="">Nhập/Xuất</option>
+                <option value="in" {{ request('request_type') == 'in' ? 'selected' : '' }}>Nhập</option>
+                <option value="out" {{ request('request_type') == 'out' ? 'selected' : '' }}>Xuất</option>
                 </select>
                 <select class="form-select" name="status" onchange="this.form.submit()">
                 <option value="">Trạng thái</option>
@@ -130,31 +130,30 @@
         <table class="table table-hover align-middle mb-0">
           <thead class="table-light">
             <tr>
-                <th class="text-center" style="width:4%">#</th>
-                <th style="width:8%">Loại</th>
-                <th style="width:12%">
-                    <a href="{{ $sortUrl('code') }}" class="text-decoration-none text-reset d-inline-flex align-items-center">
-                        Mã phiếu {!! $sortIcon('code') !!}
-                    </a>
-                </th>
-                <th style="width:12%">Kho</th>
-                <th>
-                    <a href="{{ $sortUrl('created_by') }}" class="text-decoration-none text-reset d-inline-flex align-items-center">
-                        Người tạo {!! $sortIcon('created_by') !!}
-                    </a>
-                </th>
-                <th style="width:10%">
-                    <a href="{{ $sortUrl('doc_date') }}" class="text-decoration-none text-reset d-inline-flex align-items-center">
-                        Ngày tạo {!! $sortIcon('doc_date') !!}
-                    </a>
-                </th>
-                <th style="width:18%">
-                    <a href="{{ $sortUrl('note') }}" class="text-decoration-none text-reset d-inline-flex align-items-center">
-                        Ghi chú {!! $sortIcon('note') !!}
-                    </a>
-                </th>
-                <th class="text-center" style="width:8%">Trạng thái</th>
-                <th class="text-center" style="width:10%">Thao tác</th>
+              <th class="text-center" style="width:4%">#</th>
+              <th style="width:8%">Loại</th>
+              <th style="width:14%">
+                  <a href="{{ $sortUrl('code') }}" class="text-decoration-none text-reset d-inline-flex align-items-center">
+                      Mã phiếu {!! $sortIcon('code') !!}
+                  </a>
+              </th>
+              <th>
+                  <a href="{{ $sortUrl('created_by') }}" class="text-decoration-none text-reset d-inline-flex align-items-center">
+                      Người tạo {!! $sortIcon('created_by') !!}
+                  </a>
+              </th>
+              <th style="width:10%">
+                  <a href="{{ $sortUrl('doc_date') }}" class="text-decoration-none text-reset d-inline-flex align-items-center">
+                      Ngày tạo {!! $sortIcon('doc_date') !!}
+                  </a>
+              </th>
+              <th style="width:20%">
+                  <a href="{{ $sortUrl('note') }}" class="text-decoration-none text-reset d-inline-flex align-items-center">
+                      Ghi chú {!! $sortIcon('note') !!}
+                  </a>
+              </th>
+              <th class="text-center" style="width:8%">Trạng thái</th>
+              <th class="text-center" style="width:10%">Thao tác</th>
             </tr>
           </thead>
           <tbody>
@@ -189,9 +188,6 @@
                      class="fw-medium text-primary text-decoration-none">
                     <code>{{ $stockRequest->code }}</code>
                   </a>
-                </td>
-                <td class="small">
-                  {{ $stockRequest->warehouse_name ?? '-' }}
                 </td>
                 <td>
                     @if($stockRequest->created_by)
@@ -228,7 +224,7 @@
               </tr>
             @empty
               <tr>
-                <td colspan="9" class="text-center text-body-secondary py-5">
+                <td colspan="8" class="text-center text-body-secondary py-5">
                   <svg class="icon icon-3xl d-block mx-auto mb-2 opacity-25">
                     <use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-truck') }}"></use>
                   </svg>

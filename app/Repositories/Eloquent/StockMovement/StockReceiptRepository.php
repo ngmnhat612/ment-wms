@@ -93,7 +93,7 @@ class StockReceiptRepository implements StockReceiptRepositoryInterface
     public function allForMovementList(array $filters): Collection
     {
         $query = StockReceipt::query()
-            ->with(['createdBy.employee', 'approvedBy.employee'])
+            ->with(['createdBy.employee', 'approvedBy.employee', 'stockInRequest'])
             ->withCount('details');
 
         $this->applyFilters($query, $filters);
@@ -107,9 +107,9 @@ class StockReceiptRepository implements StockReceiptRepositoryInterface
             $search = $filters['search'];
             $query->where(function ($q) use ($search) {
                 $q->where('code', 'like', "%{$search}%")
-                  ->orWhereHas('details', function ($d) use ($search) {
-                      $d->where('reference_no', 'like', "%{$search}%");
-                  });
+                ->orWhereHas('stockInRequest', function ($r) use ($search) {
+                    $r->where('code', 'like', "%{$search}%");
+                });
             });
         }
 

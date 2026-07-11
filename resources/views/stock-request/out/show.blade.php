@@ -37,6 +37,13 @@ $fmt = fn($n) => rtrim(rtrim(number_format((float)$n, 3, '.', ','), '0'), '.');
         </a>
         @endif
 
+        {{-- COMPLETED --}}
+        @if($stockOutRequest->status === \App\Enums\DocumentStatus::Completed)
+        <a href="{{ route('issues.create') }}" class="btn btn-primary">
+            Xuất
+        </a>
+        @endif
+
         <a href="{{ route('stock-requests.index') }}" class="btn btn-outline-secondary">
             Quay lại
         </a>

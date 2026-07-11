@@ -99,7 +99,7 @@ class StockReceiptService
      * Giờ phải loop 2 tầng: lines -> details, vì product_id/uom_id nằm ở
      * line (cha), còn actual_qty/lot_id/serial_id/location_id nằm ở detail (con).
      */
-public function approve(StockReceipt $receipt): void
+    public function approve(StockReceipt $receipt): void
     {
         if ($receipt->status !== DocumentStatus::Draft) {
             throw new \DomainException('Chỉ có thể duyệt phiếu đang ở trạng thái Nháp.');
