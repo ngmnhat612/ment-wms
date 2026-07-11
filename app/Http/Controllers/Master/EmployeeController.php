@@ -47,7 +47,13 @@ class EmployeeController extends Controller
     {
         Gate::authorize('create', Employee::class);
 
-        $this->employeeService->create($request->validated());
+        try {
+            $this->employeeService->create($request->validated());
+        } catch (\RuntimeException $e) {
+            return redirect()
+                ->route('master.employee.index')
+                ->with('error', $e->getMessage());
+        }
 
         return redirect()
             ->route('master.employee.index')
@@ -60,7 +66,13 @@ class EmployeeController extends Controller
     {
         Gate::authorize('update', $employee);
 
-        $this->employeeService->update($employee, $request->validated());
+        try {
+            $this->employeeService->update($employee, $request->validated());
+        } catch (\RuntimeException $e) {
+            return redirect()
+                ->route('master.employee.index')
+                ->with('error', $e->getMessage());
+        }
 
         return redirect()
             ->route('master.employee.index')

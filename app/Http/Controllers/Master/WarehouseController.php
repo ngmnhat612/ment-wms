@@ -43,7 +43,13 @@ class WarehouseController extends Controller
     {
         Gate::authorize('create', Warehouse::class);
 
-        $this->warehouseService->create($request->validated());
+        try {
+            $this->warehouseService->create($request->validated());
+        } catch (\RuntimeException $e) {
+            return redirect()
+                ->route('master.warehouse.index')
+                ->with('error', $e->getMessage());
+        }
 
         return redirect()
             ->route('master.warehouse.index')
@@ -56,7 +62,13 @@ class WarehouseController extends Controller
     {
         Gate::authorize('update', $warehouse);
 
-        $this->warehouseService->update($warehouse, $request->validated());
+        try {
+            $this->warehouseService->update($warehouse, $request->validated());
+        } catch (\RuntimeException $e) {
+            return redirect()
+                ->route('master.warehouse.index')
+                ->with('error', $e->getMessage());
+        }
 
         return redirect()
             ->route('master.warehouse.index')

@@ -39,7 +39,13 @@ class SupplierController extends Controller
     {
         Gate::authorize('create', Supplier::class);
 
-        $supplier = $this->supplierService->create($request->validated());
+        try {
+            $supplier = $this->supplierService->create($request->validated());
+        } catch (\RuntimeException $e) {
+            return redirect()
+                ->route('master.supplier.index')
+                ->with('error', $e->getMessage());
+        }
 
         return redirect()
             ->route('master.supplier.index')
@@ -52,7 +58,13 @@ class SupplierController extends Controller
     {
         Gate::authorize('update', $supplier);
 
-        $this->supplierService->update($supplier, $request->validated());
+        try {
+            $this->supplierService->update($supplier, $request->validated());
+        } catch (\RuntimeException $e) {
+            return redirect()
+                ->route('master.supplier.index')
+                ->with('error', $e->getMessage());
+        }
 
         return redirect()
             ->route('master.supplier.index')
