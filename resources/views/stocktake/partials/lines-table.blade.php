@@ -3,8 +3,15 @@
     $details        — Collection<InventoryCheckDetail>
     $canEdit        — bool, hiện input nhập actual_qty (chỉ khi phiếu đang InProgress)
     $highlightDiff  — bool (optional, default false), tô màu dòng có chênh lệch + hiện tổng
+    $checkType      — App\Enums\InventoryCheckType (optional), quyết định cột nào được mở nhập:
+                        Quantity → chỉ mở "Thực tế"; Location → chỉ mở "Vị trí thực tế"; Both → mở cả hai
 --}}
-@php $highlightDiff = $highlightDiff ?? false; @endphp
+@php
+  $highlightDiff = $highlightDiff ?? false;
+  $checkType     = $checkType ?? \App\Enums\InventoryCheckType::Both;
+  $canEditQty    = $canEdit && in_array($checkType, [\App\Enums\InventoryCheckType::Quantity, \App\Enums\InventoryCheckType::Both], true);
+  $canEditLoc    = $canEdit && in_array($checkType, [\App\Enums\InventoryCheckType::Location, \App\Enums\InventoryCheckType::Both], true);
+@endphp
 
 <div class="table-responsive">
   <table class="table table-hover align-middle mb-0">
@@ -46,7 +53,23 @@
         <td class="small text-body-secondary">{{ $detail->systemLocation->code ?? '—' }}</td>
 
         {{-- Vị trí thực tế --}}
-        <td class="small text-body-secondary">{{ $detail->actualLocation->code ?? '—' }}</td>
+        <td class="small">
+          @if($canEditLoc)
+            <select name="details[{{ $loop->index }}][actual_location_id]"
+                    class="form-select form-select-sm actual-location-select"
+                    data-detail-id="{{ $detail->id }}">
+              <option value="">— Giữ nguyên —</option>
+              @foreach($locationOptions ?? [] as $loc)
+                <option value="{{ $loc->id }}"
+                  {{ old("details.{$loop->index}.actual_location_id", $detail->actual_location_id) == $loc->id ? 'selected' : '' }}>
+                  {{ $loc->code }}
+                </option>
+              @endforeach
+            </select>
+          @else
+            <span class="text-body-secondary">{{ $detail->actualLocation->code ?? '—' }}</span>
+          @endif
+        </td>
 
         {{-- Lô --}}
         <td class="small text-body-secondary">{{ $detail->lot->lot_code ?? '—' }}</td>
@@ -57,15 +80,17 @@
         {{-- Tồn hệ thống --}}
         <td class="text-end fw-semibold">{{ number_format($detail->system_qty, 0) }}</td>
 
-        {{-- Thực tế — editable nếu đang kiểm --}}
+        {{-- Thực tế — editable nếu loại kiểm kê có kiểm số lượng --}}
         <td class="text-end">
-          @if($canEdit)
+          @if($canEditQty || $canEditLoc)
             <input type="hidden" name="details[{{ $loop->index }}][id]" value="{{ $detail->id }}">
+          @endif
+          @if($canEditQty)
             <input type="number"
                    name="details[{{ $loop->index }}][actual_qty]"
                    class="form-control form-control-sm text-end actual-qty-input"
                    style="width:90px; margin-left:auto"
-                   min="0" step="0.001"
+                   min="0" step="1"
                    value="{{ old("details.{$loop->index}.actual_qty", $detail->actual_qty) }}"
                    placeholder="Nhập..."
                    data-detail-id="{{ $detail->id }}"
