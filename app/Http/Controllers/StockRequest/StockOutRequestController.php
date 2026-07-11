@@ -2,23 +2,22 @@
 
 namespace App\Http\Controllers\StockRequest;
 
-use App\Enums\DocumentStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StockRequest\StockOutRequestRequest;
+use App\Enums\DocumentStatus;
 use App\Models\StockRequest\StockOutRequest;
-use App\Repositories\Contracts\Master\WarehouseRepositoryInterface;
-use App\Repositories\Contracts\Master\EmployeeRepositoryInterface;
 use App\Repositories\Contracts\StockRequest\StockOutRequestRepositoryInterface;
+use App\Repositories\Contracts\StockMovement\StockMovementFormDataRepositoryInterface;
 use App\Services\StockRequest\StockOutRequestService;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 
 class StockOutRequestController extends Controller
 {
     public function __construct(
-        private StockOutRequestService $stockOutRequestService,
-        private StockOutRequestRepositoryInterface $stockOutRequestRepository,
-        private WarehouseRepositoryInterface $warehouseRepository,
-        private EmployeeRepositoryInterface $employeeRepository,
+        private StockOutRequestService $outRequestService,
+        private StockOutRequestRepositoryInterface $outRequestRepository,
+        private StockMovementFormDataRepositoryInterface $formDataRepository,
     ) {}
 
     public function create()
@@ -33,11 +32,8 @@ class StockOutRequestController extends Controller
         Gate::authorize('create', StockOutRequest::class);
 
         try {
-            $stockOutRequest = $this->stockOutRequestService->create(
-                array_merge(
-                    $request->only(['code', 'note']),
-                    ['warehouse_id' => $this->warehouseRepository->allActive()->first()?->id]
-                ),
+            $stockOutRequest = $this->outRequestService->create(
+                $request->only(['warehouse_id', 'code', 'note']),
                 $request->input('details', [])
             );
         } catch (\DomainException $e) {
@@ -47,8 +43,8 @@ class StockOutRequestController extends Controller
         }
 
         return $request->input('action') === 'save_and_new'
-            ? redirect()->route('stock-out-requests.create')->with('success', 'Đã tạo phiếu yêu cầu xuất kho thành công.')
-            : redirect()->route('stock-out-requests.show', $stockOutRequest)->with('success', 'Đã tạo phiếu yêu cầu xuất kho thành công.');
+            ? redirect()->route('stock-out-requests.create')->with('success', 'Đã tạo yêu cầu xuất kho thành công.')
+            : redirect()->route('stock-out-requests.show', $stockOutRequest)->with('success', 'Đã tạo yêu cầu xuất kho thành công.');
     }
 
     public function show(StockOutRequest $stockOutRequest)
@@ -56,7 +52,7 @@ class StockOutRequestController extends Controller
         Gate::authorize('view', $stockOutRequest);
 
         return view('stock-request.out.show', [
-            'stockOutRequest' => $this->stockOutRequestRepository->findWithDetails($stockOutRequest->id),
+            'stockOutRequest' => $this->outRequestRepository->findWithDetails($stockOutRequest->id),
         ]);
     }
 
@@ -71,7 +67,7 @@ class StockOutRequestController extends Controller
 
         return view('stock-request.out.form', array_merge(
             $this->formData(),
-            ['stockOutRequest' => $this->stockOutRequestRepository->findWithDetails($stockOutRequest->id)]
+            ['stockOutRequest' => $this->outRequestRepository->findWithDetails($stockOutRequest->id)]
         ));
     }
 
@@ -80,9 +76,9 @@ class StockOutRequestController extends Controller
         Gate::authorize('update', $stockOutRequest);
 
         try {
-            $this->stockOutRequestService->update(
+            $this->outRequestService->update(
                 $stockOutRequest,
-                $request->only(['note']),
+                $request->only(['warehouse_id', 'note']),
                 $request->input('details', [])
             );
         } catch (\DomainException $e) {
@@ -101,7 +97,7 @@ class StockOutRequestController extends Controller
 
         try {
             $code = $stockOutRequest->code;
-            $this->stockOutRequestService->delete($stockOutRequest);
+            $this->outRequestService->delete($stockOutRequest);
         } catch (\DomainException $e) {
             return redirect()->route('stock-requests.index')->with('error', $e->getMessage());
         }
@@ -114,13 +110,13 @@ class StockOutRequestController extends Controller
         Gate::authorize('complete', $stockOutRequest);
 
         try {
-            $this->stockOutRequestService->complete($stockOutRequest);
+            $this->outRequestService->complete($stockOutRequest);
         } catch (\DomainException $e) {
             return redirect()->route('stock-out-requests.show', $stockOutRequest)->with('error', $e->getMessage());
         }
 
         return redirect()->route('stock-out-requests.show', $stockOutRequest)
-            ->with('success', "Phiếu {$stockOutRequest->code} đã được hoàn thành.");
+            ->with('success', "Yêu cầu {$stockOutRequest->code} đã hoàn tất.");
     }
 
     public function cancel(StockOutRequest $stockOutRequest)
@@ -128,23 +124,42 @@ class StockOutRequestController extends Controller
         Gate::authorize('cancel', $stockOutRequest);
 
         try {
-            $this->stockOutRequestService->cancel($stockOutRequest);
+            $this->outRequestService->cancel($stockOutRequest);
         } catch (\DomainException $e) {
             return redirect()->route('stock-out-requests.show', $stockOutRequest)->with('error', $e->getMessage());
         }
 
         return redirect()->route('stock-out-requests.show', $stockOutRequest)
-            ->with('success', "Đã hủy phiếu {$stockOutRequest->code}.");
+            ->with('success', "Đã hủy yêu cầu {$stockOutRequest->code}.");
     }
 
     /**
      * Dữ liệu dropdown dùng chung cho create()/edit().
-     * Lấy qua Repository — không query DB trực tiếp trong Controller (đúng Rule #1).
+     * Lấy qua Repository — không query DB trực tiếp trong Controller (Rule #1).
      */
     private function formData(): array
     {
+        $employees = $this->formDataRepository->activeEmployees();
+        $products  = $this->formDataRepository->activeProducts();
+
         return [
-            'employees' => $this->employeeRepository->allActive(),
+            'warehouses' => $this->formDataRepository->warehouses(),
+            'employees'  => $employees,
+            'products'   => $products,
+
+            'employeesJson' => $employees->map(fn ($e) => [
+                'id'   => $e->id,
+                'code' => $e->code,
+                'name' => $e->name,
+            ])->values(),
+
+            'productsJson' => $products->map(fn ($p) => [
+                'code'          => $p->code,
+                'name'          => $p->name,
+                'specification' => $p->specification,
+                'uom_name'      => $p->uom->name ?? '',
+                'tracking_type' => $p->tracking_type?->value ?? 1,
+            ])->values(),
         ];
     }
 }

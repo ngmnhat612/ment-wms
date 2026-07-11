@@ -23,6 +23,9 @@ use App\Repositories\Contracts\Inventory\SerialRepositoryInterface;
 use App\Repositories\Contracts\Inventory\StockRepositoryInterface;
 use App\Repositories\Contracts\StockRequest\StockInRequestRepositoryInterface;
 use App\Repositories\Contracts\StockRequest\StockOutRequestRepositoryInterface;
+use App\Repositories\Contracts\Stocktake\InventoryCheckRepositoryInterface;
+use App\Repositories\Contracts\Stocktake\InventoryFreezeRepositoryInterface;
+use App\Repositories\Contracts\Stocktake\StockAdjustmentRepositoryInterface;
 
 use App\Repositories\Eloquent\Master\CategoryRepository;
 use App\Repositories\Eloquent\Master\ProductRepository;
@@ -45,6 +48,9 @@ use App\Repositories\Eloquent\Inventory\SerialRepository;
 use App\Repositories\Eloquent\Inventory\StockRepository;
 use App\Repositories\Eloquent\StockRequest\StockInRequestRepository;
 use App\Repositories\Eloquent\StockRequest\StockOutRequestRepository;
+use App\Repositories\Eloquent\Stocktake\InventoryCheckRepository;
+use App\Repositories\Eloquent\Stocktake\InventoryFreezeRepository;
+use App\Repositories\Eloquent\Stocktake\StockAdjustmentRepository;
 
 use Illuminate\Support\ServiceProvider;
 
@@ -132,8 +138,15 @@ class RepositoryServiceProvider extends ServiceProvider
             StockMovementFormDataRepository::class
         );
 
-        $this->app->bind(LotRepositoryInterface::class, LotRepository::class);
-        $this->app->bind(SerialRepositoryInterface::class, SerialRepository::class);
+        $this->app->bind(
+            LotRepositoryInterface::class, 
+            LotRepository::class
+        );
+
+        $this->app->bind(
+            SerialRepositoryInterface::class, 
+            SerialRepository::class
+        );
 
         $this->app->bind(
             StockRepositoryInterface::class,
@@ -148,6 +161,21 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->bind(
             StockOutRequestRepositoryInterface::class,
             StockOutRequestRepository::class,
+        );
+
+        $this->app->bind(
+            InventoryCheckRepositoryInterface::class,
+            InventoryCheckRepository::class,
+        );
+    
+        $this->app->bind(
+            InventoryFreezeRepositoryInterface::class,
+            InventoryFreezeRepository::class,
+        );
+    
+        $this->app->bind(
+            StockAdjustmentRepositoryInterface::class,
+            StockAdjustmentRepository::class,
         );
     }
 }

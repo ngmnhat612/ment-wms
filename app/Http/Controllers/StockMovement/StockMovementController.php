@@ -56,7 +56,7 @@ class StockMovementController extends Controller
         $sort = $sort ?? '';
         $dir  = $dir ?? '';
 
-        $allowedSorts = ['code', 'created_by', 'approved_by', 'doc_date', 'note'];
+        $allowedSorts = ['code', 'linked_code', 'created_by', 'approved_by', 'doc_date', 'note'];
 
         if ($sort === '' || ! in_array($sort, $allowedSorts, true) || $dir === '') {
             return $all->sortByDesc('created_at')->values();
@@ -77,6 +77,8 @@ class StockMovementController extends Controller
             'id'                 => $receipt->id,
             'movement_type'      => 'receipt',
             'code'               => $receipt->code,
+            'linked_id'          => $receipt->stockInRequest?->id,
+            'linked_code'        => $receipt->stockInRequest?->code,
             'created_by'         => $receipt->createdBy?->display_name,
             'created_by_code'    => $receipt->createdBy?->employee?->code,
             'approved_by'        => $receipt->approvedBy?->display_name,
@@ -94,6 +96,8 @@ class StockMovementController extends Controller
             'id'                 => $issue->id,
             'movement_type'      => 'issue',
             'code'               => $issue->code,
+            'linked_id'          => $issue->stockOutRequest?->id,
+            'linked_code'        => $issue->stockOutRequest?->code,
             'created_by'         => $issue->createdBy?->display_name,
             'created_by_code'    => $issue->createdBy?->employee?->code,
             'approved_by'        => $issue->approvedBy?->display_name,

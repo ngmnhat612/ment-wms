@@ -105,7 +105,7 @@ class StockIssueRepository implements StockIssueRepositoryInterface
     public function allForMovementList(array $filters): Collection
     {
         $query = StockIssue::query()
-            ->with(['createdBy', 'approvedBy'])
+            ->with(['createdBy', 'approvedBy', 'stockOutRequest'])
             ->withCount('details');
 
         $this->applyFilters($query, $filters);
@@ -117,7 +117,12 @@ class StockIssueRepository implements StockIssueRepositoryInterface
     {
         if (! empty($filters['search'])) {
             $search = $filters['search'];
-            $query->where('code', 'like', "%{$search}%");
+            $query->where(function ($q) use ($search) {
+                $q->where('code', 'like', "%{$search}%")
+                ->orWhereHas('stockOutRequest', function ($r) use ($search) {
+                    $r->where('code', 'like', "%{$search}%");
+                });
+            });
         }
 
         if (isset($filters['status']) && $filters['status'] !== '') {

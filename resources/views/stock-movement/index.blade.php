@@ -1,10 +1,10 @@
 @extends('layouts.app')
 
-@section('title', 'Nhập/Xuất kho')
+@section('title', 'Nhập/Xuất')
 
 @section('breadcrumb')
   <li class="breadcrumb-item">Nghiệp vụ kho</li>
-  <li class="breadcrumb-item active">Nhập/Xuất kho</li>
+  <li class="breadcrumb-item active">Nhập/Xuất</li>
 @endsection
 
 @section('content')
@@ -56,7 +56,7 @@
 
         {{-- CỘT 1: Tiêu đề --}}
         <div class="flex-shrink-0">
-        <span class="fw-semibold text-nowrap">Nhập/Xuất kho</span>
+        <span class="fw-semibold text-nowrap">Nhập/Xuất</span>
         </div>
 
         {{-- CỘT 2 + CỘT 3: chiếm hết khoảng trống giữa, chia đều nhau --}}
@@ -70,7 +70,7 @@
                 <svg class="icon"><use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-search') }}"></use></svg>
                 </span>
                 <input type="text" class="form-control" name="search"
-                    value="{{ request('search') }}" placeholder="Mã phiếu, số tham chiếu...">
+                    value="{{ request('search') }}" placeholder="Tìm kiếm theo Mã phiếu">
             </div>
             </div>
 
@@ -137,6 +137,11 @@
                         Mã phiếu {!! $sortIcon('code') !!}
                     </a>
                 </th>
+                <th style="width:10%">
+                  <a href="{{ $sortUrl('linked_code') }}" class="text-decoration-none text-reset d-inline-flex align-items-center">
+                      Phiếu liên kết {!! $sortIcon('linked_code') !!}
+                  </a>
+              </th>
                 <th>
                     <a href="{{ $sortUrl('created_by') }}" class="text-decoration-none text-reset d-inline-flex align-items-center">
                         Người tạo {!! $sortIcon('created_by') !!}
@@ -176,6 +181,7 @@
                   $isReceipt = $movement->movement_type === 'receipt';
                   $showRoute = $isReceipt ? 'receipts.show' : 'issues.show';
                   $deleteUrl = $isReceipt ? "/receipts/{$movement->id}" : "/issues/{$movement->id}";
+                  $linkedRoute = $isReceipt ? 'stock-in-requests.show' : 'stock-out-requests.show';
               @endphp
               <tr>
                 <td class="text-center text-body-secondary">
@@ -193,6 +199,16 @@
                      class="fw-medium text-primary text-decoration-none">
                     <code>{{ $movement->code }}</code>
                   </a>
+                </td>
+                <td class="small">
+                  @if ($movement->linked_code)
+                    <a href="{{ Route::has($linkedRoute) ? route($linkedRoute, $movement->linked_id) : '#' }}"
+                      class="fw-medium text-primary text-decoration-none">
+                      <code>{{ $movement->linked_code }}</code>
+                    </a>
+                  @else
+                    -
+                  @endif
                 </td>
                 <td>
                     @if($movement->created_by)

@@ -9,7 +9,7 @@ class StockOutRequestRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return true; // Gate::authorize() đã xử lý ở Controller, không lặp lại ở đây.
+        return true; // Gate::authorize() đã xử lý ở Controller.
     }
 
     public function rules(): array
@@ -17,6 +17,7 @@ class StockOutRequestRequest extends FormRequest
         $isUpdate = $this->route('stock_out_request') !== null;
 
         return [
+            'warehouse_id' => 'required|exists:warehouses,id',
             'code' => $isUpdate
                 ? [
                     'nullable', 'string', 'max:50',
@@ -25,32 +26,52 @@ class StockOutRequestRequest extends FormRequest
                 : 'nullable|string|max:50|unique:stock_out_request,code',
             'note' => 'nullable|string|max:500',
 
-            // ── Danh sách vật tư yêu cầu xuất (mỗi dòng = 1 detail) ──
+            // ── Mỗi detail = 1 hàng UI (khai báo tự do, giống stock_in_request) ──
             'details'                    => 'required|array|min:1',
             'details.*.issue_date'       => 'nullable|date',
-            'details.*.product_code'     => 'required|string|max:50',
-            'details.*.product_name'     => 'required|string|max:255',
+            'details.*.product_code'     => 'nullable|string|max:50',
+            'details.*.product_name'     => 'nullable|string|max:200',
             'details.*.quantity'         => 'required|numeric|min:0.001',
-            'details.*.uom_name'         => 'required|string|max:50',
-            'details.*.actual_qty'       => 'nullable|numeric|min:0',
+            'details.*.uom_name'         => 'nullable|string|max:200',
+            'details.*.actual_qty'       => 'required|numeric|min:0',
             'details.*.receiver_id'      => 'nullable|exists:employees,id',
             'details.*.sn_code'          => 'nullable|string|max:50',
             'details.*.lot_number'       => 'nullable|integer|min:1',
-            'details.*.serial_number'    => 'nullable|string|max:100',
             'details.*.note'             => 'nullable|string|max:500',
+            'details.*.serial_number'    => 'nullable|string|max:500',
         ];
     }
 
     public function messages(): array
     {
         return [
-            'code.unique'                     => 'Mã phiếu đã tồn tại.',
-            'details.required'                => 'Phiếu yêu cầu xuất kho phải có ít nhất một vật tư.',
-            'details.*.product_code.required' => 'Vui lòng nhập mã vật tư.',
-            'details.*.product_name.required' => 'Vui lòng nhập tên vật tư.',
-            'details.*.quantity.required'     => 'Vui lòng nhập số lượng.',
-            'details.*.quantity.min'          => 'Số lượng phải lớn hơn 0.',
-            'details.*.uom_name.required'     => 'Vui lòng nhập đơn vị tính.',
+            'warehouse_id.required'   => 'Vui lòng chọn kho.',
+            'details.required'        => 'Phiếu yêu cầu phải có ít nhất 1 dòng vật tư.',
+            'details.min'             => 'Phiếu yêu cầu phải có ít nhất 1 dòng vật tư.',
+            'details.*.quantity.required' => 'Vui lòng nhập số lượng yêu cầu.',
+            'details.*.quantity.min'      => 'Số lượng yêu cầu phải lớn hơn 0.',
         ];
+    }
+
+    /**
+     * Chuẩn hoá dữ liệu trước khi validate: nếu actual_qty (Thực xuất)
+     * bị bỏ trống, tự động coi là 0 — đồng bộ cách xử lý với
+     * StockIssueRequest (theo thống nhất trước đó, tránh lỗi khi rỗng).
+     */
+    protected function prepareForValidation(): void
+    {
+        if (! is_array($this->input('details'))) {
+            return;
+        }
+
+        $details = collect($this->input('details'))->map(function ($detail) {
+            if (! isset($detail['actual_qty']) || $detail['actual_qty'] === '' || $detail['actual_qty'] === null) {
+                $detail['actual_qty'] = 0;
+            }
+
+            return $detail;
+        })->all();
+
+        $this->merge(['details' => $details]);
     }
 }

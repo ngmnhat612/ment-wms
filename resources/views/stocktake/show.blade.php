@@ -20,7 +20,6 @@
 
   $canEdit   = $status === \App\Enums\InventoryCheckStatus::Draft;
   $canStart  = $status === \App\Enums\InventoryCheckStatus::Draft;
-  $canFreeze = $status === \App\Enums\InventoryCheckStatus::InProgress && ! optional($activeFreeze)->isActive();
 @endphp
 
 {{-- HEADER --}}
@@ -59,22 +58,6 @@
 
     {{-- IN_PROGRESS --}}
     @if($status === \App\Enums\InventoryCheckStatus::InProgress)
-      @if($canFreeze)
-        <button type="button" class="btn btn-outline-danger" data-coreui-toggle="modal" data-coreui-target="#freezeModal">
-          <svg class="icon me-1"><use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-lock-locked') }}"></use></svg>
-          Đóng băng kho
-        </button>
-      @elseif(optional($activeFreeze)->isActive())
-        <form method="POST" action="{{ route('stocktakes.unfreeze', [$inventoryCheck, $activeFreeze]) }}"
-              onsubmit="return confirm('Mở đóng băng? Kho sẽ cho phép giao dịch trở lại.')">
-          @csrf
-          <button class="btn btn-outline-secondary">
-            <svg class="icon me-1"><use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-lock-unlocked') }}"></use></svg>
-            Mở đóng băng
-          </button>
-        </form>
-      @endif
-
       <form method="POST" action="{{ route('stocktakes.complete', $inventoryCheck) }}"
             onsubmit="return confirm('Hoàn thành kiểm kê? Số liệu tồn thực tế sẽ được chốt lại.')">
         @csrf
@@ -83,14 +66,6 @@
           Hoàn thành kiểm kê
         </button>
       </form>
-    @endif
-
-    {{-- COMPLETED + có chênh lệch chưa xử lý --}}
-    @if($status === \App\Enums\InventoryCheckStatus::Completed && $hasDiff)
-      <a href="{{ route('stocktakes.adjustment.create', $inventoryCheck) }}" class="btn btn-danger">
-        <svg class="icon me-1"><use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-balance-scale') }}"></use></svg>
-        Tạo phiếu điều chỉnh
-      </a>
     @endif
 
     @if(in_array($status, [\App\Enums\InventoryCheckStatus::Draft, \App\Enums\InventoryCheckStatus::InProgress]))
@@ -104,26 +79,18 @@
       </form>
     @endif
 
+    @if($status === \App\Enums\InventoryCheckStatus::Completed && $hasDiff)
+      <a href="{{ route('stocktakes.adjustment.create', $inventoryCheck) }}" class="btn btn-danger">
+        <svg class="icon me-1"><use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-balance-scale') }}"></use></svg>
+        Điều chỉnh
+      </a>
+    @endif
+
     <a href="{{ route('stocktakes.index') }}" class="btn btn-outline-secondary">
       Quay lại
     </a>
   </div>
 </div>
-
-{{-- ALERTS --}}
-@if(session('success'))
-  <div class="alert alert-success alert-dismissible mb-4">
-    <svg class="icon me-1"><use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-check') }}"></use></svg>
-    {{ session('success') }}
-    <button type="button" class="btn-close" data-coreui-dismiss="alert"></button>
-  </div>
-@endif
-@if(session('error'))
-  <div class="alert alert-danger alert-dismissible mb-4">
-    {{ session('error') }}
-    <button type="button" class="btn-close" data-coreui-dismiss="alert"></button>
-  </div>
-@endif
 
 {{-- ── THÔNG TIN PHIẾU ── --}}
 <div class="card mb-3">
@@ -132,10 +99,6 @@
   </div>
   <div class="card-body">
     <div class="row g-3">
-      <div class="col-md-3">
-        <label class="form-label mb-1">Kho</label>
-        <div class="fw-semibold">{{ $inventoryCheck->warehouse->name ?? '-' }}</div>
-      </div>
       <div class="col-md-3">
         <label class="form-label mb-1">Phạm vi</label>
         <div>{{ $scope?->label() ?? '-' }}</div>
@@ -281,37 +244,5 @@
     </form>
   </div>
 </div>
-
-{{-- MODAL ĐÓNG BĂNG --}}
-@if($canFreeze)
-<div class="modal fade" id="freezeModal" tabindex="-1">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content">
-      <form method="POST" action="{{ route('stocktakes.freeze', $inventoryCheck) }}">
-        @csrf
-        <div class="modal-header">
-          <h6 class="modal-title fw-semibold">Đóng băng kho để kiểm kê</h6>
-          <button type="button" class="btn-close" data-coreui-dismiss="modal"></button>
-        </div>
-        <div class="modal-body">
-          <p class="text-body-secondary small mb-3">
-            Đóng băng sẽ tạm khóa giao dịch nhập/xuất trên phạm vi tương ứng cho đến khi mở lại.
-          </p>
-          <label class="form-label">Phạm vi đóng băng</label>
-          <select class="form-select" name="freeze_scope" required>
-            @foreach(\App\Enums\InventoryCheckScope::cases() as $case)
-              <option value="{{ $case->value }}" {{ $scope === $case ? 'selected' : '' }}>{{ $case->label() }}</option>
-            @endforeach
-          </select>
-        </div>
-        <div class="modal-footer border-0 justify-content-end gap-2">
-          <button type="button" class="btn btn-outline-secondary btn-sm" data-coreui-dismiss="modal">Hủy</button>
-          <button type="submit" class="btn btn-danger btn-sm">Xác nhận đóng băng</button>
-        </div>
-      </form>
-    </div>
-  </div>
-</div>
-@endif
 
 @endsection

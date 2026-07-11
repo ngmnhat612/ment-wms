@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -20,9 +21,7 @@ return new class extends Migration
             $table->unsignedBigInteger('uom_id');
             $table->decimal('system_qty', 18, 3)->default(0);
             $table->decimal('actual_qty', 18, 3)->default(0);
-            $table->decimal('diff_qty', 18, 3)
-                  ->storedAs('[actual_qty] - [system_qty]')
-                  ->comment('Chênh lệch');
+            // diff_qty: computed column, thêm bằng raw SQL bên dưới (SQL Server PERSISTED)
             $table->string('note', 500)->nullable()->comment('Ghi chú');
             $table->timestamps();
 
@@ -58,6 +57,13 @@ return new class extends Migration
                   ->references('id')->on('uoms')
                   ->onDelete('no action');
         });
+
+        // Computed column PERSISTED — SQL Server không hỗ trợ tốt qua Blueprint,
+        // nên thêm bằng raw SQL sau khi bảng đã được tạo.
+        DB::statement('
+            ALTER TABLE stock_adjustment_details
+            ADD diff_qty AS (actual_qty - system_qty) PERSISTED
+        ');
     }
 
     public function down(): void

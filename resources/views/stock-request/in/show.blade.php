@@ -37,6 +37,14 @@ $fmt = fn($n) => rtrim(rtrim(number_format((float)$n, 3, '.', ','), '0'), '.');
         </a>
         @endif
 
+        {{-- COMPLETED --}}
+        @if($stockInRequest->status === \App\Enums\DocumentStatus::Completed)
+        <a href="{{ route('receipts.create', ['stock_in_request_id' => $stockInRequest->id]) }}" class="btn btn-primary">
+            <svg class="icon me-1"><use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-arrow-thick-from-top') }}"></use></svg>
+            Nhập
+        </a>
+        @endif
+
         <a href="{{ route('stock-requests.index') }}" class="btn btn-outline-secondary">
             Quay lại
         </a>
@@ -86,12 +94,17 @@ $fmt = fn($n) => rtrim(rtrim(number_format((float)$n, 3, '.', ','), '0'), '.');
                         <th class="text-center" style="width:2%">#</th>
                         <th style="width:8%">Số PO/CU</th>
                         <th style="width:8%">Ngày nhận</th>
+                        <th style="min-width:100px">Mã mới</th>
                         <th style="min-width:160px">Vật tư</th>
                         <th style="min-width:140px">TSKT</th>
                         <th style="width:8%">Thương hiệu</th>
                         <th style="width:6%" class="text-end">SL</th>
                         <th style="width:6%">ĐVT</th>
                         <th style="width:6%">Số Lô</th>
+                        <th style="width:8%">Ngày QC</th>
+                        <th style="min-width:120px">Người QC</th>
+                        <th style="min-width:100px">Kết quả QC</th>
+                        <th style="min-width:140px">Hướng khắc phục</th>
                         <th style="min-width:120px">Người yêu cầu</th>
                         <th style="min-width:120px">Ghi chú</th>
                     </tr>
@@ -102,6 +115,7 @@ $fmt = fn($n) => rtrim(rtrim(number_format((float)$n, 3, '.', ','), '0'), '.');
                         <td class="text-center text-body-secondary">{{ $di + 1 }}</td>
                         <td>{{ $detail->reference_no ?? '-' }}</td>
                         <td>{{ $detail->received_date ? \Carbon\Carbon::parse($detail->received_date)->format('d/m/Y') : '-' }}</td>
+                        <td>{{ $detail->new_product_code ?? '-' }}</td>
                         <td>
                             <div class="fw-medium">{{ $detail->product_name ?? '-' }}</div>
                             <div class="small text-body-secondary font-monospace">{{ $detail->product_code ?? '' }}</div>
@@ -111,6 +125,17 @@ $fmt = fn($n) => rtrim(rtrim(number_format((float)$n, 3, '.', ','), '0'), '.');
                         <td class="text-end">{{ $fmt($detail->quantity) }}</td>
                         <td>{{ $detail->uom_name ?? '-' }}</td>
                         <td>{{ $detail->lot_number ?? '-' }}</td>
+                        <td>{{ $detail->qc_date ? \Carbon\Carbon::parse($detail->qc_date)->format('d/m/Y') : '-' }}</td>
+                        <td>
+                            @if ($detail->qcEmployee)
+                                <div class="fw-medium">{{ $detail->qcEmployee->name }}</div>
+                                <div class="small text-body-secondary font-monospace">{{ $detail->qcEmployee->code }}</div>
+                            @else
+                                <span class="text-body-secondary small">-</span>
+                            @endif
+                        </td>
+                        <td>{{ $detail->qc_result ?? '-' }}</td>
+                        <td>{{ $detail->solution ?? '-' }}</td>
                         <td>
                             @if ($detail->requester)
                                 <div class="fw-medium">{{ $detail->requester->name }}</div>
@@ -122,7 +147,7 @@ $fmt = fn($n) => rtrim(rtrim(number_format((float)$n, 3, '.', ','), '0'), '.');
                         <td>{{ $detail->note ?? '-' }}</td>
                     </tr>
                 @empty
-                <tr><td colspan="11" class="text-center text-body-secondary py-5">Không có dòng chi tiết.</td></tr>
+                <tr><td colspan="16" class="text-center text-body-secondary py-5">Không có dòng chi tiết.</td></tr>
                 @endforelse
                 </tbody>
             </table>
