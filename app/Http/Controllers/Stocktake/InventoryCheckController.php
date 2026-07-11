@@ -75,18 +75,9 @@ class InventoryCheckController extends Controller
 
         $inventoryCheck = $this->checkRepository->findWithDetails($stocktake->id);
 
-        \Illuminate\Support\Facades\Log::debug('InventoryCheckController::show - chi tiết vừa query lại', [
-            'inventory_check_id' => $stocktake->id,
-            'details' => $inventoryCheck->details->map(fn ($d) => [
-                'id'         => $d->id,
-                'system_qty' => $d->system_qty,
-                'actual_qty' => $d->actual_qty,
-                'diff_qty'   => $d->diff_qty,
-            ])->all(),
-        ]);
-
         return view('stocktake.show', [
-            'inventoryCheck' => $inventoryCheck,
+            'inventoryCheck'  => $inventoryCheck,
+            'locationOptions' => $this->locationRepository->allOrdered(),
         ]);
     }
 

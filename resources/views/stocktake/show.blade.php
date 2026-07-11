@@ -231,6 +231,8 @@
         'details'      => $details,
         'canEdit'      => $status === \App\Enums\InventoryCheckStatus::InProgress,
         'highlightDiff' => in_array($status, [\App\Enums\InventoryCheckStatus::Completed, \App\Enums\InventoryCheckStatus::InProgress]),
+        'checkType'    => $type,
+        'locationOptions' => $locationOptions ?? [],
       ])
 
       @if($status === \App\Enums\InventoryCheckStatus::InProgress)

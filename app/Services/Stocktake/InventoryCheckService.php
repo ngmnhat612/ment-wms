@@ -77,18 +77,15 @@ class InventoryCheckService
     }
 
     /**
-     * Lưu số liệu đếm thực tế (actual_qty + actual_location_id) cho từng dòng.
+     * Lưu số liệu đếm thực tế (actual_qty và/hoặc actual_location_id) cho từng dòng,
+     * tùy theo loại kiểm kê (Quantity/Location/Both) mà form chỉ gửi lên field tương ứng.
+     * Field không được gửi (rỗng) sẽ giữ nguyên giá trị đã lưu trước đó.
      * Chỉ cho phép khi phiếu đang InProgress.
-     * $rows: mảng ['id' => detail_id, 'actual_qty' => float, 'actual_location_id' => ?int]
+     * $rows: mảng ['id' => detail_id, 'actual_qty' => ?float, 'actual_location_id' => ?int]
      */
     public function updateDetails(InventoryCheck $inventoryCheck, array $rows): void
     {
         $this->assertStatus($inventoryCheck, InventoryCheckStatus::InProgress, 'cập nhật số liệu đếm');
-
-        \Illuminate\Support\Facades\Log::debug('InventoryCheckService::updateDetails - raw rows từ request', [
-            'inventory_check_id' => $inventoryCheck->id,
-            'rows'               => $rows,
-        ]);
 
         DB::transaction(function () use ($inventoryCheck, $rows) {
             $detailIds = array_column($rows, 'id');
@@ -109,31 +106,19 @@ class InventoryCheckService
                     ? $row['actual_qty']
                     : null;
 
-                \Illuminate\Support\Facades\Log::debug('InventoryCheckService::updateDetails - trước khi update', [
-                    'detail_id'                => $detail->id,
-                    'system_qty'               => $detail->system_qty,
-                    'actual_qty_cu'            => $detail->actual_qty,
-                    'diff_qty_cu'              => $detail->diff_qty,
-                    'raw_actual_qty_tu_request'=> $row['actual_qty'],
-                    'raw_actual_qty_gettype'   => gettype($row['actual_qty']),
-                    'actual_qty_se_luu'        => $actualQtyToSave,
-                ]);
+                $actualLocationId = (($row['actual_location_id'] ?? '') !== '')
+                    ? $row['actual_location_id']
+                    : $detail->actual_location_id;
 
                 $detail->update([
                     'actual_qty'         => $actualQtyToSave,
-                    'actual_location_id' => $row['actual_location_id'] ?? $detail->system_location_id,
+                    'actual_location_id' => $actualLocationId,
                 ]);
 
                 // diff_qty là computed column (storedAs) ở SQL Server — model
                 // trong bộ nhớ KHÔNG tự cập nhật giá trị này sau update(),
                 // nên phải refresh() để lấy đúng giá trị DB vừa tính lại.
                 $detail->refresh();
-
-                \Illuminate\Support\Facades\Log::debug('InventoryCheckService::updateDetails - sau khi update + refresh', [
-                    'detail_id'      => $detail->id,
-                    'actual_qty_moi' => $detail->actual_qty,
-                    'diff_qty_moi'   => $detail->diff_qty,
-                ]);
             }
         });
     }
