@@ -37,7 +37,13 @@ class DepartmentController extends Controller
     {
         Gate::authorize('create', Department::class);
 
-        $this->departmentService->create($request->validated());
+        try {
+            $this->departmentService->create($request->validated());
+        } catch (\RuntimeException $e) {
+            return redirect()
+                ->route('master.department.index')
+                ->with('error', $e->getMessage());
+        }
 
         return redirect()
             ->route('master.department.index')

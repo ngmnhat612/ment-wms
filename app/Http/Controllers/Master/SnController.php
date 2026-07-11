@@ -37,7 +37,13 @@ class SnController extends Controller
     {
         Gate::authorize('create', Sn::class);
 
-        $this->snService->create($request->validated());
+        try {
+            $this->snService->create($request->validated());
+        } catch (\RuntimeException $e) {
+            return redirect()
+                ->route('master.sn.index')
+                ->with('error', $e->getMessage());
+        }
 
         return redirect()
             ->route('master.sn.index')
