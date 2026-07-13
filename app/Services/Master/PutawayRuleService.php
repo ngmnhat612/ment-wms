@@ -59,20 +59,6 @@ class PutawayRuleService
 
     public function create(array $data): PutawayRule
     {
-        $trashed = $this->putawayRuleRepository->findTrashed(
-            $data['warehouse_id'],
-            $data['product_id']  ?? null,
-            $data['category_id'] ?? null,
-        );
-
-        if ($trashed) {
-            return $this->putawayRuleRepository->restoreAndUpdate($trashed, [
-                'location_id' => $data['location_id'],
-                'note'        => $data['note'] ?? null,
-                'status'      => $data['status'],
-            ]);
-        }
-
         return $this->putawayRuleRepository->create($data);
     }
 

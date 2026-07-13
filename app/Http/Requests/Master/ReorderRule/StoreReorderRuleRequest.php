@@ -19,8 +19,7 @@ class StoreReorderRuleRequest extends FormRequest
                 'required',
                 'exists:products,id',
                 Rule::unique('reorder_rules')
-                    ->where('warehouse_id', $this->input('warehouse_id'))
-                    ->whereNull('deleted_at'),
+                    ->where('warehouse_id', $this->input('warehouse_id')),
             ],
             'warehouse_id' => 'required|exists:warehouses,id',
             'employee_id'  => 'required|exists:employees,id',
