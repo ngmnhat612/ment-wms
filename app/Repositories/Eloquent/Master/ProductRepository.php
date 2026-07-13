@@ -19,9 +19,13 @@ class ProductRepository implements ProductRepositoryInterface
             $search = $filters['search'];
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                ->orWhere('code', 'like', "%{$search}%")
-                ->orWhere('specification', 'like', "%{$search}%");
+                ->orWhere('code', 'like', "%{$search}%");
             });
+        }
+
+        if (!empty($filters['search_spec'])) {
+            $searchSpec = $filters['search_spec'];
+            $query->where('specification', 'like', "%{$searchSpec}%");
         }
 
         if (!empty($filters['category_id'])) {
@@ -39,7 +43,7 @@ class ProductRepository implements ProductRepositoryInterface
         $sortable = ['code', 'name', 'specification'];
         $sortReq  = $filters['sort'] ?? '';
         $sortBy   = in_array($sortReq, $sortable) ? $sortReq : 'created_at';
-        $sortDir = in_array($filters['dir'] ?? '', ['asc', 'desc']) ? $filters['dir'] : 'desc';
+        $sortDir  = in_array($filters['dir'] ?? '', ['asc', 'desc']) ? $filters['dir'] : 'desc';
 
         return $query
             ->orderBy($sortBy, $sortDir)
