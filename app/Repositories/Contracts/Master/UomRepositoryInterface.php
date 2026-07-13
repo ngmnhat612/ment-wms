@@ -44,11 +44,6 @@ interface UomRepositoryInterface
     public function delete(Uom $uom): bool;
 
     /**
-     * Kiểm tra đơn vị tính đang được gán cho vật tư.
-     */
-    public function hasProducts(Uom $uom): bool;
-
-    /**
      * Kiểm tra đơn vị tính đang được dùng trong quy đổi.
      */
     public function hasConversions(Uom $uom): bool;

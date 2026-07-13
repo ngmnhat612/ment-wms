@@ -494,7 +494,7 @@
             Bạn có chắc muốn xóa vật tư<br>
             <strong id="deleteProductName" class="text-body"></strong>?
           </p>
-          <p class="text-danger small mt-1">Không thể xóa nếu đang có tồn kho.</p>
+          <p></p>
         </div>
         <div class="modal-footer border-0 pt-0 justify-content-center gap-2">
           <button type="button" class="btn btn-outline-secondary btn-sm"

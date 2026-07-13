@@ -88,12 +88,6 @@ class SupplierService
      */
     public function delete(Supplier $supplier): void
     {
-        if ($this->supplierRepository->hasStockReceipts($supplier)) {
-            throw new \RuntimeException(
-                "Không thể xóa \"{$supplier->name}\" vì đang có phiếu nhập kho liên quan."
-            );
-        }
-
         $this->guardNotInUse('suppliers', 'id', $supplier->id, 'Nhà cung cấp', $supplier->name);
 
         $this->supplierRepository->delete($supplier);

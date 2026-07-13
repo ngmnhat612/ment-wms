@@ -36,9 +36,4 @@ interface SupplierRepositoryInterface
      * Xóa nhà cung cấp.
      */
     public function delete(Supplier $supplier): bool;
-
-    /**
-     * Kiểm tra nhà cung cấp có phiếu nhập kho liên quan không.
-     */
-    public function hasStockReceipts(Supplier $supplier): bool;
 }

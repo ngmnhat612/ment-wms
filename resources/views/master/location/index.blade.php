@@ -284,7 +284,7 @@
             Bạn có chắc muốn xóa vị trí<br>
             <strong id="deleteLocName" class="text-body"></strong>?
           </p>
-          <p class="text-danger small mt-1">Không thể xóa nếu có vị trí con hoặc đang có tồn kho.</p>
+          <p></p>
         </div>
         <div class="modal-footer border-0 pt-0 justify-content-center gap-2">
           <button type="button" class="btn btn-outline-secondary btn-sm" data-coreui-dismiss="modal">Hủy</button>

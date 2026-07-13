@@ -63,11 +63,6 @@ class UomRepository implements UomRepositoryInterface
         return $uom->delete();
     }
 
-    public function hasProducts(Uom $uom): bool
-    {
-        return $uom->products()->exists();
-    }
-
     public function hasConversions(Uom $uom): bool
     {
         return $uom->conversionsFrom()->exists()
