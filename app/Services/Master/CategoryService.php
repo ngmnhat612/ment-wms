@@ -95,12 +95,6 @@ class CategoryService
      */
     public function delete(Category $category): void
     {
-        if ($this->categoryRepository->hasProducts($category)) {
-            throw new \RuntimeException(
-                'Không thể xóa nếu đã gán danh mục vật tư.'
-            );
-        }
-
         $this->guardNotInUse('categories', 'id', $category->id, 'Danh mục', $category->name);
 
         $this->categoryRepository->delete($category);

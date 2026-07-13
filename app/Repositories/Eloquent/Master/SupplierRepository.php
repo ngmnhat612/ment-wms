@@ -65,16 +65,4 @@ class SupplierRepository implements SupplierRepositoryInterface
     {
         return $supplier->delete();
     }
-
-    public function hasStockReceipts(Supplier $supplier): bool
-    {
-        // TODO: chuyển sang check StockReceiptDetail khi module Inbound hoàn thiện.
-        if (!\Illuminate\Support\Facades\Schema::hasTable('stock_receipt_details')) {
-            return false;
-        }
-
-        return \Illuminate\Support\Facades\DB::table('stock_receipt_details')
-            ->where('supplier_id', $supplier->id)
-            ->exists();
-    }
 }

@@ -30,6 +30,7 @@ trait ChecksForeignKeyUsage
             'uom_conversions'           => 'Quy đổi đơn vị tính',
             'stock_receipt'             => 'Phiếu nhập kho',
             'stock_issue'               => 'Phiếu xuất kho',
+            'stocks'                    => 'Tồn kho',
             // Thêm bảng mới vào đây khi cần đổi tên hiển thị,
             // KHÔNG BẮT BUỘC — nếu quên, hệ thống vẫn tự phát hiện
             // và báo bằng tên bảng SQL (fallback), không bỏ sót.

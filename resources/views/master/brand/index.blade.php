@@ -258,7 +258,6 @@
             Bạn có chắc muốn xóa thương hiệu<br>
             <strong id="deleteBrandName" class="text-body"></strong>?
           </p>
-          <!-- <p class="text-danger small mt-1">Không thể xóa nếu đã gán cho vật tư.</p> -->
            <p></p>
         </div>
         <div class="modal-footer border-0 pt-0 justify-content-center gap-2">

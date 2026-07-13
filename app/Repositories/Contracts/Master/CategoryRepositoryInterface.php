@@ -61,11 +61,6 @@ interface CategoryRepositoryInterface
     public function hasChildren(Category $category): bool;
 
     /**
-     * Kiểm tra danh mục có vật tư không.
-     */
-    public function hasProducts(Category $category): bool;
-
-    /**
      * Lấy tất cả ID con cháu (đệ quy) — dùng để kiểm tra vòng tròn parent.
      *
      * @return int[]

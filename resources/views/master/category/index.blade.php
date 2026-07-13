@@ -267,7 +267,7 @@
             Bạn có chắc muốn xóa danh mục<br>
             <strong id="deleteCatName" class="text-body"></strong>?
           </p>
-          <p class="text-danger small mt-1">Không thể xóa nếu đã gán danh mục vật tư.</p>
+          <p></p>
         </div>
         <div class="modal-footer border-0 pt-0 justify-content-center gap-2">
           <button type="button" class="btn btn-outline-secondary btn-sm" data-coreui-dismiss="modal">Hủy</button>

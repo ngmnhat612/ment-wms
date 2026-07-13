@@ -80,11 +80,6 @@ class CategoryRepository implements CategoryRepositoryInterface
         return $category->children()->exists();
     }
 
-    public function hasProducts(Category $category): bool
-    {
-        return $category->products()->exists();
-    }
-
     public function getDescendantIds(Category $category): array
     {
         $ids      = [];

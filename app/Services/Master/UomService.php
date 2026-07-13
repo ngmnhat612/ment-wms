@@ -86,12 +86,6 @@ class UomService
      */
     public function delete(Uom $uom): void
     {
-        if ($this->uomRepository->hasProducts($uom)) {
-            throw new \RuntimeException(
-                "Không thể xóa \"{$uom->name}\" vì đã được gán cho vật tư."
-            );
-        }
-
         $this->guardNotInUse('uoms', 'id', $uom->id, 'Đơn vị tính', $uom->name);
 
         $this->uomRepository->delete($uom);

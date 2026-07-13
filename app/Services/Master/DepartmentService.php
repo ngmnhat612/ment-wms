@@ -75,10 +75,6 @@ class DepartmentService
      */
     public function delete(Department $department): void
     {
-        if ($department->employees()->exists()) {
-            throw new \RuntimeException('Không thể xóa bộ phận đã gán cho nhân viên.');
-        }
-
         $this->guardNotInUse('departments', 'id', $department->id, 'Bộ phận', $department->name);
 
         $this->departmentRepository->delete($department);
