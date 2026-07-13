@@ -20,6 +20,7 @@ class StoreProductVariantRequest extends FormRequest
         return [
             'parent_code' => [
                 'required', 'string',
+                'regex:/^[A-Za-z0-9]+$/',
                 Rule::exists('products', 'code')->whereNull('deleted_at'),
             ],
             'code' => [
@@ -44,6 +45,7 @@ class StoreProductVariantRequest extends FormRequest
             'parent_code.required' => 'Vui lòng nhập mã MenT gốc.',
             'parent_code.exists'   => 'Mã MenT gốc không tồn tại trong hệ thống.',
             'code.max'             => 'Mã biến thể không được vượt quá 50 ký tự.',
+            'code.regex'           => 'Mã biến thể chỉ được phép chứa chữ cái và số, không chứa ký tự đặc biệt hoặc icon.',
             'code.unique'          => 'Mã biến thể đã tồn tại.',
             'name.required'        => 'Vui lòng nhập tên biến thể.',
             'name.max'             => 'Tên không được vượt quá 200 ký tự.',

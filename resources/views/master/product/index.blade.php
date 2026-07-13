@@ -45,54 +45,90 @@
 
   {{-- BẢNG DANH SÁCH --}}
   <div class="card">
-    <div class="card-header d-flex align-items-center gap-2">
-      <span class="fw-semibold flex-shrink-0">Danh sách vật tư</span>
-      <form method="GET" action="{{ route('master.product.index') }}"
-            class="d-flex gap-2 flex-wrap align-items-center flex-grow-1 justify-content-end">
-        <div class="input-group" style="min-width:400px;flex:2">
-          <span class="input-group-text">
-            <svg class="icon"><use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-search') }}"></use></svg>
-          </span>
-          <input type="text" class="form-control" name="search"
-                 value="{{ request('search') }}" placeholder="Tìm theo mã, tên vật tư hoặc thông số kỹ thuật">
-        </div>
-        <select class="form-select" name="category_id" style="min-width:150px;flex:1" onchange="this.form.submit()">
-          <option value="">Danh mục</option>
-          @foreach ($categories as $cat)
-            <option value="{{ $cat->id }}" {{ request('category_id') == $cat->id ? 'selected' : '' }}>
-              {{ $cat->name }}
-            </option>
-          @endforeach
-        </select>
-        <select class="form-select" name="tracking_type" style="min-width:150px;flex:1" onchange="this.form.submit()">
-          <option value="">Theo dõi</option>
-          @foreach (\App\Enums\TrackingType::options() as $val => $label)
-            <option value="{{ $val }}" {{ request('tracking_type') === (string) $val ? 'selected' : '' }}>
-              {{ $label }}
-            </option>
-          @endforeach
-        </select>
-        <select class="form-select" name="status" style="min-width:150px;flex:1" onchange="this.form.submit()">
-          <option value="">Trạng thái</option>
-          @foreach (\App\Enums\ActiveStatus::options() as $val => $label)
-            <option value="{{ $val }}" {{ request('status') === (string) $val ? 'selected' : '' }}>
-              {{ $label }}
-            </option>
-          @endforeach
-        </select>
+    <div class="card-header">
+      <form method="GET" action="{{ route('master.product.index') }}" class="d-flex align-items-center gap-3 flex-wrap">
 
-        @php
-          $hasFilter = request('search') || request('category_id') || request('tracking_type') || (request('status') !== null && request('status') !== '');
-        @endphp
-        @if ($hasFilter)
-          <a href="{{ route('master.product.index') }}" class="btn btn-outline-secondary">
-            <svg class="icon"><use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-filter-x') }}"></use></svg>
-          </a>
-        @else
-          <button type="submit" class="btn btn-primary">
+        {{-- CỘT 1: Tiêu đề --}}
+        <div class="flex-shrink-0">
+          <span class="fw-semibold text-nowrap">Danh sách vật tư</span>
+        </div>
+
+        {{-- CỘT 2: 2 thanh tìm kiếm + 3 filter --}}
+        <div class="flex-grow-1" style="min-width:500px">
+          <div class="row g-2">
+
+            {{-- Dòng 1: 2 thanh tìm kiếm --}}
+            <div class="col-6">
+              <div class="input-group">
+                <span class="input-group-text">
+                  <svg class="icon"><use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-search') }}"></use></svg>
+                </span>
+                <input type="text" class="form-control" name="search"
+                      value="{{ request('search') }}" placeholder="Tìm theo mã hoặc tên vật tư">
+              </div>
+            </div>
+            <div class="col-6">
+              <div class="input-group">
+                <span class="input-group-text">
+                  <svg class="icon"><use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-search') }}"></use></svg>
+                </span>
+                <input type="text" class="form-control" name="search_spec"
+                      value="{{ request('search_spec') }}" placeholder="Tìm theo thông số kỹ thuật">
+              </div>
+            </div>
+
+            {{-- Dòng 2: 3 filter --}}
+            <div class="col-4">
+              <select class="form-select" name="category_id" onchange="this.form.submit()">
+                <option value="">Danh mục</option>
+                @foreach ($categories as $cat)
+                  <option value="{{ $cat->id }}" {{ request('category_id') == $cat->id ? 'selected' : '' }}>
+                    {{ $cat->name }}
+                  </option>
+                @endforeach
+              </select>
+            </div>
+            <div class="col-4">
+              <select class="form-select" name="tracking_type" onchange="this.form.submit()">
+                <option value="">Theo dõi</option>
+                @foreach (\App\Enums\TrackingType::options() as $val => $label)
+                  <option value="{{ $val }}" {{ request('tracking_type') === (string) $val ? 'selected' : '' }}>
+                    {{ $label }}
+                  </option>
+                @endforeach
+              </select>
+            </div>
+            <div class="col-4">
+              <select class="form-select" name="status" onchange="this.form.submit()">
+                <option value="">Trạng thái</option>
+                @foreach (\App\Enums\ActiveStatus::options() as $val => $label)
+                  <option value="{{ $val }}" {{ request('status') === (string) $val ? 'selected' : '' }}>
+                    {{ $label }}
+                  </option>
+                @endforeach
+              </select>
+            </div>
+
+          </div>
+        </div>
+
+        {{-- CỘT 3: Nút Lọc --}}
+        <div class="flex-shrink-0">
+          @php
+            $hasFilter = request('search') || request('search_spec') || request('category_id') || request('tracking_type') || (request('status') !== null && request('status') !== '');
+          @endphp
+
+          <button type="submit" class="btn btn-primary {{ $hasFilter ? 'd-none' : '' }}">
             <svg class="icon"><use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-filter') }}"></use></svg>
           </button>
-        @endif
+
+          @if ($hasFilter)
+            <a href="{{ route('master.product.index') }}" class="btn btn-outline-secondary">
+              <svg class="icon"><use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-filter-x') }}"></use></svg>
+            </a>
+          @endif
+        </div>
+
       </form>
     </div>
 

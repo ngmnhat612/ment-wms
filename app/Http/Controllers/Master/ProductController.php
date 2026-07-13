@@ -33,7 +33,7 @@ class ProductController extends Controller
     {
         Gate::authorize('viewAny', Product::class);
 
-        $filters = $request->only(['search', 'category_id', 'tracking_type', 'status', 'sort', 'dir']);
+        $filters = $request->only(['search', 'search_spec', 'category_id', 'tracking_type', 'status', 'sort', 'dir']);
 
         $products    = $this->productService->search($filters);
         $totalCount  = $this->productService->totalCount();
