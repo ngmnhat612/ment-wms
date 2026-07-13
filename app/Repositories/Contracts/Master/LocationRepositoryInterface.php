@@ -71,11 +71,6 @@ interface LocationRepositoryInterface
     public function hasChildren(Location $location): bool;
 
     /**
-     * Kiểm tra vị trí có tồn kho không.
-     */
-    public function hasStock(Location $location): bool;
-
-    /**
      * Kiểm tra vị trí có phải root của kho không.
      */
     public function isRootLocation(Location $location): bool;

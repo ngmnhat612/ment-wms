@@ -4,6 +4,7 @@ namespace App\Services\Master;
 
 use App\Models\Master\Product;
 use App\Repositories\Contracts\Master\ProductRepositoryInterface;
+use App\Services\Concerns\ChecksForeignKeyUsage;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -15,6 +16,8 @@ use App\Services\Concerns\CodeGeneratorService;
 
 class ProductService
 {
+    use ChecksForeignKeyUsage;
+
     public function __construct(
         protected ProductRepositoryInterface $productRepository,
         protected CodeGeneratorService $codeGeneratorService,
@@ -37,6 +40,17 @@ class ProductService
     public function activeCount(): int
     {
         return $this->productRepository->activeCount();
+    }
+
+    /**
+     * Vị trí Internal đang active — dùng cho dropdown "Vị trí đích" ở form Sản phẩm
+     * (đồng bộ với PutawayRule khi tạo/sửa vật tư). Tái sử dụng PutawayRuleService
+     * vì đã có sẵn dependency và cùng nguồn dữ liệu, tránh query Location trực tiếp
+     * ở Controller (Rule #1).
+     */
+    public function activeInternalLocations(): Collection
+    {
+        return $this->putawayRuleService->activeInternalLocations();
     }
 
     // ===== COMMANDS =====
@@ -165,16 +179,16 @@ class ProductService
 
     /**
      * Xóa sản phẩm.
-     * Ném exception nếu còn tồn kho.
+     * Ném exception nếu đang được tham chiếu bởi bất kỳ bảng nào khác
+     * (bao gồm cả tồn kho — stocks.product_id có khai báo khóa ngoại nên
+     * được tự động phát hiện qua guardNotInUse, không cần kiểm tra riêng).
      * Xóa ReorderRule tương ứng trước khi xóa sản phẩm.
      *
      * @throws \RuntimeException
      */
     public function delete(Product $product): void
     {
-        if ($this->productRepository->hasStock($product)) {
-            throw new \RuntimeException("Không thể xóa \"{$product->name}\" vì đang có tồn kho.");
-        }
+        $this->guardNotInUse('products', 'id', $product->id, 'Vật tư', $product->name);
 
         $this->reorderRuleService->deleteForProduct($product->id);
         $this->putawayRuleService->deleteForProduct($product->id);

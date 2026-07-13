@@ -4,13 +4,16 @@ namespace App\Services\Master;
 
 use App\Models\Master\ReorderRule;
 use App\Models\Master\Warehouse;
+use App\Repositories\Contracts\Master\ReorderRuleFormDataRepositoryInterface;
 use App\Repositories\Contracts\Master\ReorderRuleRepositoryInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Collection;
 
 class ReorderRuleService
 {
     public function __construct(
         private readonly ReorderRuleRepositoryInterface $reorderRuleRepository,
+        private readonly ReorderRuleFormDataRepositoryInterface $formDataRepository,
     ) {}
 
     // ===== READ =====
@@ -28,6 +31,23 @@ class ReorderRuleService
     public function activeCount(): int
     {
         return $this->reorderRuleRepository->activeCount();
+    }
+
+    // ===== FORM DATA (dropdown lookups cho index/form) =====
+
+    public function activeProducts(): Collection
+    {
+        return $this->formDataRepository->activeProducts();
+    }
+
+    public function activeNonAdminEmployees(): Collection
+    {
+        return $this->formDataRepository->activeNonAdminEmployees();
+    }
+
+    public function defaultWarehouse(): ?Warehouse
+    {
+        return $this->formDataRepository->defaultWarehouse();
     }
 
     // ===== WRITE =====

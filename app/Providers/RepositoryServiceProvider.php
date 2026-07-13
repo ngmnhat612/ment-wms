@@ -26,6 +26,10 @@ use App\Repositories\Contracts\StockRequest\StockOutRequestRepositoryInterface;
 use App\Repositories\Contracts\Stocktake\InventoryCheckRepositoryInterface;
 use App\Repositories\Contracts\Stocktake\InventoryFreezeRepositoryInterface;
 use App\Repositories\Contracts\Stocktake\StockAdjustmentRepositoryInterface;
+use App\Repositories\Contracts\Master\UomConversionRepositoryInterface;
+use App\Repositories\Contracts\Master\WarehouseEmployeeRepositoryInterface;
+use App\Repositories\Contracts\Master\PutawayRuleFormDataRepositoryInterface;
+use App\Repositories\Contracts\Master\ReorderRuleFormDataRepositoryInterface;
 
 use App\Repositories\Eloquent\Master\CategoryRepository;
 use App\Repositories\Eloquent\Master\ProductRepository;
@@ -51,6 +55,10 @@ use App\Repositories\Eloquent\StockRequest\StockOutRequestRepository;
 use App\Repositories\Eloquent\Stocktake\InventoryCheckRepository;
 use App\Repositories\Eloquent\Stocktake\InventoryFreezeRepository;
 use App\Repositories\Eloquent\Stocktake\StockAdjustmentRepository;
+use App\Repositories\Eloquent\Master\UomConversionRepository;
+use App\Repositories\Eloquent\Master\WarehouseEmployeeRepository;
+use App\Repositories\Eloquent\Master\PutawayRuleFormDataRepository;
+use App\Repositories\Eloquent\Master\ReorderRuleFormDataRepository;
 
 use Illuminate\Support\ServiceProvider;
 
@@ -176,6 +184,26 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->bind(
             StockAdjustmentRepositoryInterface::class,
             StockAdjustmentRepository::class,
+        );
+
+        $this->app->bind(
+            UomConversionRepositoryInterface::class,
+            UomConversionRepository::class,
+        );
+
+        $this->app->bind(
+            WarehouseEmployeeRepositoryInterface::class,
+            WarehouseEmployeeRepository::class,
+        );
+
+        $this->app->bind(
+            PutawayRuleFormDataRepositoryInterface::class,
+            PutawayRuleFormDataRepository::class,
+        );
+
+        $this->app->bind(
+            ReorderRuleFormDataRepositoryInterface::class,
+            ReorderRuleFormDataRepository::class,
         );
     }
 }

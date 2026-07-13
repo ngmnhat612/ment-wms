@@ -4,12 +4,15 @@ namespace App\Services\Master;
 
 use App\Models\Master\Location;
 use App\Repositories\Contracts\Master\LocationRepositoryInterface;
+use App\Services\Concerns\ChecksForeignKeyUsage;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
 use App\Services\Concerns\CodeGeneratorService;
 
 class LocationService
 {
+    use ChecksForeignKeyUsage;
+
     public function __construct(
         private readonly LocationRepositoryInterface $locationRepository,
         private readonly CodeGeneratorService        $codeGeneratorService,
@@ -120,9 +123,18 @@ class LocationService
     }
 
     /**
-     * Xóa vị trí.
+     * Xóa cứng vị trí.
      *
-     * @throws \RuntimeException khi có con, tồn kho, hoặc là root của kho.
+     * @throws \RuntimeException khi có con, là root của kho, hoặc đang được
+     *         tham chiếu bởi bất kỳ bảng nào khác — bao gồm cả tồn kho
+     *         (stocks.current_location_id có khóa ngoại nên được tự động
+     *         phát hiện qua guardNotInUse).
+     *
+     * Lưu ý: khác với hasStock() trước đây (chỉ chặn khi quantity > 0),
+     * guardNotInUse áp dụng nguyên tắc nhất quán — chặn nếu còn BẤT KỲ dòng
+     * Stock nào tham chiếu vị trí này, kể cả quantity = 0 (dòng lịch sử đã
+     * xuất hết nhưng chưa bị dọn). Đây là lựa chọn có chủ đích: ưu tiên an
+     * toàn/nhất quán hơn là cho phép xóa sớm khi tồn kho về 0.
      */
     public function delete(Location $location): void
     {
@@ -132,17 +144,13 @@ class LocationService
             );
         }
 
-        if ($this->locationRepository->hasStock($location)) {
-            throw new \RuntimeException(
-                "Không thể xóa \"{$location->name}\" vì đang có tồn kho."
-            );
-        }
-
         if ($this->locationRepository->isRootLocation($location)) {
             throw new \RuntimeException(
                 "Không thể xóa vị trí gốc của kho \"{$location->name}\"."
             );
         }
+
+        $this->guardNotInUse('locations', 'id', $location->id, 'Vị trí', $location->name);
 
         $this->locationRepository->delete($location);
     }

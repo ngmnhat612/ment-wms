@@ -83,12 +83,6 @@ class ProductRepository implements ProductRepositoryInterface
         return $product->delete();
     }
 
-    public function hasStock(Product $product): bool
-    {
-        // return $product->stocks()->exists();
-        return false; // TODO: bật lại khi bảng stocks đã có
-    }
-
     public function barcodeExists(string $barcode, ?int $excludeId = null): bool
     {
         return Product::where('barcode', $barcode)

@@ -4,11 +4,14 @@ namespace App\Http\Controllers\StockMovement;
 
 use App\Enums\DocumentStatus;
 use App\Http\Controllers\Controller;
+use App\Models\StockMovement\StockIssue;
+use App\Models\StockMovement\StockReceipt;
 use App\Repositories\Contracts\StockMovement\StockIssueRepositoryInterface;
 use App\Repositories\Contracts\StockMovement\StockReceiptRepositoryInterface;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\View\View;
 
 class StockMovementController extends Controller
@@ -20,6 +23,10 @@ class StockMovementController extends Controller
 
     public function index(Request $request): View
     {
+        // Danh sách gộp cả 2 loại chứng từ (receipt + issue) → cần quyền xem cả 2.
+        Gate::authorize('viewAny', StockReceipt::class);
+        Gate::authorize('viewAny', StockIssue::class);
+
         $type   = $request->input('movement_type'); // '' | 'receipt' | 'issue'
         $filters = $request->only(['search', 'status', 'date_from', 'date_to']);
 

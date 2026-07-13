@@ -68,13 +68,4 @@ class WarehouseRepository implements WarehouseRepositoryInterface
     {
         return $warehouse->delete();
     }
-
-    public function hasStock(Warehouse $warehouse): bool
-    {
-        // return $warehouse->locations()
-        //     ->where('type', LocationType::Internal->value)
-        //     ->whereHas('stocks')
-        //     ->exists();
-        return false; // TODO: bật lại khi bảng stocks đã có
-    }
 }
