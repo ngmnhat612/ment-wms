@@ -61,7 +61,9 @@ class AccountService
     }
 
     /**
-     * Xóa tài khoản (giữ lại hồ sơ nhân viên).
+     * Xóa cứng tài khoản (giữ lại hồ sơ nhân viên).
+     * Không cần kiểm tra ràng buộc khóa ngoại — không có bảng nào khác
+     * tham chiếu tới accounts.id trong hệ thống.
      */
     public function delete(Account $account): void
     {

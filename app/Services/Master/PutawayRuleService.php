@@ -3,13 +3,17 @@
 namespace App\Services\Master;
 
 use App\Models\Master\PutawayRule;
+use App\Models\Master\Warehouse;
+use App\Repositories\Contracts\Master\PutawayRuleFormDataRepositoryInterface;
 use App\Repositories\Contracts\Master\PutawayRuleRepositoryInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Collection;
 
 class PutawayRuleService
 {
     public function __construct(
         private readonly PutawayRuleRepositoryInterface $putawayRuleRepository,
+        private readonly PutawayRuleFormDataRepositoryInterface $formDataRepository,
     ) {}
 
     // ===== READ =====
@@ -27,6 +31,28 @@ class PutawayRuleService
     public function activeCount(): int
     {
         return $this->putawayRuleRepository->activeCount();
+    }
+
+    // ===== FORM DATA (dropdown lookups cho index/form) =====
+
+    public function activeProducts(): Collection
+    {
+        return $this->formDataRepository->activeProducts();
+    }
+
+    public function activeCategories(): Collection
+    {
+        return $this->formDataRepository->activeCategories();
+    }
+
+    public function activeInternalLocations(): Collection
+    {
+        return $this->formDataRepository->activeInternalLocations();
+    }
+
+    public function defaultWarehouse(): ?Warehouse
+    {
+        return $this->formDataRepository->defaultWarehouse();
     }
 
     // ===== WRITE =====

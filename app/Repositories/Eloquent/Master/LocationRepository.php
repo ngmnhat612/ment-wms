@@ -143,15 +143,6 @@ class LocationRepository implements LocationRepositoryInterface
         return $location->children()->exists();
     }
 
-    public function hasStock(Location $location): bool
-    {
-        if (!\Illuminate\Support\Facades\Schema::hasTable('stocks')) {
-            return false;
-        }
-
-        return $location->stocks()->where('quantity', '>', 0)->exists();
-    }
-
     public function isRootLocation(Location $location): bool
     {
         return $location->warehouseAsRoot()->exists();

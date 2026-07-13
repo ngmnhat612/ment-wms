@@ -5,6 +5,7 @@ namespace App\Services\Master;
 use App\Enums\ActiveStatus;
 use App\Models\Master\Employee;
 use App\Repositories\Contracts\Master\EmployeeRepositoryInterface;
+use App\Services\Concerns\ChecksForeignKeyUsage;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
@@ -12,6 +13,8 @@ use App\Services\Concerns\CodeGeneratorService;
 
 class EmployeeService
 {
+    use ChecksForeignKeyUsage;
+
     public function __construct(
         private readonly EmployeeRepositoryInterface $employeeRepository,
         private readonly AccountService               $accountService,
@@ -99,10 +102,15 @@ class EmployeeService
     }
 
     /**
-     * Xóa mềm nhân viên. Nếu có tài khoản đăng nhập, tài khoản cũng
-     * sẽ được xóa mềm theo (cascade).
+     * Xóa cứng nhân viên. Nếu có tài khoản đăng nhập, tài khoản cũng
+     * sẽ được xóa cứng theo (cascade trong transaction).
      *
-     * @throws \RuntimeException nếu tài khoản gắn với nhân viên là is_protected.
+     * @throws \RuntimeException nếu tài khoản gắn với nhân viên là is_protected,
+     *         hoặc nhân viên đang được tham chiếu bởi bất kỳ bảng nào khác
+     *         (ví dụ là người tạo phiếu, quản lý kho, QC... — tự động phát hiện
+     *         qua khóa ngoại). Trong phần lớn trường hợp thực tế, nhân viên đã
+     *         từng thao tác nghiệp vụ sẽ luôn bị chặn xóa — dùng "Ngưng hoạt động"
+     *         thay vì xóa cho các trường hợp đó.
      */
     public function delete(Employee $employee): void
     {
@@ -113,9 +121,14 @@ class EmployeeService
         }
 
         DB::transaction(function () use ($employee) {
+            // Xóa Account TRƯỚC khi kiểm tra guardNotInUse — nếu kiểm tra trước,
+            // accounts.employee_id còn tồn tại sẽ luôn chặn nhầm việc xóa
+            // Employee có tài khoản đăng nhập (trường hợp hợp lệ, không phải lỗi).
             if ($employee->account) {
                 $this->accountService->delete($employee->account);
             }
+
+            $this->guardNotInUse('employees', 'id', $employee->id, 'Nhân viên', $employee->name);
 
             $this->employeeRepository->delete($employee);
         });

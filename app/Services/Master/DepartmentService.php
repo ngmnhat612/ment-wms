@@ -4,12 +4,15 @@ namespace App\Services\Master;
 
 use App\Models\Master\Department;
 use App\Repositories\Contracts\Master\DepartmentRepositoryInterface;
+use App\Services\Concerns\ChecksForeignKeyUsage;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
 use App\Services\Concerns\CodeGeneratorService;
 
 class DepartmentService
 {
+    use ChecksForeignKeyUsage;
+
     public function __construct(
         private readonly DepartmentRepositoryInterface $departmentRepository,
         private readonly CodeGeneratorService           $codeGeneratorService,
@@ -65,15 +68,18 @@ class DepartmentService
     }
 
     /**
-     * Xóa mềm bộ phận.
+     * Xóa cứng bộ phận.
      *
-     * @throws \RuntimeException khi đang có nhân viên thuộc bộ phận này.
+     * @throws \RuntimeException khi đang có nhân viên thuộc bộ phận này, hoặc
+     *         đang được tham chiếu bởi bất kỳ bảng nào khác.
      */
     public function delete(Department $department): void
     {
         if ($department->employees()->exists()) {
             throw new \RuntimeException('Không thể xóa bộ phận đã gán cho nhân viên.');
         }
+
+        $this->guardNotInUse('departments', 'id', $department->id, 'Bộ phận', $department->name);
 
         $this->departmentRepository->delete($department);
     }

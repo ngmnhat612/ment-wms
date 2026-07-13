@@ -4,12 +4,15 @@ namespace App\Services\Master;
 
 use App\Models\Master\Category;
 use App\Repositories\Contracts\Master\CategoryRepositoryInterface;
+use App\Services\Concerns\ChecksForeignKeyUsage;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
 use App\Services\Concerns\CodeGeneratorService;
 
 class CategoryService
 {
+    use ChecksForeignKeyUsage;
+
     public function __construct(
         private readonly CategoryRepositoryInterface $categoryRepository,
         private readonly CodeGeneratorService        $codeGeneratorService,
@@ -85,9 +88,10 @@ class CategoryService
     }
 
     /**
-     * Xóa danh mục.
+     * Xóa cứng danh mục.
      *
-     * @throws \RuntimeException khi có danh mục con hoặc vật tư đang dùng.
+     * @throws \RuntimeException khi có danh mục con, hoặc đang được tham chiếu
+     *         bởi bất kỳ bảng nào khác (tự động phát hiện qua ràng buộc khóa ngoại).
      */
     public function delete(Category $category): void
     {
@@ -96,6 +100,8 @@ class CategoryService
                 'Không thể xóa nếu đã gán danh mục vật tư.'
             );
         }
+
+        $this->guardNotInUse('categories', 'id', $category->id, 'Danh mục', $category->name);
 
         $this->categoryRepository->delete($category);
     }

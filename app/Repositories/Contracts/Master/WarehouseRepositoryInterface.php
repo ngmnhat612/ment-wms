@@ -42,9 +42,4 @@ interface WarehouseRepositoryInterface
      * Xóa kho.
      */
     public function delete(Warehouse $warehouse): bool;
-
-    /**
-     * Kiểm tra kho có tồn kho nội bộ hay không.
-     */
-    public function hasStock(Warehouse $warehouse): bool;
 }

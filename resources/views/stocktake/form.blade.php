@@ -2,15 +2,15 @@
 
 @php $isEdit = isset($inventoryCheck); @endphp
 
-@section('title', $isEdit ? 'Sửa phiếu kiểm kê' : 'Tạo phiếu kiểm kê')
+@section('title', $isEdit ? 'Chỉnh sửa phiếu kiểm kê' : 'Thêm phiếu kiểm kê')
 
 @section('breadcrumb')
-  <li class="breadcrumb-item"><a href="{{ route('stocktakes.index') }}">Kiểm kê kho</a></li>
+  <li class="breadcrumb-item"><a href="{{ route('stocktakes.index') }}">Kiểm kê</a></li>
   @if($isEdit)
     <li class="breadcrumb-item"><a href="{{ route('stocktakes.show', $inventoryCheck) }}">{{ $inventoryCheck->code }}</a></li>
-    <li class="breadcrumb-item active">Sửa phiếu kiểm kê</li>
+    <li class="breadcrumb-item active">Chỉnh sửa phiếu kiểm kê</li>
   @else
-    <li class="breadcrumb-item active">Tạo phiếu kiểm kê</li>
+    <li class="breadcrumb-item active">Thêm phiếu kiểm kê</li>
   @endif
 @endsection
 
@@ -20,7 +20,7 @@
 <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
   <div>
     <h4 class="mb-0 fw-semibold">
-      {{ $isEdit ? 'Sửa phiếu kiểm kê' : 'Tạo phiếu kiểm kê' }}
+      {{ $isEdit ? 'Chỉnh sửa phiếu kiểm kê' : 'Thêm phiếu kiểm kê' }}
     </h4>
   </div>
 
@@ -59,7 +59,7 @@
         <input type="hidden" name="warehouse_id" value="{{ old('warehouse_id', $inventoryCheck->warehouse_id ?? $warehouses->first()?->id) }}">
 
         <div class="col-md-4">
-          <label class="form-label mb-1" for="check_scope">
+          <label class="form-label mb-1 fw-semibold" for="check_scope">
             Phạm vi <span class="text-danger">*</span>
           </label>
           <select class="form-select @error('check_scope') is-invalid @enderror" id="check_scope" name="check_scope" required>
@@ -76,7 +76,7 @@
         </div>
 
         <div class="col-md-4">
-          <label class="form-label mb-1" for="check_type">
+          <label class="form-label mb-1 fw-semibold" for="check_type">
             Loại kiểm kê <span class="text-danger">*</span>
           </label>
           <select class="form-select @error('check_type') is-invalid @enderror" id="check_type" name="check_type" required>
@@ -93,9 +93,9 @@
         </div>
 
         <div class="col-md-4">
-          <label class="form-label mb-1" for="check_date">
-            Ngày kiểm kê <span class="text-danger">*</span>
-          </label>
+            <label class="form-label mb-1 fw-semibold" for="check_date">
+              Ngày kiểm kê <span class="text-danger">*</span>
+            </label>
           <input type="date" class="form-control @error('check_date') is-invalid @enderror"
                  id="check_date" name="check_date"
                  value="{{ old('check_date', isset($inventoryCheck) ? \Carbon\Carbon::parse($inventoryCheck->check_date)->toDateString() : now()->toDateString()) }}">
@@ -105,19 +105,19 @@
         </div>
 
         <div class="col-md-6">
-          <label class="form-label mb-1" for="purpose">Mục đích</label>
-          <input type="text" class="form-control @error('purpose') is-invalid @enderror"
-                 id="purpose" name="purpose" maxlength="200"
-                 value="{{ old('purpose', $inventoryCheck->purpose ?? '') }}" placeholder="VD: Kiểm kê định kỳ quý 3...">
+          <label class="form-label mb-1 fw-semibold" for="purpose">Mục đích</label>
+          <textarea class="form-control @error('purpose') is-invalid @enderror"
+                    id="purpose" name="purpose" rows="2" maxlength="200"
+                    placeholder="Nhập mục đích">{{ old('purpose', $inventoryCheck->purpose ?? '') }}</textarea>
           @error('purpose')
             <div class="invalid-feedback">{{ $message }}</div>
           @enderror
         </div>
 
-        <div class="col-12">
-          <label class="form-label mb-1" for="note">Ghi chú</label>
+        <div class="col-md-6">
+          <label class="form-label mb-1 fw-semibold" for="note">Ghi chú</label>
           <textarea class="form-control @error('note') is-invalid @enderror" id="note" name="note"
-                    rows="2" maxlength="500" placeholder="Ghi chú thêm...">{{ old('note', $inventoryCheck->note ?? '') }}</textarea>
+                    rows="2" maxlength="500" placeholder="Nhập ghi chú">{{ old('note', $inventoryCheck->note ?? '') }}</textarea>
           @error('note')
             <div class="invalid-feedback">{{ $message }}</div>
           @enderror
@@ -129,36 +129,37 @@
 
   {{-- ── PHẠM VI: THEO KHU VỰC ── --}}
   <div class="card mb-3" id="scope-area" style="display:none">
-    <div class="card-header fw-semibold d-flex justify-content-between align-items-center" style="min-height:44px">
-      <span>Chọn khu vực / vị trí kiểm kê</span>
-      <div class="d-flex gap-2">
-        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="selectAllLocations()">Chọn tất cả</button>
-        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="clearLocations()">Bỏ chọn</button>
-      </div>
-    </div>
+<div class="card-header fw-semibold d-flex justify-content-between align-items-center" style="min-height:44px">
+  <span>Vị trí kiểm kê</span>
+  <div class="d-flex gap-2">
+    <button type="button" class="btn btn-sm btn-primary" id="toggleLocationsBtn" onclick="toggleAllLocations()" title="Chọn tất cả">
+      <svg class="icon" id="toggleLocationsIcon"><use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-check-circle') }}"></use></svg>
+    </button>
+  </div>
+</div>
     <div class="card-body">
       @error('location_ids')
         <div class="alert alert-danger py-2 mb-3">{{ $message }}</div>
       @enderror
       <div class="row g-2" style="max-height:300px; overflow-y:auto">
         @foreach($locations as $loc)
-        <div class="col-sm-6 col-lg-4">
+        <div class="col-sm-6 col-lg-3">
           <div class="form-check">
             <input class="form-check-input location-cb" type="checkbox"
-                   name="location_ids[]" value="{{ $loc->id }}"
-                   id="loc_{{ $loc->id }}"
-                   {{ in_array($loc->id, old('location_ids', $selectedLocationIds ?? [])) ? 'checked' : '' }}>
-            <label class="form-check-label small" for="loc_{{ $loc->id }}">
+                  name="location_ids[]" value="{{ $loc->id }}"
+                  id="loc_{{ $loc->id }}"
+                  {{ in_array($loc->id, old('location_ids', $selectedLocationIds ?? [])) ? 'checked' : '' }}>
+            <label class="form-check-label" for="loc_{{ $loc->id }}">
               <span class="fw-semibold">{{ $loc->code }}</span>
               @if($loc->name !== $loc->code)
-                <span class="text-body-secondary">— {{ $loc->name }}</span>
+                <span class="fw-semibold">- {{ $loc->name }}</span>
               @endif
             </label>
           </div>
         </div>
         @endforeach
         @if($locations->isEmpty())
-          <div class="col-12 text-body-secondary small">Không có vị trí nào.</div>
+          <div class="col-12 text-body-secondary">Không có vị trí nào.</div>
         @endif
       </div>
     </div>
@@ -169,7 +170,7 @@
     <a href="{{ $isEdit ? route('stocktakes.show', $inventoryCheck) : route('stocktakes.index') }}" class="btn btn-outline-secondary">Hủy</a>
     <button type="submit" class="btn btn-primary">
       <svg class="icon me-1"><use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-save') }}"></use></svg>
-      {{ $isEdit ? 'Lưu thay đổi' : 'Tạo phiếu kiểm kê' }}
+      Lưu
     </button>
   </div>
 
@@ -188,12 +189,31 @@
   document.getElementById('check_scope').addEventListener('change', updateScopeVisibility);
   updateScopeVisibility();
 
-  // Chọn/bỏ chọn tất cả vị trí
-  function selectAllLocations() {
-    document.querySelectorAll('.location-cb').forEach(cb => cb.checked = true);
-  }
-  function clearLocations() {
-    document.querySelectorAll('.location-cb').forEach(cb => cb.checked = false);
+  // // Chọn/bỏ chọn tất cả vị trí
+  // function selectAllLocations() {
+  //   document.querySelectorAll('.location-cb').forEach(cb => cb.checked = true);
+  // }
+  // function clearLocations() {
+  //   document.querySelectorAll('.location-cb').forEach(cb => cb.checked = false);
+  // }
+
+  function toggleAllLocations() {
+    const checkboxes = document.querySelectorAll('.location-cb');
+    const btn = document.getElementById('toggleLocationsBtn');
+    const useEl = document.querySelector('#toggleLocationsIcon use');
+    const isSelectAll = btn.dataset.state !== 'selected';
+
+    checkboxes.forEach(cb => cb.checked = isSelectAll);
+
+    if (isSelectAll) {
+      useEl.setAttribute('xlink:href', '{{ asset('vendor/coreui/icons/sprites/free.svg#cil-x-circle') }}');
+      btn.title = 'Bỏ chọn';
+      btn.dataset.state = 'selected';
+    } else {
+      useEl.setAttribute('xlink:href', '{{ asset('vendor/coreui/icons/sprites/free.svg#cil-check-circle') }}');
+      btn.title = 'Chọn tất cả';
+      btn.dataset.state = '';
+    }
   }
 </script>
 @endpush

@@ -4,11 +4,14 @@ namespace App\Services\Master;
 
 use App\Models\Master\Supplier;
 use App\Repositories\Contracts\Master\SupplierRepositoryInterface;
+use App\Services\Concerns\ChecksForeignKeyUsage;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use App\Services\Concerns\CodeGeneratorService;
 
 class SupplierService
 {
+    use ChecksForeignKeyUsage;
+
     public function __construct(
         private readonly SupplierRepositoryInterface $supplierRepository,
         private readonly CodeGeneratorService         $codeGeneratorService,
@@ -78,9 +81,10 @@ class SupplierService
     }
 
     /**
-     * Xóa nhà cung cấp.
+     * Xóa cứng nhà cung cấp.
      *
-     * @throws \RuntimeException khi đang có phiếu nhập kho liên quan.
+     * @throws \RuntimeException khi đang có phiếu nhập kho liên quan, hoặc
+     *         đang được tham chiếu bởi bất kỳ bảng nào khác.
      */
     public function delete(Supplier $supplier): void
     {
@@ -89,6 +93,8 @@ class SupplierService
                 "Không thể xóa \"{$supplier->name}\" vì đang có phiếu nhập kho liên quan."
             );
         }
+
+        $this->guardNotInUse('suppliers', 'id', $supplier->id, 'Nhà cung cấp', $supplier->name);
 
         $this->supplierRepository->delete($supplier);
     }

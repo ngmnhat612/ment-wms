@@ -5,14 +5,11 @@ namespace App\Models\Master;
 use App\Enums\ActiveStatus;
 use App\Enums\LocationType;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\Master\Warehouse;
 use App\Models\Inventory\Stock;
 
 class Location extends Model
 {
-    use SoftDeletes;
-
     protected $table = 'locations';
 
     protected $fillable = [
@@ -126,11 +123,6 @@ class Location extends Model
     public function hasChildren(): bool
     {
         return $this->children()->exists();
-    }
-
-    public function hasStock(): bool
-    {
-        return $this->stocks()->where('quantity', '>', 0)->exists();
     }
 
     public function isRootLocation(): bool

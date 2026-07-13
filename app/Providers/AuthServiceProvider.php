@@ -23,6 +23,8 @@ use App\Models\StockRequest\StockOutRequest;
 use App\Models\Stocktake\InventoryCheck;
 use App\Models\Stocktake\InventoryFreeze;
 use App\Models\Stocktake\StockAdjustment;
+use App\Models\Master\UomConversion;
+use App\Models\Master\WarehouseEmployee;
 
 use App\Policies\Master\AccountPolicy;
 use App\Policies\Master\CategoryPolicy;
@@ -45,6 +47,8 @@ use App\Policies\StockRequest\StockOutRequestPolicy;
 use App\Policies\Stocktake\InventoryCheckPolicy;
 use App\Policies\Stocktake\InventoryFreezePolicy;
 use App\Policies\Stocktake\StockAdjustmentPolicy;
+use App\Policies\Master\UomConversionPolicy;
+use App\Policies\Master\WarehouseEmployeePolicy;
 
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
 
@@ -65,11 +69,14 @@ class AuthServiceProvider extends ServiceProvider
         Supplier::class     => SupplierPolicy::class,
         Department::class   => DepartmentPolicy::class,
         Sn::class           => SnPolicy::class,
+        UomConversion::class     => UomConversionPolicy::class,
+        WarehouseEmployee::class => WarehouseEmployeePolicy::class,
 
         // StockMovement
         StockReceipt::class => StockReceiptPolicy::class,
         StockIssue::class   => StockIssuePolicy::class,
 
+        // Inventory
         Stock::class => StockPolicy::class,
 
         // StockRequest
@@ -80,6 +87,7 @@ class AuthServiceProvider extends ServiceProvider
         InventoryCheck::class  => InventoryCheckPolicy::class,
         InventoryFreeze::class => InventoryFreezePolicy::class,
         StockAdjustment::class => StockAdjustmentPolicy::class,
+        
     ];
 
     public function boot(): void

@@ -5,11 +5,7 @@ namespace App\Http\Controllers\Master;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Master\PutawayRule\StorePutawayRuleRequest;
 use App\Http\Requests\Master\PutawayRule\UpdatePutawayRuleRequest;
-use App\Models\Master\Category;
-use App\Models\Master\Location;
-use App\Models\Master\Product;
 use App\Models\Master\PutawayRule;
-use App\Models\Master\Warehouse;
 use App\Services\Master\PutawayRuleService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -34,14 +30,10 @@ class PutawayRuleController extends Controller
         $totalCount  = $this->putawayRuleService->totalCount();
         $activeCount = $this->putawayRuleService->activeCount();
 
-        $products   = Product::where('status', 1)->orderBy('code')->get(['id', 'code', 'name']);
-        $categories = Category::where('status', 1)->orderBy('name')->get(['id', 'name']);
-        $locations = Location::where('status', 1)
-            ->internal()
-            ->orderBy('code')
-            ->get(['id', 'code', 'name']);
-
-        $defaultWarehouse = Warehouse::where('status', 1)->orderBy('id')->first(['id', 'code', 'name']);
+        $products         = $this->putawayRuleService->activeProducts();
+        $categories       = $this->putawayRuleService->activeCategories();
+        $locations        = $this->putawayRuleService->activeInternalLocations();
+        $defaultWarehouse = $this->putawayRuleService->defaultWarehouse();
 
         return view('master.putaway-rule.index', compact(
             'rules', 'totalCount', 'activeCount',

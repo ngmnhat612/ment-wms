@@ -4,11 +4,14 @@ namespace App\Http\Controllers\StockRequest;
 
 use App\Enums\DocumentStatus;
 use App\Http\Controllers\Controller;
+use App\Models\StockRequest\StockInRequest;
+use App\Models\StockRequest\StockOutRequest;
 use App\Repositories\Contracts\StockRequest\StockInRequestRepositoryInterface;
 use App\Repositories\Contracts\StockRequest\StockOutRequestRepositoryInterface;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\View\View;
 
 class StockRequestController extends Controller
@@ -20,6 +23,10 @@ class StockRequestController extends Controller
 
     public function index(Request $request): View
     {
+        // Danh sách gộp cả 2 loại yêu cầu (in + out) → cần quyền xem cả 2.
+        Gate::authorize('viewAny', StockInRequest::class);
+        Gate::authorize('viewAny', StockOutRequest::class);
+
         $type    = $request->input('request_type'); // '' | 'in' | 'out'
         $filters = $request->only(['search', 'status', 'date_from', 'date_to']);
 

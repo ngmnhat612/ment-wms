@@ -5,10 +5,7 @@ namespace App\Http\Controllers\Master;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Master\ReorderRule\StoreReorderRuleRequest;
 use App\Http\Requests\Master\ReorderRule\UpdateReorderRuleRequest;
-use App\Models\Master\Employee;
-use App\Models\Master\Product;
 use App\Models\Master\ReorderRule;
-use App\Models\Master\Warehouse;
 use App\Services\Master\ReorderRuleService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -33,14 +30,9 @@ class ReorderRuleController extends Controller
         $totalCount  = $this->reorderRuleService->totalCount();
         $activeCount = $this->reorderRuleService->activeCount();
 
-        $products         = Product::where('status', 1)->orderBy('code')->get(['id', 'code', 'name']);
-        $employees = Employee::where('status', 1)
-            ->whereDoesntHave('account', function ($q) {
-                $q->role('Admin');
-            })
-            ->orderBy('name')
-            ->get(['id', 'code', 'name']);
-        $defaultWarehouse = Warehouse::where('status', 1)->orderBy('id')->first(['id', 'code', 'name']);
+        $products         = $this->reorderRuleService->activeProducts();
+        $employees        = $this->reorderRuleService->activeNonAdminEmployees();
+        $defaultWarehouse = $this->reorderRuleService->defaultWarehouse();
 
         return view('master.reorder-rule.index', compact(
             'rules', 'totalCount', 'activeCount',

@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Master;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Master\Warehouse\StoreWarehouseRequest;
 use App\Http\Requests\Master\Warehouse\UpdateWarehouseRequest;
-use App\Models\Master\Employee;
 use App\Models\Master\Warehouse;
 use App\Services\Master\WarehouseService;
 use Illuminate\Http\RedirectResponse;
@@ -30,7 +29,7 @@ class WarehouseController extends Controller
         $warehouses  = $this->warehouseService->search($filters);
         $totalCount  = $this->warehouseService->totalCount();
         $activeCount = $this->warehouseService->activeCount();
-        $employees   = Employee::where('status', 1)->orderBy('name')->get();
+        $employees   = $this->warehouseService->activeEmployees();
 
         return view('master.warehouse.index', compact(
             'warehouses', 'totalCount', 'activeCount', 'employees'

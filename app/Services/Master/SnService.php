@@ -4,12 +4,15 @@ namespace App\Services\Master;
 
 use App\Models\Master\Sn;
 use App\Repositories\Contracts\Master\SnRepositoryInterface;
+use App\Services\Concerns\ChecksForeignKeyUsage;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
 use App\Services\Concerns\CodeGeneratorService;
 
 class SnService
 {
+    use ChecksForeignKeyUsage;
+
     public function __construct(
         private readonly SnRepositoryInterface $snRepository,
         private readonly CodeGeneratorService  $codeGeneratorService,
@@ -65,10 +68,16 @@ class SnService
     }
 
     /**
-     * Xóa mềm dự án.
+     * Xóa cứng dự án.
+     *
+     * Trước đây hàm này xóa thẳng không kiểm tra gì — vá lại tương tự Brand.
+     *
+     * @throws \RuntimeException khi đang được sử dụng bởi bảng khác.
      */
     public function delete(Sn $sn): void
     {
+        $this->guardNotInUse('sns', 'id', $sn->id, 'Dự án', $sn->name);
+
         $this->snRepository->delete($sn);
     }
 }

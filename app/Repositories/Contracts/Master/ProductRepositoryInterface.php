@@ -51,11 +51,6 @@ interface ProductRepositoryInterface
     public function delete(Product $product): bool;
 
     /**
-     * Kiểm tra sản phẩm có tồn kho hay không.
-     */
-    public function hasStock(Product $product): bool;
-
-    /**
      * Kiểm tra barcode đã tồn tại chưa (loại trừ product hiện tại).
      */
     public function barcodeExists(string $barcode, ?int $excludeId = null): bool;

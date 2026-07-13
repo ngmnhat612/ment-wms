@@ -4,12 +4,9 @@ namespace App\Models\Master;
 
 use App\Enums\ActiveStatus;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Category extends Model
 {
-    use SoftDeletes;
-
     protected $table = 'categories';
 
     protected $fillable = [
@@ -77,7 +74,7 @@ class Category extends Model
     public function getFullPathAttribute(): string
     {
         return $this->parent
-            ? $this->parent->full_path . ' › ' . $this->name
+            ? $this->parent->full_path . ' > ' . $this->name
             : $this->name;
     }
 }
