@@ -4,13 +4,10 @@ namespace App\Models\Master;
 
 use App\Enums\ActiveStatus;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\DB;
 
 class ReorderRule extends Model
 {
-    use SoftDeletes;
-
     protected $table = 'reorder_rules';
 
     protected $fillable = [

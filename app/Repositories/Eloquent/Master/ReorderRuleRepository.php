@@ -71,22 +71,6 @@ class ReorderRuleRepository implements ReorderRuleRepositoryInterface
         return $rule->delete();
     }
 
-    public function findTrashed(int $productId, int $warehouseId): ?ReorderRule
-    {
-        return ReorderRule::withTrashed()
-            ->where('product_id',   $productId)
-            ->where('warehouse_id', $warehouseId)
-            ->whereNotNull('deleted_at')
-            ->first();
-    }
-
-    public function restoreAndUpdate(ReorderRule $rule, array $data): ReorderRule
-    {
-        $rule->restore();
-        $rule->update($data);
-        return $rule->fresh();
-    }
-
     public function findByProductAndWarehouse(int $productId, int $warehouseId): ?ReorderRule
     {
         return ReorderRule::where('product_id', $productId)
