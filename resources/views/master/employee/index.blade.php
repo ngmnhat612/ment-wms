@@ -159,12 +159,10 @@
                   @endif
                 </td>
 
-                {{-- <td class="small">{{ $emp->note ?? '-' }}</td> --}}
-                {{-- UPDATE --}}
+                {{-- Ghi chú --}}
                 <td class="small" title="{{ $emp->note }}">
-                {{ \Illuminate\Support\Str::limit($emp->note ?? '-', 20) }}
+                {{ truncate_text($emp->note) }}
                 </td>
-                {{-- UPDATE --}}
 
                 {{-- Trạng thái nhân viên --}}
                 <td class="text-center">

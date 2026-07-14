@@ -184,12 +184,9 @@
                 </td>
                 <td><code class="text-primary fw-medium">{{ $product->code ?? '-' }}</code></td>
                 <td class="fw-medium">{{ $product->name ?? '-' }}</td>
-                {{-- <td class="small">{{ $product->specification ?? '-' }}</td> --}}
-                {{-- UPDATE --}}
                 <td class="small" title="{{ $product->specification }}">
-                  {{ \Illuminate\Support\Str::limit($product->specification ?? '-', 30) }}
+                  {{ truncate_text($product->specification) }}
                 </td>
-                {{-- UPDATE --}}
                 <td class="small">{{ $product->category?->code ?? '-' }}</td>
                 <td class="small">{{ $product->uom?->name ?? '-' }}</td>
                 <td class="small">{{ $product->tracking_type?->label() ?? '-' }}</td>

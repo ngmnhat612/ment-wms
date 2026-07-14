@@ -134,12 +134,9 @@
                     <span class="text-body-secondary small">-</span>
                   @endif
                 </td>
-                {{-- <td class="small">{{ $rule->note ?: '-' }}</td> --}}
-                {{-- UPDATE --}}
                 <td class="small" title="{{ $rule->note }}">
-                  {{ \Illuminate\Support\Str::limit($rule->note ?? '-', 30) }}
+                  {{ truncate_text($rule->note) }}
                 </td>
-                {{-- UPDATE --}}
                 <td class="text-center">
                   @if ($rule->status === \App\Enums\ActiveStatus::Active)
                     <span class="badge bg-success-subtle text-success border border-success-subtle">Hoạt động</span>

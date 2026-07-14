@@ -112,12 +112,9 @@
                   <code class="text-primary fw-medium">{{ $sn->code ?? '-' }}</code>
                 </td>
                 <td class="fw-medium">{{ $sn->name ?? '-' }}</td>
-                {{-- <td class="small">{{ $sn->note ?? '-' }}</td> --}}
-                {{-- UPDATE --}}
                 <td class="small" title="{{ $sn->note }}">
-                {{ \Illuminate\Support\Str::limit($sn->note ?? '-', 50) }}
+                {{ truncate_text($sn->note) }}
                 </td>
-                {{-- UPDATE --}}
                 <td class="text-center">
                   @if ($sn->status === \App\Enums\ActiveStatus::Active)
                     <span class="badge bg-success-subtle text-success border border-success-subtle">Hoạt động</span>

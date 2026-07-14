@@ -112,12 +112,9 @@
                   <code class="text-primary fw-medium">{{ $department->code ?? '-' }}</code>
                 </td>
                 <td class="fw-medium">{{ $department->name ?? '-' }}</td>
-                {{-- <td class="small">{{ $department->note ?? '-' }}</td> --}}
-                {{-- UPDATE --}}
                 <td class="small" title="{{ $department->note }}">
-                {{ \Illuminate\Support\Str::limit($department->note ?? '-', 50) }}
+                {{ truncate_text($department->note) }}
                 </td>
-                {{-- UPDATE --}}
                 <td class="text-center">
                   @if ($department->status === \App\Enums\ActiveStatus::Active)
                     <span class="badge bg-success-subtle text-success border border-success-subtle">Hoạt động</span>

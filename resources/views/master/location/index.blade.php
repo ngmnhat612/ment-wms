@@ -120,12 +120,9 @@
                         <span class="text-body-secondary small">Gốc</span>
                       @endif
                     </td>
-                    {{-- <td class="small">{{ $loc->note ?? '-' }}</td> --}}
-                    {{-- UPDATE --}}
                     <td class="small" title="{{ $loc->note }}">
-                    {{ \Illuminate\Support\Str::limit($loc->note ?? '-', 50) }}
+                    {{ truncate_text($loc->note) }}
                     </td>
-                    {{-- UPDATE --}}
                     <td class="text-center">
                       @if ($loc->status === \App\Enums\ActiveStatus::Active)
                         <span class="badge bg-success-subtle text-success border border-success-subtle">Hoạt động</span>
@@ -395,7 +392,7 @@
       {{ old('id') ?: 'null' }}, // UPDATE
       {{ old('parent_id') ?: 'null' }}, // UPDATE
       {{ old('warehouse_id') ?: 'null' }}, // UPDATE
-      '{{ old('code') }}', 
+      '{{ old('code') }}',
       '{{ addslashes(old('name')) }}',
       {{ old('type', 1) }},
       {{ old('status', 1) }},

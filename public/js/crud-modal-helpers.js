@@ -1,4 +1,3 @@
-/* UPDATE: ;Tạo file mới */
 // Dùng cho các ô "Mã..." (Mã danh mục, Mã phòng ban, Mã MenT, v.v.)
 // Chuyển hoa, chỉ giữ A-Z và 0-9, giữ nguyên vị trí con trỏ.
 function sanitizeCodeInput(el) {
@@ -10,7 +9,6 @@ function sanitizeCodeInput(el) {
     }
 }
 
-// UPDATE
 // Ghi id bản ghi đang sửa vào hidden input của form CRUD (modal).
 // Dùng trong openModal() của các module category/department/sn/brand/location/
 // supplier/uom/warehouse, để khi validate lỗi lúc Sửa, script reopen (dựa vào

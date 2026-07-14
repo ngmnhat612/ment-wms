@@ -144,12 +144,9 @@
                     -
                   @endif
                 </td>
-                {{-- <td class="small">{{ $supplier->note ?? '-' }}</td> --}}
-                {{-- UPDATE --}}
                 <td class="small" title="{{ $supplier->note }}">
-                  {{ \Illuminate\Support\Str::limit($supplier->note ?? '-', 15) }}
+                  {{ truncate_text($supplier->note) }}
                 </td>
-                {{-- UPDATE --}}
                 <td class="text-center">
                   @if ($supplier->status === \App\Enums\ActiveStatus::Active)
                     <span class="badge bg-success-subtle text-success border border-success-subtle">Hoạt động</span>

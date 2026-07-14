@@ -112,12 +112,9 @@
                   <code class="text-primary fw-medium">{{ $uom->code ?? '-' }}</code>
                 </td>
                 <td class="fw-medium">{{ $uom->name ?? '-' }}</td>
-                {{-- <td class="small">{{ $uom->note ?? '-' }}</td> --}}
-                {{-- UPDATE --}}
                 <td class="small" title="{{ $uom->note }}">
-                {{ \Illuminate\Support\Str::limit($uom->note ?? '-', 50) }}
+                {{ truncate_text($uom->note) }}
                 </td>
-                {{-- UPDATE --}}
                 <td class="text-center">
                   @if ($uom->status === \App\Enums\ActiveStatus::Active)
                     <span class="badge bg-success-subtle text-success border border-success-subtle">Hoạt động</span>

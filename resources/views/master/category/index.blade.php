@@ -119,14 +119,9 @@
                   @endif
                   {{ $cat->name ?? '-' }}
                 </td>
-                {{-- <td class="small">
-                  {{ $cat->note ?? '-' }}
-                </td> --}}
-                {{-- UPDATE --}}
                 <td class="small" title="{{ $cat->note }}">
-                  {{ \Illuminate\Support\Str::limit($cat->note ?? '-', 50) }}
+                 {{ truncate_text($cat->note) }}
                 </td>
-                {{-- UPDATE --}}
                 <td class="text-center">
                   @if ($cat->status === \App\Enums\ActiveStatus::Active)
                     <span class="badge bg-success-subtle text-success border border-success-subtle">Hoạt động</span>
