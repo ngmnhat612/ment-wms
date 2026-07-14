@@ -21,11 +21,11 @@ class StoreProductVariantRequest extends FormRequest
             'parent_code' => [
                 'required', 'string',
                 'regex:/^[A-Za-z0-9]+$/',
-                Rule::exists('products', 'code')->whereNull('deleted_at'),
+                Rule::exists('products', 'code'),
             ],
             'code' => [
                 'nullable', 'string', 'max:50',
-                'regex:/^[A-Za-z0-9]+$/', // UPDATE
+                'regex:/^[A-Za-z0-9]+$/',
                 Rule::unique('products', 'code'),
             ],
             'name'          => 'required|string|max:200',
