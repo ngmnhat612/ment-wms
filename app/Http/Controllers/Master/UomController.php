@@ -39,7 +39,13 @@ class UomController extends Controller
     {
         Gate::authorize('create', Uom::class);
 
-        $this->uomService->create($request->validated());
+        try {
+            $this->uomService->create($request->validated());
+        } catch (\RuntimeException $e) {
+            return redirect()
+                ->route('master.uom.index')
+                ->with('error', $e->getMessage());
+        }
 
         return redirect()
             ->route('master.uom.index')
@@ -52,7 +58,13 @@ class UomController extends Controller
     {
         Gate::authorize('update', $uom);
 
-        $this->uomService->update($uom, $request->validated());
+        try {
+            $this->uomService->update($uom, $request->validated());
+        } catch (\RuntimeException $e) {
+            return redirect()
+                ->route('master.uom.index')
+                ->with('error', $e->getMessage());
+        }
 
         return redirect()
             ->route('master.uom.index')

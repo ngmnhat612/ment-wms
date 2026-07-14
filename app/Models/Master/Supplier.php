@@ -4,12 +4,12 @@ namespace App\Models\Master;
 
 use App\Enums\ActiveStatus;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Database\Eloquent\Factories\HasFactory;   // UPDATE
+use App\Models\Inventory\Lot;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Supplier extends Model
 {
-    use SoftDeletes, HasFactory; // UPDATE
+    use HasFactory; 
 
     protected $table = 'suppliers';
 

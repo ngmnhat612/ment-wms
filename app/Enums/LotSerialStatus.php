@@ -15,7 +15,7 @@ enum LotSerialStatus: int
     public function label(): string
     {
         return match($this) {
-            self::InStock  => 'Trong kho',
+            self::InStock  => 'Còn hàng',
             self::Expired  => 'Hết hạn',
             self::Consumed => 'Hết hàng',
         };
@@ -24,9 +24,9 @@ enum LotSerialStatus: int
     public function badgeClass(): string
     {
         return match($this) {
-            self::InStock  => 'badge bg-success',
-            self::Expired  => 'badge bg-warning text-dark',
-            self::Consumed => 'badge bg-secondary',
+            self::InStock  => 'badge bg-success-subtle text-success border border-success-subtle',
+            self::Expired  => 'badge bg-danger-subtle text-danger border border-danger-subtle',
+            self::Consumed => 'badge bg-secondary-subtle text-secondary border border-secondary-subtle',
         };
     }
 }

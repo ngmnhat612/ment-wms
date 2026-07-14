@@ -19,8 +19,8 @@ class StoreProductRequest extends FormRequest
     {
         return [
             'code' => [
-                'nullable', 'string', 'max:50', 
-                'regex:/^[A-Za-z0-9]+$/', // UPDATE
+                'nullable', 'string', 'max:50',
+                'regex:/^[A-Za-z0-9]+$/',
                 Rule::unique('products', 'code'),
             ],
             'name'                => 'required|string|max:200',
@@ -46,7 +46,7 @@ class StoreProductRequest extends FormRequest
     {
         return [
             'code.max'                        => 'Mã MenT không được vượt quá 50 ký tự.',
-            'code.regex'                      => 'Mã MenT chỉ được phép chứa chữ cái và số, không chứa ký tự đặc biệt.', // UPDATE
+            'code.regex'                      => 'Mã MenT chỉ được phép chứa chữ cái và số, không chứa ký tự đặc biệt.',
             'code.unique'                     => 'Mã MenT đã tồn tại.',
             'name.required'                   => 'Vui lòng nhập tên vật tư.',
             'name.max'                        => 'Tên vật tư không được vượt quá 200 ký tự.',

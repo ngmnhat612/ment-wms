@@ -29,6 +29,13 @@ interface CategoryRepositoryInterface
     public function allActive(): Collection;
 
     /**
+     * Lấy TOÀN BỘ danh mục (kể cả inactive), sắp theo tên — dùng cho
+     * dropdown filter ở các màn hình chỉ cần lọc, không ràng buộc trạng thái
+     * (vd: màn Tồn kho — tồn cũ có thể thuộc danh mục đã inactive).
+     */
+    public function allOrdered(): Collection;
+
+    /**
      * Lấy danh sách danh mục cha hợp lệ (active, dùng cho select parent).
      */
     public function getParentOptions(): Collection;
@@ -52,11 +59,6 @@ interface CategoryRepositoryInterface
      * Kiểm tra danh mục có danh mục con không.
      */
     public function hasChildren(Category $category): bool;
-
-    /**
-     * Kiểm tra danh mục có vật tư không.
-     */
-    public function hasProducts(Category $category): bool;
 
     /**
      * Lấy tất cả ID con cháu (đệ quy) — dùng để kiểm tra vòng tròn parent.

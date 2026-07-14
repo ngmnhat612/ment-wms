@@ -222,10 +222,6 @@
                 <span class="meta-value">{{ $receipt->code }}</span>
             </div>
             <div class="meta-row">
-                <span class="meta-label">Loại nhập:</span>
-                <span class="meta-value">{{ $typeLabels[$receipt->receipt_type] ?? '—' }}</span>
-            </div>
-            <div class="meta-row">
                 <span class="meta-label">Số tham chiếu:</span>
                 <span class="meta-value">{{ $receipt->reference_no ?? '—' }}</span>
             </div>

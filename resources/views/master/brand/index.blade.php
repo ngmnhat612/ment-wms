@@ -205,7 +205,7 @@
                     class="form-control {{ $errors->has('name') ? 'is-invalid' : '' }}"
                     id="bName" name="name"
                     value="{{ old('name') }}"
-                    placeholder="Tên đầy đủ" required maxlength="200">
+                    placeholder="Nhập tên" required maxlength="200">
               @error('name')
                 <div class="invalid-feedback">{{ $message }}</div>
               @enderror
@@ -263,7 +263,6 @@
             Bạn có chắc muốn xóa thương hiệu<br>
             <strong id="deleteBrandName" class="text-body"></strong>?
           </p>
-          <!-- <p class="text-danger small mt-1">Không thể xóa nếu đã gán cho vật tư.</p> -->
            <p></p>
         </div>
         <div class="modal-footer border-0 pt-0 justify-content-center gap-2">

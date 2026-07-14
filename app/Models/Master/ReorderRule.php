@@ -4,13 +4,12 @@ namespace App\Models\Master;
 
 use App\Enums\ActiveStatus;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Database\Eloquent\Factories\HasFactory;   // UPDATE
+use Illuminate\Database\Eloquent\Factories\HasFactory;   
 
 class ReorderRule extends Model
 {
-    use SoftDeletes, HasFactory; // UPDATE
+    use HasFactory;
 
     protected $table = 'reorder_rules';
 

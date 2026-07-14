@@ -29,6 +29,13 @@ interface ProductRepositoryInterface
     public function findById(int $id, array $with = []): ?Product;
 
     /**
+     * Lấy nhiều sản phẩm theo danh sách ID, index theo id.
+     * Dùng để validate business (vd: đọc tracking_type) mà không query
+     * Model trực tiếp trong FormRequest/Controller.
+     */
+    public function findManyByIds(array $ids): Collection;
+
+    /**
      * Tạo mới sản phẩm.
      */
     public function create(array $data): Product;
@@ -44,11 +51,6 @@ interface ProductRepositoryInterface
     public function delete(Product $product): bool;
 
     /**
-     * Kiểm tra sản phẩm có tồn kho hay không.
-     */
-    public function hasStock(Product $product): bool;
-
-    /**
      * Kiểm tra barcode đã tồn tại chưa (loại trừ product hiện tại).
      */
     public function barcodeExists(string $barcode, ?int $excludeId = null): bool;
@@ -59,7 +61,15 @@ interface ProductRepositoryInterface
     public function allRootActive(): Collection;
 
     /**
+     * Lấy TOÀN BỘ vật tư (kể cả biến thể, kể cả inactive), sắp theo tên —
+     * dùng cho dropdown filter ở màn Tồn kho (không chỉ root/active như
+     * allRootActive(), vì tồn kho có thể thuộc bất kỳ vật tư nào).
+     */
+    public function allOrdered(): Collection;
+
+    /**
      * Tìm vật tư gốc theo code.
      */
     public function findRootByCode(string $code): ?Product;
+
 }

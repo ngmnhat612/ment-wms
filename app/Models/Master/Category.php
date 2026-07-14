@@ -4,12 +4,11 @@ namespace App\Models\Master;
 
 use App\Enums\ActiveStatus;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Database\Eloquent\Factories\HasFactory; // UPDATE
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Category extends Model
 {
-    use SoftDeletes, HasFactory; // UPDATE
+    use HasFactory;
 
     protected $table = 'categories';
 
@@ -78,7 +77,7 @@ class Category extends Model
     public function getFullPathAttribute(): string
     {
         return $this->parent
-            ? $this->parent->full_path . ' › ' . $this->name
+            ? $this->parent->full_path . ' > ' . $this->name
             : $this->name;
     }
 }

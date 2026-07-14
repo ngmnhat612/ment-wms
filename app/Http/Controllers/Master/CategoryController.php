@@ -38,7 +38,13 @@ class CategoryController extends Controller
     {
         Gate::authorize('create', Category::class);
 
-        $this->categoryService->create($request->validated());
+        try {
+            $this->categoryService->create($request->validated());
+        } catch (\RuntimeException $e) {
+            return redirect()
+                ->route('master.category.index')
+                ->with('error', $e->getMessage());
+        }
 
         return redirect()
             ->route('master.category.index')

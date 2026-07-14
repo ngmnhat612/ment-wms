@@ -21,16 +21,14 @@ class StorePutawayRuleRequest extends FormRequest
                 'required_if:apply_on,product',
                 'exists:products,id',
                 Rule::unique('putaway_rules')
-                    ->where('warehouse_id', $this->input('warehouse_id'))
-                    ->whereNull('deleted_at'),
+                    ->where('warehouse_id', $this->input('warehouse_id')),
             ],
             'category_id' => [
                 'nullable',
                 'required_if:apply_on,category',
                 'exists:categories,id',
                 Rule::unique('putaway_rules')
-                    ->where('warehouse_id', $this->input('warehouse_id'))
-                    ->whereNull('deleted_at'),
+                    ->where('warehouse_id', $this->input('warehouse_id')),
             ],
             'warehouse_id' => 'required|exists:warehouses,id',
             'location_id'  => 'required|exists:locations,id',

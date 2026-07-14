@@ -37,7 +37,13 @@ class BrandController extends Controller
     {
         Gate::authorize('create', Brand::class);
 
-        $this->brandService->create($request->validated());
+        try {
+            $this->brandService->create($request->validated());
+        } catch (\RuntimeException $e) {
+            return redirect()
+                ->route('master.brand.index')
+                ->with('error', $e->getMessage());
+        }
 
         return redirect()
             ->route('master.brand.index')

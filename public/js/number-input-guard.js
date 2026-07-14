@@ -17,11 +17,9 @@ function sanitizeNumberInput(el) {
     if (cleaned !== el.value) el.value = cleaned;
 }
 
-// UPDATE
 // Dùng cho các ô chỉ chấp nhận chữ số (SĐT, mã bưu điện...) - KHÔNG xoá số 0 ở đầu,
 // vì các giá trị này (vd: 0901234567) số 0 đầu vẫn có ý nghĩa, khác với ô số lượng/đơn giá.
 function sanitizeDigitsOnly(el) {
     const cleaned = el.value.replace(/[^\d]/g, '');
     if (cleaned !== el.value) el.value = cleaned;
 }
-

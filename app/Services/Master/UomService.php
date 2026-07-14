@@ -4,12 +4,15 @@ namespace App\Services\Master;
 
 use App\Models\Master\Uom;
 use App\Repositories\Contracts\Master\UomRepositoryInterface;
+use App\Services\Concerns\ChecksForeignKeyUsage;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
 use App\Services\Concerns\CodeGeneratorService;
 
 class UomService
 {
+    use ChecksForeignKeyUsage;
+
     public function __construct(
         private readonly UomRepositoryInterface $uomRepository,
         private readonly CodeGeneratorService   $codeGeneratorService,
@@ -76,17 +79,14 @@ class UomService
     }
 
     /**
-     * Xóa mềm đơn vị tính.
+     * Xóa cứng đơn vị tính.
      *
-     * @throws \RuntimeException khi đã được gán cho vật tư.
+     * @throws \RuntimeException khi đã được gán cho vật tư, hoặc đang được
+     *         tham chiếu bởi bất kỳ bảng nào khác (tự động phát hiện qua khóa ngoại).
      */
     public function delete(Uom $uom): void
     {
-        if ($this->uomRepository->hasProducts($uom)) {
-            throw new \RuntimeException(
-                "Không thể xóa \"{$uom->name}\" vì đã được gán cho vật tư."
-            );
-        }
+        $this->guardNotInUse('uoms', 'id', $uom->id, 'Đơn vị tính', $uom->name);
 
         $this->uomRepository->delete($uom);
     }

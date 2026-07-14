@@ -7,12 +7,11 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;   // UPDATE
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
-use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Account extends Authenticatable
 {
     use Notifiable, HasRoles;
-    use SoftDeletes, HasFactory; // UPDATE
+    use HasFactory;
 
     protected $table = 'accounts';
 

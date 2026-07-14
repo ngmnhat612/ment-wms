@@ -77,23 +77,6 @@ class PutawayRuleRepository implements PutawayRuleRepositoryInterface
         return $rule->delete();
     }
 
-    public function findTrashed(int $warehouseId, ?int $productId, ?int $categoryId): ?PutawayRule
-    {
-        return PutawayRule::withTrashed()
-            ->where('warehouse_id', $warehouseId)
-            ->where('product_id',   $productId)    // NULL = WHERE product_id IS NULL
-            ->where('category_id',  $categoryId)   // NULL = WHERE category_id IS NULL
-            ->whereNotNull('deleted_at')
-            ->first();
-    }
-
-    public function restoreAndUpdate(PutawayRule $rule, array $data): PutawayRule
-    {
-        $rule->restore();
-        $rule->update($data);
-        return $rule->fresh();
-    }
-
     public function findByProductAndWarehouse(int $productId, int $warehouseId): ?PutawayRule
     {
         return PutawayRule::where('product_id', $productId)

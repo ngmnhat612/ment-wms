@@ -11,7 +11,6 @@ use App\Services\Master\ProductService;
 use App\Services\Master\CategoryService;
 use App\Services\Master\UomService;
 use App\Models\Master\Product;
-use App\Models\Master\Location;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -34,7 +33,7 @@ class ProductController extends Controller
     {
         Gate::authorize('viewAny', Product::class);
 
-        $filters = $request->only(['search', 'category_id', 'tracking_type', 'status', 'sort', 'dir']);
+        $filters = $request->only(['search', 'search_spec', 'category_id', 'tracking_type', 'status', 'sort', 'dir']);
 
         $products    = $this->productService->search($filters);
         $totalCount  = $this->productService->totalCount();
@@ -42,10 +41,7 @@ class ProductController extends Controller
         $allProducts = $this->productService->allRootActive();
         $categories  = $this->categoryService->getActive();
         $uoms        = $this->uomService->getActive();
-        $locations   = Location::where('status', 1)
-            ->internal()
-            ->orderBy('code')
-            ->get(['id', 'code', 'name']);
+        $locations   = $this->productService->activeInternalLocations();
 
         return view('master.product.index', compact(
             'products', 'totalCount', 'activeCount', 'categories', 'uoms', 'allProducts', 'locations'

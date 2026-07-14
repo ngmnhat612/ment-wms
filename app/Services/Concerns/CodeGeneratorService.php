@@ -86,4 +86,22 @@ class CodeGeneratorService
 
         return $parentCode . '.' . $next;
     }
+
+    /**
+     * Sinh mã Lô tự động theo quy tắc: "LO" + <số thứ tự tiếp theo>, không zero-pad.
+     * Số thứ tự tính RIÊNG theo TỪNG SẢN PHẨM (mỗi sản phẩm có dãy số Lô độc
+     * lập, bắt đầu từ 1): Vật tư A → LO1, LO2...; Vật tư B → LO1, LO2... riêng.
+     *
+     * @return array{code: string, number: int} vd ['code' => 'LO10', 'number' => 10]
+     */
+    public function generateLotCode(int $productId, string $prefix = 'LO'): array
+    {
+        $maxNumber = (int) (DB::table('lots')->where('product_id', $productId)->max('lot_number') ?? 0);
+        $nextNumber = $maxNumber + 1;
+
+        return [
+            'code'   => $prefix . $nextNumber,
+            'number' => $nextNumber,
+        ];
+    }
 }

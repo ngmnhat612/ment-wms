@@ -44,6 +44,13 @@ interface LocationRepositoryInterface
     public function allForTree(): Collection;
 
     /**
+     * Lấy TOÀN BỘ vị trí (phẳng, không eager-load children), sắp theo code —
+     * dùng cho dropdown filter/select đơn giản (vd: màn Tồn kho).
+     * Khác allForTree() ở chỗ không load quan hệ, tránh query thừa.
+     */
+    public function allOrdered(): Collection;
+
+    /**
      * Tạo mới vị trí.
      */
     public function create(array $data): Location;
@@ -62,11 +69,6 @@ interface LocationRepositoryInterface
      * Kiểm tra vị trí có con không.
      */
     public function hasChildren(Location $location): bool;
-
-    /**
-     * Kiểm tra vị trí có tồn kho không.
-     */
-    public function hasStock(Location $location): bool;
 
     /**
      * Kiểm tra vị trí có phải root của kho không.

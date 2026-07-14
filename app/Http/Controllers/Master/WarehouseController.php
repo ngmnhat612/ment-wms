@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Master;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Master\Warehouse\StoreWarehouseRequest;
 use App\Http\Requests\Master\Warehouse\UpdateWarehouseRequest;
-use App\Models\Master\Employee;
 use App\Models\Master\Warehouse;
 use App\Services\Master\WarehouseService;
 use Illuminate\Http\RedirectResponse;
@@ -30,7 +29,7 @@ class WarehouseController extends Controller
         $warehouses  = $this->warehouseService->search($filters);
         $totalCount  = $this->warehouseService->totalCount();
         $activeCount = $this->warehouseService->activeCount();
-        $employees   = Employee::where('status', 1)->orderBy('name')->get();
+        $employees   = $this->warehouseService->activeEmployees();
 
         return view('master.warehouse.index', compact(
             'warehouses', 'totalCount', 'activeCount', 'employees'
@@ -43,7 +42,13 @@ class WarehouseController extends Controller
     {
         Gate::authorize('create', Warehouse::class);
 
-        $this->warehouseService->create($request->validated());
+        try {
+            $this->warehouseService->create($request->validated());
+        } catch (\RuntimeException $e) {
+            return redirect()
+                ->route('master.warehouse.index')
+                ->with('error', $e->getMessage());
+        }
 
         return redirect()
             ->route('master.warehouse.index')
@@ -56,7 +61,13 @@ class WarehouseController extends Controller
     {
         Gate::authorize('update', $warehouse);
 
-        $this->warehouseService->update($warehouse, $request->validated());
+        try {
+            $this->warehouseService->update($warehouse, $request->validated());
+        } catch (\RuntimeException $e) {
+            return redirect()
+                ->route('master.warehouse.index')
+                ->with('error', $e->getMessage());
+        }
 
         return redirect()
             ->route('master.warehouse.index')

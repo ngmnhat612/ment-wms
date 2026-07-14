@@ -4,12 +4,15 @@ namespace App\Services\Master;
 
 use App\Models\Master\Brand;
 use App\Repositories\Contracts\Master\BrandRepositoryInterface;
+use App\Services\Concerns\ChecksForeignKeyUsage;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
 use App\Services\Concerns\CodeGeneratorService;
 
 class BrandService
 {
+    use ChecksForeignKeyUsage;
+
     public function __construct(
         private readonly BrandRepositoryInterface $brandRepository,
         private readonly CodeGeneratorService     $codeGeneratorService,
@@ -65,12 +68,18 @@ class BrandService
     }
 
     /**
-     * Xóa mềm thương hiệu.
+     * Xóa cứng thương hiệu.
      *
-     * @throws \RuntimeException khi có vật tư đang dùng.
+     * Trước đây hàm này xóa thẳng không kiểm tra gì — với soft delete, hậu quả
+     * bị che giấu vì bản ghi vẫn còn trong DB (chỉ ẩn). Với xóa cứng, thiếu kiểm
+     * tra sẽ làm vật tư đang dùng thương hiệu này mất dữ liệu tham chiếu thật.
+     *
+     * @throws \RuntimeException khi đang được sử dụng bởi bảng khác.
      */
     public function delete(Brand $brand): void
     {
+        $this->guardNotInUse('brands', 'id', $brand->id, 'Thương hiệu', $brand->name);
+
         $this->brandRepository->delete($brand);
     }
 }

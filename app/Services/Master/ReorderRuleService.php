@@ -4,13 +4,16 @@ namespace App\Services\Master;
 
 use App\Models\Master\ReorderRule;
 use App\Models\Master\Warehouse;
+use App\Repositories\Contracts\Master\ReorderRuleFormDataRepositoryInterface;
 use App\Repositories\Contracts\Master\ReorderRuleRepositoryInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Collection;
 
 class ReorderRuleService
 {
     public function __construct(
         private readonly ReorderRuleRepositoryInterface $reorderRuleRepository,
+        private readonly ReorderRuleFormDataRepositoryInterface $formDataRepository,
     ) {}
 
     // ===== READ =====
@@ -30,25 +33,27 @@ class ReorderRuleService
         return $this->reorderRuleRepository->activeCount();
     }
 
+    // ===== FORM DATA (dropdown lookups cho index/form) =====
+
+    public function activeProducts(): Collection
+    {
+        return $this->formDataRepository->activeProducts();
+    }
+
+    public function activeNonAdminEmployees(): Collection
+    {
+        return $this->formDataRepository->activeNonAdminEmployees();
+    }
+
+    public function defaultWarehouse(): ?Warehouse
+    {
+        return $this->formDataRepository->defaultWarehouse();
+    }
+
     // ===== WRITE =====
 
     public function create(array $data): ReorderRule
     {
-        $trashed = $this->reorderRuleRepository->findTrashed(
-            $data['product_id'],
-            $data['warehouse_id']
-        );
-
-        if ($trashed) {
-            return $this->reorderRuleRepository->restoreAndUpdate($trashed, [
-                'employee_id' => $data['employee_id'] ?? null,
-                'min_qty'     => $data['min_qty'],
-                'max_qty'     => $data['max_qty'],
-                'note'        => $data['note'] ?? null,
-                'status'      => $data['status'],
-            ]);
-        }
-
         return $this->reorderRuleRepository->create($data);
     }
 
@@ -66,14 +71,10 @@ class ReorderRuleService
 
     /**
      * Tạo/cập nhật ReorderRule tự động khi Thêm/Sửa vật tư ở form Sản phẩm.
-     * - Chưa có rule (kể cả đã bị xóa mềm) -> tạo mới / restore, mặc định min=0, max=0.
+     * - Chưa có rule -> tạo mới, mặc định min=0, max=0.
      * - Đã có rule đang active -> chỉ cập nhật min_qty/max_qty, kể cả khi set về 0/0
      *   (KHÔNG xóa rule, vì rule có thể đang giữ employee_id/note đã gán
      *   thủ công ở trang "Gán Min-Max" trước đó).
-     *
-     * Tái sử dụng create()/update() public để thừa hưởng logic restore-from-trashed,
-     * tránh trùng lặp và tránh vi phạm unique(product_id, warehouse_id) khi rule cũ
-     * đang ở trạng thái đã xóa mềm.
      */
     public function syncForProduct(int $productId, int $warehouseId, int $minQty, int $maxQty): void
     {

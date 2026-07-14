@@ -9,7 +9,7 @@ use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ActivityLogController;
-use App\Http\Controllers\InventoryController;
+use App\Http\Controllers\Inventory\InventoryController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\ReportAlertController;
 
@@ -30,11 +30,15 @@ use App\Http\Controllers\Master\PutawayRuleController;
 use App\Http\Controllers\Master\DepartmentController;
 use App\Http\Controllers\Master\SnController;
 
-// ── STOCK-MOVEMENT ───────────────────────────────────────────────────────────────────
+// ── STOCK-MOVEMENT ────────────────────────────────────────────────────────────
 use App\Http\Controllers\StockMovement\StockMovementController;
+use App\Http\Controllers\StockMovement\StockReceiptController;
+use App\Http\Controllers\StockMovement\StockIssueController;
 
-// ── OUTBOUND ──────────────────────────────────────────────────────────────────
-use App\Http\Controllers\Outbound\StockRequestController;
+// ── STOCK-REQUEST ─────────────────────────────────────────────────────────────
+use App\Http\Controllers\StockRequest\StockRequestController;
+use App\Http\Controllers\StockRequest\StockInRequestController;
+use App\Http\Controllers\StockRequest\StockOutRequestController;
 
 // ── STOCKTAKE ─────────────────────────────────────────────────────────────────
 use App\Http\Controllers\Stocktake\InventoryCheckController;
@@ -125,31 +129,70 @@ Route::middleware('auth')->group(function () {
     Route::resource('receipts', StockReceiptController::class)->except(['index']);
     Route::get('receipts/{receipt}/print', [StockReceiptController::class, 'printPdf'])
         ->name('receipts.print');
-    Route::post('receipts/{receipt}/submit', [StockReceiptController::class, 'submit'])
-        ->name('receipts.submit');
     Route::post('receipts/{receipt}/approve', [StockReceiptController::class, 'approve'])
         ->name('receipts.approve');
-    Route::post('receipts/{receipt}/confirm', [StockReceiptController::class, 'confirm'])
-        ->name('receipts.confirm');
     Route::post('receipts/{receipt}/cancel', [StockReceiptController::class, 'cancel'])
         ->name('receipts.cancel');
     Route::post('receipts/suggest-putaway', [StockReceiptController::class, 'suggestPutaway'])
         ->name('receipts.suggest-putaway');
 
     // ── XUẤT KHO ─────────────────────────────────────────────────────────────
+    Route::get('issues/stock-locations/{product}', [StockIssueController::class, 'stockLocations'])
+        ->name('issues.stock-locations');
     Route::resource('issues', StockIssueController::class)->except(['index']);
     Route::get('issues/{issue}/print', [StockIssueController::class, 'printPdf'])
         ->name('issues.print');
-    Route::post('issues/{issue}/submit', [StockIssueController::class, 'submit'])
-        ->name('issues.submit');
-    Route::post('issues/{issue}/approve', [StockIssueController::class, 'approve'])
-        ->name('issues.approve');
-    Route::post('issues/{issue}/confirm', [StockIssueController::class, 'confirm'])
-        ->name('issues.confirm');
+    Route::post('issues/{issue}/complete', [StockIssueController::class, 'complete'])
+        ->name('issues.complete');
     Route::post('issues/{issue}/cancel', [StockIssueController::class, 'cancel'])
         ->name('issues.cancel');
-    Route::get('issues/stock-locations/{productId}', [StockIssueController::class, 'stockLocations'])
-        ->name('issues.stock-locations');
+
+    // ── TỒN KHO ──────────────────────────────────────────────────────────────
+    Route::get('inventory', [InventoryController::class, 'index'])->name('inventory.index');
+    Route::get('inventory/lot-serials', [InventoryController::class, 'lotSerials'])->name('inventory.lotSerials');
+    Route::post('inventory/update-location', [InventoryController::class, 'updateLocation'])->name('inventory.updateLocation');
+
+    // ── YÊU CẦU NHẬP / XUẤT KHO ──────────────────────────────────────────────
+    Route::get('stock-requests', [StockRequestController::class, 'index'])
+        ->name('stock-requests.index');
+ 
+    // ── YÊU CẦU NHẬP KHO ─────────────────────────────────────────────────────
+    Route::resource('stock-in-requests', StockInRequestController::class)->except(['index']);
+    Route::post('stock-in-requests/{stock_in_request}/complete', [StockInRequestController::class, 'complete'])
+        ->name('stock-in-requests.complete');
+    Route::post('stock-in-requests/{stock_in_request}/cancel', [StockInRequestController::class, 'cancel'])
+        ->name('stock-in-requests.cancel');
+ 
+    // ── YÊU CẦU XUẤT KHO ─────────────────────────────────────────────────────
+    Route::resource('stock-out-requests', StockOutRequestController::class)->except(['index']);
+    Route::post('stock-out-requests/{stock_out_request}/complete', [StockOutRequestController::class, 'complete'])
+        ->name('stock-out-requests.complete');
+    Route::post('stock-out-requests/{stock_out_request}/cancel', [StockOutRequestController::class, 'cancel'])
+        ->name('stock-out-requests.cancel');
+
+    // ── KIỂM KÊ KHO ──────────────────────────────────────────────────────────
+    Route::resource('stocktakes', InventoryCheckController::class)->except(['destroy']);
+ 
+    Route::post('stocktakes/{stocktake}/start', [InventoryCheckController::class, 'start'])
+        ->name('stocktakes.start');
+    Route::post('stocktakes/{stocktake}/complete', [InventoryCheckController::class, 'complete'])
+        ->name('stocktakes.complete');
+    Route::post('stocktakes/{stocktake}/cancel', [InventoryCheckController::class, 'cancel'])
+        ->name('stocktakes.cancel');
+    Route::put('stocktakes/{stocktake}/details', [InventoryCheckController::class, 'updateDetails'])
+        ->name('stocktakes.details.update');
+ 
+    // ── PHIẾU ĐIỀU CHỈNH ──────────────────────────────────────────────────────
+    Route::get('stocktakes/{stocktake}/adjustment/create', [StockAdjustmentController::class, 'create'])
+        ->name('stocktakes.adjustment.create');
+    Route::post('stocktakes/{stocktake}/adjustment', [StockAdjustmentController::class, 'store'])
+        ->name('stocktakes.adjustment.store');
+    Route::get('stocktakes/{stocktake}/adjustment/{adjustment}', [StockAdjustmentController::class, 'show'])
+        ->name('stocktakes.adjustment.show');
+    Route::post('stocktakes/{stocktake}/adjustment/{adjustment}/complete', [StockAdjustmentController::class, 'complete'])
+        ->name('stocktakes.adjustment.complete');
+    Route::post('stocktakes/{stocktake}/adjustment/{adjustment}/cancel', [StockAdjustmentController::class, 'cancel'])
+        ->name('stocktakes.adjustment.cancel');
 
     Route::get('under-construction', fn() => view('under-construction'))
         ->name('under-construction');
@@ -157,26 +200,10 @@ Route::middleware('auth')->group(function () {
     // ── PENDING — trỏ tạm về under-construction ───────────────────────────────
     $pending = [
         // Nghiệp vụ kho
-        'stock-requests.index'  => 'stock-requests',
-        // 'receipts.index'        => 'receipts',
-        // 'issues.index'          => 'issues',
-        'stocktakes.index'      => 'stocktakes',
+        // 'stocktakes.index'      => 'stocktakes',
 
         // Tồn kho
-        'inventory.index'       => 'inventory',
-
-        // Master data
-        // 'master.uom.index'          => 'master/uom',
         'master.uom-conversion.index' => 'master/uom-conversion',
-        // 'master.category.index'     => 'master/category',
-        // 'master.supplier.index'     => 'master/supplier',
-        // 'master.employee.index'     => 'master/employee',
-        // 'master.location.index'     => 'master/location',
-        // 'master.reorder-rule.index' => 'master/reorder-rule',
-        // 'master.putaway-rule.index' => 'master/putaway-rule',
-        // 'master.brand.index'        => 'master/brand',
-        // 'master.warehouse.index'    => 'master/warehouse',
-        // 'master.department.index'   => 'master/department',
 
 
         // Báo cáo

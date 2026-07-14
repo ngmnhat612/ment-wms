@@ -19,9 +19,13 @@ class ProductRepository implements ProductRepositoryInterface
             $search = $filters['search'];
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                ->orWhere('code', 'like', "%{$search}%")
-                ->orWhere('specification', 'like', "%{$search}%");
+                ->orWhere('code', 'like', "%{$search}%");
             });
+        }
+
+        if (!empty($filters['search_spec'])) {
+            $searchSpec = $filters['search_spec'];
+            $query->where('specification', 'like', "%{$searchSpec}%");
         }
 
         if (!empty($filters['category_id'])) {
@@ -39,7 +43,7 @@ class ProductRepository implements ProductRepositoryInterface
         $sortable = ['code', 'name', 'specification'];
         $sortReq  = $filters['sort'] ?? '';
         $sortBy   = in_array($sortReq, $sortable) ? $sortReq : 'created_at';
-        $sortDir = in_array($filters['dir'] ?? '', ['asc', 'desc']) ? $filters['dir'] : 'desc';
+        $sortDir  = in_array($filters['dir'] ?? '', ['asc', 'desc']) ? $filters['dir'] : 'desc';
 
         return $query
             ->orderBy($sortBy, $sortDir)
@@ -63,6 +67,11 @@ class ProductRepository implements ProductRepositoryInterface
         return Product::with($with)->find($id);
     }
 
+    public function findManyByIds(array $ids): Collection
+    {
+        return Product::whereIn('id', $ids)->get()->keyBy('id');
+    }
+
     public function create(array $data): Product
     {
         return Product::create($data);
@@ -78,12 +87,6 @@ class ProductRepository implements ProductRepositoryInterface
         return $product->delete();
     }
 
-    public function hasStock(Product $product): bool
-    {
-        // return $product->stocks()->exists();
-        return false; // TODO: bật lại khi bảng stocks đã có
-    }
-
     public function barcodeExists(string $barcode, ?int $excludeId = null): bool
     {
         return Product::where('barcode', $barcode)
@@ -97,6 +100,13 @@ class ProductRepository implements ProductRepositoryInterface
             // ->where('status', ActiveStatus::Active)
             ->whereNull('parent_id')
             ->orderBy('code')
+            ->get();
+    }
+
+    public function allOrdered(): Collection
+    {
+        return Product::select('id', 'code', 'name')
+            ->orderBy('name')
             ->get();
     }
 

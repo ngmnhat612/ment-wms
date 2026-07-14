@@ -3,13 +3,17 @@
 namespace App\Services\Master;
 
 use App\Models\Master\PutawayRule;
+use App\Models\Master\Warehouse;
+use App\Repositories\Contracts\Master\PutawayRuleFormDataRepositoryInterface;
 use App\Repositories\Contracts\Master\PutawayRuleRepositoryInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Collection;
 
 class PutawayRuleService
 {
     public function __construct(
         private readonly PutawayRuleRepositoryInterface $putawayRuleRepository,
+        private readonly PutawayRuleFormDataRepositoryInterface $formDataRepository,
     ) {}
 
     // ===== READ =====
@@ -29,24 +33,32 @@ class PutawayRuleService
         return $this->putawayRuleRepository->activeCount();
     }
 
+    // ===== FORM DATA (dropdown lookups cho index/form) =====
+
+    public function activeProducts(): Collection
+    {
+        return $this->formDataRepository->activeProducts();
+    }
+
+    public function activeCategories(): Collection
+    {
+        return $this->formDataRepository->activeCategories();
+    }
+
+    public function activeInternalLocations(): Collection
+    {
+        return $this->formDataRepository->activeInternalLocations();
+    }
+
+    public function defaultWarehouse(): ?Warehouse
+    {
+        return $this->formDataRepository->defaultWarehouse();
+    }
+
     // ===== WRITE =====
 
     public function create(array $data): PutawayRule
     {
-        $trashed = $this->putawayRuleRepository->findTrashed(
-            $data['warehouse_id'],
-            $data['product_id']  ?? null,
-            $data['category_id'] ?? null,
-        );
-
-        if ($trashed) {
-            return $this->putawayRuleRepository->restoreAndUpdate($trashed, [
-                'location_id' => $data['location_id'],
-                'note'        => $data['note'] ?? null,
-                'status'      => $data['status'],
-            ]);
-        }
-
         return $this->putawayRuleRepository->create($data);
     }
 
@@ -89,7 +101,7 @@ class PutawayRuleService
      */
     public function deleteForProduct(int $productId): void
     {
-        $rule = PutawayRule::where('product_id', $productId)->first(); //UPDATE
+        $rule = PutawayRule::where('product_id', $productId)->first();
         if ($rule) {
             $this->delete($rule);
         }
