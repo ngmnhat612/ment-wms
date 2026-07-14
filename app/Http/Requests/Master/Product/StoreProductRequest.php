@@ -36,8 +36,8 @@ class StoreProductRequest extends FormRequest
             'stock_rotation'      => 'required|in:1,2,3',
             'status'              => 'required|in:0,1',
             'image'               => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
-            'min_qty'             => 'nullable|integer|min:0|max:99999',
-            'max_qty'             => 'nullable|integer|min:0|max:99999|gte:min_qty',
+            'min_qty'             => 'nullable|integer|min:0|max:99999999',
+            'max_qty'             => 'nullable|integer|min:0|max:99999999|gte:min_qty',
             'location_id'         => 'nullable|exists:locations,id',
         ];
     }
@@ -67,8 +67,9 @@ class StoreProductRequest extends FormRequest
             'image.image'                     => 'File không phải là hình ảnh hợp lệ.',
             'image.mimes'                     => 'Hình ảnh phải có định dạng jpeg, png, jpg hoặc webp.',
             'image.max'                       => 'Hình ảnh không được vượt quá 2MB.',
-            'max_qty.gte'                     => 'Ngưỡng tối đa phải >= ngưỡng tối thiểu.',
-            'min_qty.max'                     => 'Ngưỡng tối thiểu phải < 99999.',
+            'max_qty.gte'                     => 'Ngưỡng tối thiểu không được vượt quá ngưỡng tối đa.',
+            'min_qty.max'                     => 'Ngưỡng tối thiểu phải bé hơn 99999999.',
+            'max_qty.max'                     => 'Ngưỡng tối đa phải bé hơn 99999999.',
             'location_id'                     => 'nullable|exists:locations,id',
         ];
     }

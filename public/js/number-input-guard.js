@@ -14,6 +14,16 @@ function sanitizeNumberInput(el) {
     // Xoá số 0 thừa ở đầu (nhưng giữ lại 1 số 0 nếu người dùng chỉ gõ "0")
     cleaned = cleaned.replace(/^0+(?=\d)/, '');
 
+    // Nếu input có khai báo max, chặn không cho vượt quá ngay khi gõ
+    // (tránh trường hợp giá trị vượt PHP_INT parse range gây lỗi "must be an integer"
+    // thay vì lỗi "must be <= max" mong muốn)
+    if (el.max !== '' && cleaned !== '') {
+        const maxVal = Number(el.max);  
+        if (Number(cleaned) > maxVal) {
+            cleaned = el.max;
+        }
+    }
+
     if (cleaned !== el.value) el.value = cleaned;
 }
 
