@@ -289,7 +289,7 @@
       const method  = document.getElementById('formMethod');
       const codeEl  = document.getElementById('sCode');
 
-      setModalFormId('snForm', id);
+      setModalFormId('snFormId', id);
       document.getElementById('sName').value = name;
       document.getElementById('sNote').value = note;
       document.getElementById(status == 1 ? 'sStatusActive' : 'sStatusInactive').checked = true;
@@ -323,7 +323,7 @@
   }
 
   document.getElementById('sCode').addEventListener('input', function () {
-    sanitizeCodeInput(this); 
+    sanitizeCodeInput(this);
   });
 
   @if ($errors->any())

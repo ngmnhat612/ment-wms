@@ -26,6 +26,7 @@ class StoreSnRequest extends FormRequest
         return [
             'name.required' => 'Vui lòng nhập tên dự án.',
             'code.unique'   => 'Mã dự án đã tồn tại.',
-            'code.regex'    => 'Mã dự án chỉ được phép chứa chữ cái và số, không chứa ký tự đặc biệt.', 
+            'code.regex'    => 'Mã dự án chỉ được phép chứa chữ cái và số, không chứa ký tự đặc biệt.',
+        ];
     }
 }
