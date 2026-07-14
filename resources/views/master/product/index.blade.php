@@ -170,6 +170,7 @@
                 <td>
                   @if ($product->image_path)
                     <img src="{{ Storage::url($product->image_path) }}"
+                        class="img-zoomable"
                         style="width:50px; height:50px; object-fit:contain; cursor:zoom-in;"
                         alt="{{ $product->name }}"
                         data-preview="{{ Storage::url($product->image_path) }}">
@@ -268,7 +269,7 @@
           <input type="text" class="form-control text-uppercase"
                 id="pCode" name="code"
                 placeholder="Tự động"
-                oninput="sanitizeCodeInput(this)"> {{-- UPDATE --}}
+                oninput="sanitizeCodeInput(this)">
         </div>
 
         {{-- Chế độ biến thể: Mã MenT gốc + Mã MenT biến thể (cùng hàng 50/50) --}}
@@ -280,7 +281,7 @@
                     id="pParentCode" name="parent_code"
                     placeholder="Nhập hoặc chọn"
                     list="parentCodeList"
-                    oninput="sanitizeCodeInput(this); fetchParentProduct()" {{-- UPDATE --}}
+                    oninput="sanitizeCodeInput(this); fetchParentProduct()"
                     onblur="fetchParentProduct()">
               <datalist id="parentCodeList">
                 @foreach ($allProducts as $p)
@@ -293,7 +294,7 @@
               <input type="text" class="form-control text-uppercase"
                     id="pVariantCode" name="code"
                     placeholder="TỰ ĐỘNG"
-                    oninput="sanitizeCodeInput(this)"> {{-- UPDATE --}}
+                    oninput="sanitizeCodeInput(this)">
             </div>
           </div>
         </div>
@@ -462,7 +463,7 @@
             <div class="form-check">
               <input class="form-check-input" type="radio" name="status"
                      id="pStatusInactive" value="0">
-              <label class="form-check-label text-secondary" for="pStatusInactive">Ngưng hoạt động</label> {{-- UPDATE --}}
+              <label class="form-check-label text-secondary" for="pStatusInactive">Ngưng hoạt động</label>
             </div>
           </div>
         </div>
@@ -523,6 +524,8 @@
   ">
     <img id="imgPreviewPopupImg" src="" style="width:500px;height:500px;object-fit:contain;">
   </div>
+
+@include('master.product.partials.image-zoom-modal')
 
 @endsection
 
@@ -737,7 +740,6 @@
     const pfa = (document.body.dataset.pfa || '').trim();
     if (!pfa) return;
 
-    // UPDATE: <strong>Kiểm tra lại:</strong>
     const alertHtml = `
       <div class="alert alert-danger alert-dismissible mb-3" role="alert">
         <strong>Kiểm tra lại:</strong>
@@ -864,7 +866,6 @@
     document.getElementById('pNameVariant').disabled = !isVariant;
     document.getElementById('pParentCode').disabled  = !isVariant;
 
-    // UPDATE
     // document.getElementById('pName').required        = !isVariant;
     // document.getElementById('pNameVariant').required =  isVariant;
 
@@ -987,4 +988,6 @@
     }
   }
 </script>
+
+  @vite('resources/js/product/product-index.js')
 @endpush
