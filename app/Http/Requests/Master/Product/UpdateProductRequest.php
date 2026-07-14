@@ -29,7 +29,7 @@ class UpdateProductRequest extends FormRequest
             : $this->route('product');
 
         return [
-            'code'                => "nullable|string|max:50|regex:/^[A-Za-z0-9]+$/|unique:products,code,{$productId}", // ignore current;
+            'code'                => "nullable|string|max:50|unique:products,code,{$productId}", // ignore current;
             'name'                => 'required|string|max:200',
             'category_id'         => 'required|exists:categories,id',
             'uom_id'              => 'required|exists:uoms,id',
@@ -54,7 +54,6 @@ class UpdateProductRequest extends FormRequest
         return [
             // 'code.required'                   => 'Vui lòng nhập mã MenT.',
             'code.max'                        => 'Mã MenT không được vượt quá 50 ký tự.',
-            'code.regex'                      => 'Mã MenT chỉ được phép chứa chữ cái và số, không chứa ký tự đặc biệt.',
             'code.unique'                     => 'Mã MenT đã tồn tại.',
             'name.required'                   => 'Vui lòng nhập tên vật tư.',
             'name.max'                        => 'Tên vật tư không được vượt quá 200 ký tự.',
