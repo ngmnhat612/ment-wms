@@ -24,7 +24,6 @@ class LoginRequest extends FormRequest
         ];
     }
 
-    // UPDATE
     /**
      * Message tiếng Việt ghi đè cho lỗi validate mặc định (thay vì message
      * tiếng Anh mặc định của Laravel khi bỏ trống ô nhập liệu).

@@ -3,7 +3,7 @@
 <head>
     <title>Đăng nhập</title>
     @include('layouts.partials.head')
-    <link href="{{ asset('css/login.css') }}" rel="stylesheet"> {{-- UPDATE --}}
+    <link href="{{ asset('css/login.css') }}" rel="stylesheet"> 
 </head>
 <body class="bg-body-tertiary min-vh-100 d-flex flex-row align-items-center">
 

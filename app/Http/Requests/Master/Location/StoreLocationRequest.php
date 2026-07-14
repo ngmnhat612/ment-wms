@@ -16,7 +16,7 @@ class StoreLocationRequest extends FormRequest
         return [
             'parent_id'    => 'nullable|exists:locations,id',
             'warehouse_id' => 'nullable|exists:warehouses,id',
-            'code'         => 'nullable|string|max:50|regex:/^[A-Za-z0-9]+$/|unique:locations,code', // UPDATE
+            'code'         => 'nullable|string|max:50|regex:/^[A-Za-z0-9]+$/|unique:locations,code', 
             'name'         => 'required|string|max:100',
             'type'         => 'nullable|in:1,2',
             'status'       => 'required|in:0,1',
@@ -29,7 +29,7 @@ class StoreLocationRequest extends FormRequest
         return [
             'code.unique'    => 'Mã vị trí đã tồn tại.',
             'code.max'       => 'Mã vị trí không quá 50 ký tự.',
-            'code.regex'     => 'Mã vị trí chỉ được phép chứa chữ cái và số, không chứa ký tự đặc biệt.', // UPDATE
+            'code.regex'     => 'Mã vị trí chỉ được phép chứa chữ cái và số, không chứa ký tự đặc biệt.', 
             'name.required'  => 'Vui lòng nhập tên vị trí.',
             'name.max'       => 'Tên vị trí không quá 100 ký tự.',
         ];

@@ -37,7 +37,7 @@
 
   {{-- HEADER --}}
   <div class="d-flex justify-content-end mb-4">
-    <button class="btn btn-primary" onclick="clearValidationErrors('supplierForm'); openModal()"> {{-- UPDATE --}}
+    <button class="btn btn-primary" onclick="clearValidationErrors('supplierForm'); openModal()">
       <svg class="icon me-1"><use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-plus') }}"></use></svg>
       Thêm mới
     </button>
@@ -156,7 +156,7 @@
                 </td>
                 <td class="text-center">
                   <button class="btn btn-sm btn-outline-primary me-1"
-                    onclick="clearValidationErrors('supplierForm'); openModal( {{-- UPDATE --}}
+                    onclick="clearValidationErrors('supplierForm'); openModal(
                       {{ $supplier->id }},
                       '{{ addslashes($supplier->code) }}',
                       '{{ addslashes($supplier->name) }}',
@@ -209,7 +209,7 @@
         <form id="supplierForm" method="POST">
           @csrf
           <input type="hidden" name="_method" id="formMethod" value="POST">
-          <input type="hidden" name="id" id="snFormId" value="{{ old('id') }}"> {{-- UPDATE --}}
+          <input type="hidden" name="id" id="snFormId" value="{{ old('id') }}">
 
           <div class="modal-header">
             <h5 class="modal-title" id="supplierModalLabel">Thêm nhà cung cấp</h5>
@@ -368,7 +368,7 @@
       const method  = document.getElementById('formMethod');
       const codeEl  = document.getElementById('sCode');
 
-      setModalFormId('snFormId', id); // UPDATE
+      setModalFormId('snFormId', id);
       document.getElementById('sName').value    = name;
       document.getElementById('sTaxCode').value = taxCode;
       document.getElementById('sPhone').value   = phone;
@@ -406,13 +406,13 @@
   }
 
   document.getElementById('sCode').addEventListener('input', function () {
-    sanitizeCodeInput(this); //UPDATE
+    sanitizeCodeInput(this); 
   });
 
   @if ($errors->any())
     openModal(
     //   null,
-      {{ old('id') ?: 'null' }}, // UPDATE
+      {{ old('id') ?: 'null' }},
       '{{ old("code") }}',
       '{{ addslashes(old("name")) }}',
       '{{ addslashes(old("tax_code")) }}',

@@ -296,7 +296,7 @@
                 <div class="form-check">
                   <input class="form-check-input" type="radio" name="status"
                          id="rStatusInactive" value="0">
-                  <label class="form-check-label text-secondary" for="rStatusInactive">Ngưng hoạt động</label> {{-- UPDATE --}}
+                  <label class="form-check-label text-secondary" for="rStatusInactive">Ngưng hoạt động</label> 
                 </div>
               </div>
             </div>

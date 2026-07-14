@@ -37,7 +37,7 @@
 
   {{-- HEADER --}}
   <div class="d-flex justify-content-end mb-4">
-    <button class="btn btn-primary" onclick="clearValidationErrors('categoryForm'); openModal()"> {{-- UPDATE --}}
+    <button class="btn btn-primary" onclick="clearValidationErrors('categoryForm'); openModal()">
       <svg class="icon me-1"><use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-plus') }}"></use></svg>
       Thêm mới
     </button>
@@ -131,7 +131,7 @@
                 </td>
                 <td class="text-center">
                   <button class="btn btn-sm btn-outline-primary me-1"
-                    onclick="clearValidationErrors('categoryForm'); openModal( {{-- UPDATE --}}
+                    onclick="clearValidationErrors('categoryForm'); openModal(
                       {{ $cat->id }},
                       '{{ addslashes($cat->code) }}',
                       '{{ addslashes($cat->name) }}',
@@ -180,7 +180,7 @@
         <form id="categoryForm" method="POST">
           @csrf
           <input type="hidden" name="_method" id="formMethod" value="POST">
-          <input type="hidden" name="id" id="catFormId" value="{{ old('id') }}"> {{-- UPDATE --}}
+          <input type="hidden" name="id" id="catFormId" value="{{ old('id') }}">
 
           <div class="modal-header">
             <h5 class="modal-title" id="categoryModalLabel">Thêm danh mục</h5>
@@ -233,7 +233,7 @@
                 <div class="form-check">
                   <input class="form-check-input" type="radio" name="status"
                          id="catStatusInactive" value="0">
-                  <label class="form-check-label text-secondary" for="catStatusInactive">Ngưng hoạt động</label> {{-- UPDATE --}}
+                  <label class="form-check-label text-secondary" for="catStatusInactive">Ngưng hoạt động</label>
                 </div>
               </div>
             </div>
@@ -296,7 +296,7 @@
       const method  = document.getElementById('formMethod');
       const codeEl  = document.getElementById('catCode');
 
-      setModalFormId('catFormId', id); // UPDATE
+      setModalFormId('catFormId', id);
       document.getElementById('catName').value = name;
       document.getElementById('catDesc').value = desc;
       document.getElementById(status == 1 ? 'catStatusActive' : 'catStatusInactive').checked = true;
@@ -330,13 +330,13 @@
   }
 
   document.getElementById('catCode').addEventListener('input', function () {
-    sanitizeCodeInput(this); //UPDATE
+    sanitizeCodeInput(this); 
   });
 
   @if ($errors->any())
     openModal(
     //   null,
-      {{ old('id') ?: 'null' }}, // UPDATE
+      {{ old('id') ?: 'null' }},
       '{{ old("code") }}',
       '{{ addslashes(old("name")) }}',
       '{{ addslashes(old("note")) }}',

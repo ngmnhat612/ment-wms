@@ -37,7 +37,7 @@
 
   {{-- HEADER --}}
   <div class="d-flex justify-content-end mb-4">
-    <button class="btn btn-primary" onclick="clearValidationErrors('departmentForm'); openModal()"> {{-- UPDATE --}}
+    <button class="btn btn-primary" onclick="clearValidationErrors('departmentForm'); openModal()">
       <svg class="icon me-1"><use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-plus') }}"></use></svg>
       Thêm mới
     </button>
@@ -124,7 +124,7 @@
                 </td>
                 <td class="text-center">
                   <button class="btn btn-sm btn-outline-primary me-1"
-                    onclick="clearValidationErrors('departmentForm'); openModal( {{-- UPDATE --}}
+                    onclick="clearValidationErrors('departmentForm'); openModal(
                       {{ $department->id }},
                       '{{ addslashes($department->code) }}',
                       '{{ addslashes($department->name) }}',
@@ -173,7 +173,7 @@
         <form id="departmentForm" method="POST">
           @csrf
           <input type="hidden" name="_method" id="formMethod" value="POST">
-          <input type="hidden" name="id" id="depFormId" value="{{ old('id') }}"> {{-- UPDATE --}}
+          <input type="hidden" name="id" id="depFormId" value="{{ old('id') }}">
 
           <div class="modal-header">
             <h5 class="modal-title" id="departmentModalLabel">Thêm bộ phận</h5>
@@ -226,7 +226,7 @@
                 <div class="form-check">
                   <input class="form-check-input" type="radio" name="status"
                          id="dStatusInactive" value="0">
-                  <label class="form-check-label text-secondary" for="dStatusInactive">Ngưng hoạt động</label> {{-- UPDATE --}}
+                  <label class="form-check-label text-secondary" for="dStatusInactive">Ngưng hoạt động</label>
                 </div>
               </div>
             </div>
@@ -289,7 +289,7 @@
       const method  = document.getElementById('formMethod');
       const codeEl  = document.getElementById('dCode');
 
-      setModalFormId('depFormId', id); // UPDATE
+      setModalFormId('depFormId', id);
       document.getElementById('dName').value = name;
       document.getElementById('dNote').value = note;
       document.getElementById(status == 1 ? 'dStatusActive' : 'dStatusInactive').checked = true;
@@ -323,13 +323,13 @@
   }
 
   document.getElementById('dCode').addEventListener('input', function () {
-    sanitizeCodeInput(this); //UPDATE
+    sanitizeCodeInput(this);
   });
 
   @if ($errors->any())
     openModal(
     //   null,
-      {{ old('id') ?: 'null' }}, // UPDATE
+      {{ old('id') ?: 'null' }},
       '{{ old("code") }}',
       '{{ addslashes(old("name")) }}',
       '{{ addslashes(old("note")) }}',

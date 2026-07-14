@@ -17,7 +17,7 @@ class UpdateDepartmentRequest extends FormRequest
 
         return [
             'name'   => "required|string|max:200",
-            'code'   => "nullable|string|max:50|regex:/^[A-Za-z0-9]+$/|unique:departments,code,{$departmentId}", //UPDATE
+            'code'   => "nullable|string|max:50|regex:/^[A-Za-z0-9]+$/|unique:departments,code,{$departmentId}",
             'note'   => 'nullable|string|max:500',
             'status' => 'required|in:0,1',
         ];
@@ -28,7 +28,7 @@ class UpdateDepartmentRequest extends FormRequest
         return [
             'name.required' => 'Vui lòng nhập tên bộ phận.',
             'code.unique'   => 'Mã bộ phận đã tồn tại.',
-            'code.regex'    => 'Mã bộ phận chỉ được phép chứa chữ cái và số, không chứa ký tự đặc biệt.', // UPDATE
+            'code.regex'    => 'Mã bộ phận chỉ được phép chứa chữ cái và số, không chứa ký tự đặc biệt.', 
         ];
     }
 }

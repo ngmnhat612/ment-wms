@@ -23,7 +23,6 @@
 {{-- Tạm thời comment lại color-modes để tránh lỗi querySelector khi header không có UI switch theme --}}
 {{-- <script src="{{ asset('vendor/coreui/js/custom/color-modes.js') }}"></script> --}}
 
-{{-- UPDATE --}}
 {{-- Tắt validate mặc định của trình duyệt cho các form CRUD dùng modal (category, department,
      sn, brand, location, supplier, uom, warehouse, employee...), để lỗi luôn đi qua server và
      hiển thị đồng bộ qua banner "Vui lòng kiểm tra lại". Giữ nguyên required trong HTML (không xoá).

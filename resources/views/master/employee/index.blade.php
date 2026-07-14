@@ -265,7 +265,7 @@
         <form id="employeeForm" method="POST">
           @csrf
           <input type="hidden" name="_method" id="empMethod" value="POST">
-          <input type="hidden" name="id" id="empFormId" value="{{ old('id') }}"> {{-- UPDATE --}}
+          <input type="hidden" name="id" id="empFormId" value="{{ old('id') }}">
 
           <div class="modal-header">
             <h5 class="modal-title" id="employeeModalLabel">Thêm nhân viên</h5>
@@ -318,12 +318,12 @@
                       name="phone_number" id="empPhone"
                       value="{{ old('phone_number') }}"
                       placeholder="Nhập số điện thoại" maxlength="20"
-                      {{-- UPDATE --}}
+
                       inputmode="numeric"
                       onkeydown="blockInvalidNumberKeys(event)"
                       onpaste="blockInvalidNumberPaste(event)"
                       oninput="sanitizeDigitsOnly(this)">
-                      {{-- UPDATE --}}
+
                 @error('phone_number')
                   <div class="invalid-feedback">{{ $message }}</div>
                 @enderror
@@ -512,7 +512,7 @@
     const method  = document.getElementById('empMethod');
     const codeEl  = document.getElementById('empCode');
 
-    setModalFormId('empFormId', id); // UPDATE
+    setModalFormId('empFormId', id);
 
     if (!keepErrors) {
       form.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
@@ -549,13 +549,13 @@
 
   // Auto viết hoa mã NV
   document.getElementById('empCode').addEventListener('input', function () {
-    sanitizeCodeInput(this); //UPDATE
+    sanitizeCodeInput(this);
   });
 
   @if ($errors->hasAny(['code', 'name', 'phone_number', 'department_id', 'note', 'status']))
     openEmployeeModal(
     //   null,
-      {{ old('id') ?: 'null' }}, // UPDATE
+      {{ old('id') ?: 'null' }},
       '{{ old("code") }}',
       '{{ addslashes(old("name")) }}',
       '{{ addslashes(old("phone_number")) }}',
@@ -569,7 +569,7 @@
   @if ($errors->hasAny(['username', 'password', 'password_confirmation', 'new_password', 'new_password_confirmation', 'role', 'account_status']))
     @php
       $errEmployeeId = old('employee_id') ?? request()->route('employee')?->id;
-      $errEmployee   = $errEmployeeId ? \App\Models\Master\Employee::with('account.roles')->find($errEmployeeId) : null; // UPDATE
+      $errEmployee   = $errEmployeeId ? \App\Models\Master\Employee::with('account.roles')->find($errEmployeeId) : null;
       $errAccount    = $errEmployee?->account;
     @endphp
     openAccountModal(

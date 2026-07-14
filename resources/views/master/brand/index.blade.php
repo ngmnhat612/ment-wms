@@ -225,7 +225,7 @@
                 <div class="form-check">
                   <input class="form-check-input" type="radio" name="status"
                          id="bStatusInactive" value="0">
-                  <label class="form-check-label text-secondary" for="bStatusInactive">Ngưng hoạt động</label> {{-- UPDATE --}}
+                  <label class="form-check-label text-secondary" for="bStatusInactive">Ngưng hoạt động</label>
                 </div>
               </div>
             </div>
@@ -321,7 +321,7 @@
   }
 
   document.getElementById('bCode').addEventListener('input', function () {
-    sanitizeCodeInput(this); //UPDATE
+    sanitizeCodeInput(this); 
   });
 
   @if ($errors->any())
