@@ -415,22 +415,24 @@
 
           <div class="col-6">
             <label class="form-label">Ngưỡng tồn tối thiểu (Min)</label>
-            <input type="number" step="1" min="0" max="99999999"
-                  class="form-control" id="pMinQty" name="min_qty"
-                  value="0"
-                  onkeydown="blockInvalidNumberKeys(event)"
-                  onpaste="blockInvalidNumberPaste(event)"
-                  oninput="sanitizeNumberInput(this)">
-          </div>
-          <div class="col-6">
+            <input type="text" inputmode="numeric" pattern="[0-9]*"
+                    class="form-control" id="pMinQty" name="min_qty"
+                    value="0"
+                    onkeydown="blockInvalidNumberKeys(event)"
+                    onpaste="blockInvalidNumberPaste(event)"
+                    oninput="sanitizeNumberInput(this)"
+                    data-max="99999999">
+            </div>
+            <div class="col-6">
             <label class="form-label">Ngưỡng tồn tối đa (Max)</label>
-            <input type="number" step="1" min="0" max="99999999"
-                  class="form-control" id="pMaxQty" name="max_qty"
-                  value="0"
-                  onkeydown="blockInvalidNumberKeys(event)"
-                  onpaste="blockInvalidNumberPaste(event)"
-                  oninput="sanitizeNumberInput(this)">
-          </div>
+            <input type="text" inputmode="numeric" pattern="[0-9]*"
+                    class="form-control" id="pMaxQty" name="max_qty"
+                    value="0"
+                    onkeydown="blockInvalidNumberKeys(event)"
+                    onpaste="blockInvalidNumberPaste(event)"
+                    oninput="sanitizeNumberInput(this)"
+                    data-max="99999999">
+            </div>
 
           {{-- ===== Gợi ý vị trí ===== --}}
           <div class="col-12">
