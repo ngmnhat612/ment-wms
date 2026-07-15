@@ -303,7 +303,7 @@
         <div class="mb-3 d-block" id="nameNormalWrap">
           <label class="form-label">Tên <span class="text-danger">*</span></label>
           <input type="text" class="form-control" id="pName" name="name"
-                placeholder="Nhập tên" required maxlength="200">
+                placeholder="Nhập tên" maxlength="200">
         </div>
 
         {{-- Chế độ biến thể: Tên --}}
@@ -868,8 +868,8 @@
     document.getElementById('pNameVariant').disabled = !isVariant;
     document.getElementById('pParentCode').disabled  = !isVariant;
 
-    document.getElementById('pName').required        = !isVariant;
-    document.getElementById('pNameVariant').required =  isVariant;
+    // document.getElementById('pName').required        = !isVariant;
+    // document.getElementById('pNameVariant').required =  isVariant;
 
     const lock = ['pCategory', 'pUom', 'pTracking', 'pRotation'];
     lock.forEach(id => {
