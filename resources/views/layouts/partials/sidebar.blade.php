@@ -1,8 +1,8 @@
 <div class="sidebar sidebar-dark sidebar-fixed border-end" id="sidebar">
   <div class="sidebar-header border-bottom">
     <div class="sidebar-brand d-flex align-items-center gap-2">
-      <img src="{{ asset('images/MENT.ico') }}" 
-          alt="Logo" 
+      <img src="{{ asset('images/MENT.ico') }}"
+          alt="Logo"
           style="height: 28px; opacity: 0.85;">
       <span class="sidebar-brand-full fw-semibold fs-5">MenT WMS</span>
     </div>

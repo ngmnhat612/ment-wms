@@ -3,6 +3,7 @@
 <head>
     <title>Đăng nhập</title>
     @include('layouts.partials.head')
+    <link href="{{ asset('css/login.css') }}" rel="stylesheet"> 
 </head>
 <body class="bg-body-tertiary min-vh-100 d-flex flex-row align-items-center">
 
@@ -83,8 +84,8 @@
                     <div class="card col-md-5 text-white bg-primary py-5">
                         <div class="card-body text-center d-flex flex-column justify-content-center">
                             <div class="mt-3">
-                                <img src="{{ asset('images/MENT.ico') }}" 
-                                    alt="Logo công ty" 
+                                <img src="{{ asset('images/MENT.ico') }}"
+                                    alt="Logo công ty"
                                     style="height: 80px; opacity: 0.85;">
                             </div>
                             <h2>MenT WMS</h2>

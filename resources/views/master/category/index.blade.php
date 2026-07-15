@@ -38,7 +38,7 @@
 
   {{-- HEADER --}}
   <div class="d-flex justify-content-end mb-4">
-    <button class="btn btn-primary" onclick="openModal()">
+    <button class="btn btn-primary" onclick="clearValidationErrors('categoryForm'); openModal()">
       <svg class="icon me-1"><use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-plus') }}"></use></svg>
       Thêm mới
     </button>
@@ -120,8 +120,8 @@
                   @endif
                   {{ $cat->name ?? '-' }}
                 </td>
-                <td class="small">
-                  {{ $cat->note ?? '-' }}
+                <td class="small" title="{{ $cat->note }}">
+                 {{ truncate_text($cat->note) }}
                 </td>
                 <td class="text-center">
                   @if ($cat->status === \App\Enums\ActiveStatus::Active)
@@ -132,7 +132,7 @@
                 </td>
                 <td class="text-center">
                   <button class="btn btn-sm btn-outline-primary me-1"
-                    onclick="openModal(
+                    onclick="clearValidationErrors('categoryForm'); openModal(
                       {{ $cat->id }},
                       '{{ addslashes($cat->code) }}',
                       '{{ addslashes($cat->name) }}',
@@ -181,6 +181,7 @@
         <form id="categoryForm" method="POST">
           @csrf
           <input type="hidden" name="_method" id="formMethod" value="POST">
+          <input type="hidden" name="id" id="catFormId" value="{{ old('id') }}">
 
           <div class="modal-header">
             <h5 class="modal-title" id="categoryModalLabel">Thêm danh mục</h5>
@@ -233,7 +234,7 @@
                 <div class="form-check">
                   <input class="form-check-input" type="radio" name="status"
                          id="catStatusInactive" value="0">
-                  <label class="form-check-label text-secondary" for="catStatusInactive">Ngừng hoạt động</label>
+                  <label class="form-check-label text-secondary" for="catStatusInactive">Ngưng hoạt động</label>
                 </div>
               </div>
             </div>
@@ -296,6 +297,7 @@
       const method  = document.getElementById('formMethod');
       const codeEl  = document.getElementById('catCode');
 
+      setModalFormId('catFormId', id);
       document.getElementById('catName').value = name;
       document.getElementById('catDesc').value = desc;
       document.getElementById(status == 1 ? 'catStatusActive' : 'catStatusInactive').checked = true;
@@ -329,14 +331,13 @@
   }
 
   document.getElementById('catCode').addEventListener('input', function () {
-    const pos = this.selectionStart;
-    this.value = this.value.toUpperCase();
-    this.setSelectionRange(pos, pos);
+    sanitizeCodeInput(this);
   });
 
   @if ($errors->any())
     openModal(
-      null,
+    //   null,
+      {{ old('id') ?: 'null' }},
       '{{ old("code") }}',
       '{{ addslashes(old("name")) }}',
       '{{ addslashes(old("note")) }}',

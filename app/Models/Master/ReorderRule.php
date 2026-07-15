@@ -5,9 +5,12 @@ namespace App\Models\Master;
 use App\Enums\ActiveStatus;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Database\Eloquent\Factories\HasFactory;   
 
 class ReorderRule extends Model
 {
+    use HasFactory;
+
     protected $table = 'reorder_rules';
 
     protected $fillable = [

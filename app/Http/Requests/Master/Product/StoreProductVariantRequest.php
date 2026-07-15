@@ -21,10 +21,11 @@ class StoreProductVariantRequest extends FormRequest
             'parent_code' => [
                 'required', 'string',
                 'regex:/^[A-Za-z0-9]+$/',
-                Rule::exists('products', 'code')->whereNull('deleted_at'),
+                Rule::exists('products', 'code'),
             ],
             'code' => [
                 'nullable', 'string', 'max:50',
+                'regex:/^[A-Za-z0-9]+$/',
                 Rule::unique('products', 'code'),
             ],
             'name'          => 'required|string|max:200',
@@ -33,8 +34,8 @@ class StoreProductVariantRequest extends FormRequest
             'image'         => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
             // category_id, uom_id, tracking_type, stock_rotation,
             // alert_before_expiry — không validate vì kế thừa từ cha ở service
-            'min_qty'       => 'nullable|integer|min:0|max:99999',
-            'max_qty'       => 'nullable|integer|min:0|max:99999|gte:min_qty',
+            'min_qty'       => 'nullable|integer|min:0|max:99999999',
+            'max_qty'       => 'nullable|integer|min:0|max:99999999|gte:min_qty',
             'location_id'   => 'nullable|exists:locations,id',
         ];
     }
@@ -55,8 +56,9 @@ class StoreProductVariantRequest extends FormRequest
             'image.image'          => 'File không phải là hình ảnh hợp lệ.',
             'image.mimes'          => 'Hình ảnh phải có định dạng jpeg, png, jpg hoặc webp.',
             'image.max'            => 'Hình ảnh không được vượt quá 2MB.',
-            'max_qty.gte'          => 'Ngưỡng tối đa phải >= ngưỡng tối thiểu.',
-            'min_qty.max'          => 'Ngưỡng tối thiểu phải < 99999.',
+            'max_qty.gte'          => 'Ngưỡng tối thiểu không được vượt quá ngưỡng tối đa.',
+            'min_qty.max'          => 'Ngưỡng tối thiểu phải bé hơn 99999999.',
+            'max_qty.max'          => 'Ngưỡng tối đa phải bé hơn 99999999.',
             'location_id'          => 'nullable|exists:locations,id',
         ];
     }

@@ -17,7 +17,7 @@ class UpdateBrandRequest extends FormRequest
 
         return [
             'name'   => "required|string|max:100",
-            'code'   => "nullable|string|max:20|unique:brands,code,{$brandId}",
+            'code'   => "nullable|string|max:20|regex:/^[A-Za-z0-9]+$/|unique:brands,code,{$brandId}", //UPDATE
             'note'   => 'nullable|string|max:500',
             'status' => 'required|in:0,1',
         ];
@@ -28,6 +28,7 @@ class UpdateBrandRequest extends FormRequest
         return [
             'name.required' => 'Vui lòng nhập tên thương hiệu.',
             'code.unique'   => 'Mã thương hiệu đã tồn tại.',
+            'code.regex'    => 'Mã  thương hiệu chỉ được phép chứa chữ cái và số, không chứa ký tự đặc biệt.', // UPDATE
         ];
     }
 }

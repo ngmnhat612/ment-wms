@@ -37,7 +37,7 @@
 
   {{-- HEADER --}}
   <div class="d-flex justify-content-end mb-4">
-    <button class="btn btn-primary" onclick="openModal()">
+    <button class="btn btn-primary" onclick="clearValidationErrors('snForm'); openModal()">
       <svg class="icon me-1"><use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-plus') }}"></use></svg>
       Thêm mới
     </button>
@@ -112,7 +112,9 @@
                   <code class="text-primary fw-medium">{{ $sn->code ?? '-' }}</code>
                 </td>
                 <td class="fw-medium">{{ $sn->name ?? '-' }}</td>
-                <td class="small">{{ $sn->note ?? '-' }}</td>
+                <td class="small" title="{{ $sn->note }}">
+                {{ truncate_text($sn->note) }}
+                </td>
                 <td class="text-center">
                   @if ($sn->status === \App\Enums\ActiveStatus::Active)
                     <span class="badge bg-success-subtle text-success border border-success-subtle">Hoạt động</span>
@@ -122,7 +124,7 @@
                 </td>
                 <td class="text-center">
                   <button class="btn btn-sm btn-outline-primary me-1"
-                    onclick="openModal(
+                    onclick="clearValidationErrors('snForm'); openModal(
                       {{ $sn->id }},
                       '{{ addslashes($sn->code) }}',
                       '{{ addslashes($sn->name) }}',
@@ -171,6 +173,7 @@
         <form id="snForm" method="POST">
           @csrf
           <input type="hidden" name="_method" id="formMethod" value="POST">
+          <input type="hidden" name="id" id="snFormId" value="{{ old('id') }}">
 
           <div class="modal-header">
             <h5 class="modal-title" id="snModalLabel">Thêm dự án</h5>
@@ -223,7 +226,7 @@
                 <div class="form-check">
                   <input class="form-check-input" type="radio" name="status"
                          id="sStatusInactive" value="0">
-                  <label class="form-check-label text-secondary" for="sStatusInactive">Ngừng hoạt động</label>
+                  <label class="form-check-label text-secondary" for="sStatusInactive">Ngưng hoạt động</label>
                 </div>
               </div>
             </div>
@@ -286,6 +289,7 @@
       const method  = document.getElementById('formMethod');
       const codeEl  = document.getElementById('sCode');
 
+      setModalFormId('snFormId', id);
       document.getElementById('sName').value = name;
       document.getElementById('sNote').value = note;
       document.getElementById(status == 1 ? 'sStatusActive' : 'sStatusInactive').checked = true;
@@ -319,14 +323,13 @@
   }
 
   document.getElementById('sCode').addEventListener('input', function () {
-    const pos = this.selectionStart;
-    this.value = this.value.toUpperCase();
-    this.setSelectionRange(pos, pos);
+    sanitizeCodeInput(this);
   });
 
   @if ($errors->any())
     openModal(
-      null,
+    //   null,
+      {{ old('id') ?: 'null' }},
       '{{ old("code") }}',
       '{{ addslashes(old("name")) }}',
       '{{ addslashes(old("note")) }}',

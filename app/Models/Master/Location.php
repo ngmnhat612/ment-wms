@@ -7,9 +7,11 @@ use App\Enums\LocationType;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Master\Warehouse;
 use App\Models\Inventory\Stock;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Location extends Model
 {
+    use HasFactory;
     protected $table = 'locations';
 
     protected $fillable = [

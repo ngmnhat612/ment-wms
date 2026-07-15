@@ -1,4 +1,4 @@
-<header class="header sticky p-0 shadow-sm" 
+<header class="header sticky p-0 shadow-sm"
         style="height: var(--cui-sidebar-brand-height)">
   <div class="container-fluid px-4">
     <button class="header-toggler" type="button"
@@ -61,7 +61,7 @@
           <li>
               <button type="submit" form="logoutForm" class="dropdown-item text-danger">
                   <svg class="icon me-2">
-                      <use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-account-logout') }}"></use>
+                      <use hx-boost="false" xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-account-logout') }}"></use>
                   </svg>
                   Đăng xuất
               </button>
@@ -73,6 +73,6 @@
 </header>
 
 {{-- Form logout — đặt ngoài header để tránh lồng form --}}
-<form id="logoutForm" method="POST" action="{{ route('logout') }}" class="d-none">
+<form id="logoutForm" method="POST" action="{{ route('logout') }}" class="d-none" hx-boost="false">
     @csrf
 </form>

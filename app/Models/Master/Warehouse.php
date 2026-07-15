@@ -4,9 +4,12 @@ namespace App\Models\Master;
 
 use App\Enums\ActiveStatus;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Warehouse extends Model
 {
+    use HasFactory;
+
     protected $table = 'warehouses';
 
     protected $fillable = [

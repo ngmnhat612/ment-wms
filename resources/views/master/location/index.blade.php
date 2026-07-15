@@ -37,7 +37,7 @@
 
   {{-- HEADER --}}
   <div class="d-flex justify-content-end mb-4">
-    <button class="btn btn-primary" onclick="openModal()">
+    <button class="btn btn-primary" onclick="clearValidationErrors('locationForm'); openModal()">
       <svg class="icon me-1"><use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-plus') }}"></use></svg>
       Thêm vị trí
     </button>
@@ -121,7 +121,9 @@
                         <span class="text-body-secondary small">Gốc</span>
                       @endif
                     </td>
-                    <td class="small">{{ $loc->note ?? '-' }}</td>
+                    <td class="small" title="{{ $loc->note }}">
+                    {{ truncate_text($loc->note) }}
+                    </td>
                     <td class="text-center">
                       @if ($loc->status === \App\Enums\ActiveStatus::Active)
                         <span class="badge bg-success-subtle text-success border border-success-subtle">Hoạt động</span>
@@ -131,7 +133,7 @@
                     </td>
                     <td class="text-center">
                       <button class="btn btn-sm btn-outline-primary me-1"
-                              onclick="openModal(
+                              onclick="clearValidationErrors('locationForm'); openModal(
                                 {{ $loc->id }},
                                 {{ $loc->parent_id ?? 'null' }},
                                 {{ $loc->warehouse_id ?? 'null' }},
@@ -183,6 +185,7 @@
         <form id="locationForm" method="POST">
           @csrf
           <input type="hidden" name="_method" id="formMethod" value="POST">
+          <input type="hidden" name="id" id="locFormId" value="{{ old('id') }}">
           <input type="hidden" name="warehouse_id" id="lWarehouseId" value="{{ $warehouses->first()?->id }}">
           <input type="hidden" name="type" id="lType" value="1">
 
@@ -249,7 +252,7 @@
                 <div class="form-check">
                   <input class="form-check-input" type="radio" name="status"
                          id="lStatusInactive" value="0">
-                  <label class="form-check-label text-secondary" for="lStatusInactive">Ngừng hoạt động</label>
+                  <label class="form-check-label text-secondary" for="lStatusInactive">Ngưng hoạt động</label>
                 </div>
               </div>
             </div>
@@ -318,6 +321,7 @@
     const method = document.getElementById('formMethod');
     const codeEl = document.getElementById('lCode');
 
+    setModalFormId('locFormId', id);
     document.getElementById('lParentId').value    = parentId    ?? '';
     document.getElementById('lWarehouseId').value = warehouseId ?? '';
     document.getElementById('lName').value        = name;
@@ -355,9 +359,7 @@
 
   // Auto viết hoa mã
   document.getElementById('lCode').addEventListener('input', function () {
-    const pos = this.selectionStart;
-    this.value = this.value.toUpperCase();
-    this.setSelectionRange(pos, pos);
+    sanitizeCodeInput(this);
   });
 
   // ===== CHẶN SUBMIT LIÊN TỤC =====
@@ -387,7 +389,10 @@
 
   @if ($errors->any())
     openModal(
-      null, null, null,
+    //   null, null, null,
+      {{ old('id') ?: 'null' }},
+      {{ old('parent_id') ?: 'null' }},
+      {{ old('warehouse_id') ?: 'null' }},
       '{{ old('code') }}',
       '{{ addslashes(old('name')) }}',
       {{ old('type', 1) }},

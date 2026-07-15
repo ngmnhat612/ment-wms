@@ -38,7 +38,7 @@
 
   {{-- HEADER --}}
   <div class="d-flex justify-content-end mb-4">
-    <button class="btn btn-primary" onclick="openModal()">
+    <button class="btn btn-primary" onclick="clearValidationErrors('supplierForm'); openModal()">
       <svg class="icon me-1"><use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-plus') }}"></use></svg>
       Thêm mới
     </button>
@@ -145,7 +145,9 @@
                     -
                   @endif
                 </td>
-                <td class="small">{{ $supplier->note ?? '-' }}</td>
+                <td class="small" title="{{ $supplier->note }}">
+                  {{ truncate_text($supplier->note) }}
+                </td>
                 <td class="text-center">
                   @if ($supplier->status === \App\Enums\ActiveStatus::Active)
                     <span class="badge bg-success-subtle text-success border border-success-subtle">Hoạt động</span>
@@ -155,7 +157,7 @@
                 </td>
                 <td class="text-center">
                   <button class="btn btn-sm btn-outline-primary me-1"
-                    onclick="openModal(
+                    onclick="clearValidationErrors('supplierForm'); openModal(
                       {{ $supplier->id }},
                       '{{ addslashes($supplier->code) }}',
                       '{{ addslashes($supplier->name) }}',
@@ -208,6 +210,7 @@
         <form id="supplierForm" method="POST">
           @csrf
           <input type="hidden" name="_method" id="formMethod" value="POST">
+          <input type="hidden" name="id" id="snFormId" value="{{ old('id') }}">
 
           <div class="modal-header">
             <h5 class="modal-title" id="supplierModalLabel">Thêm nhà cung cấp</h5>
@@ -366,6 +369,7 @@
       const method  = document.getElementById('formMethod');
       const codeEl  = document.getElementById('sCode');
 
+      setModalFormId('snFormId', id);
       document.getElementById('sName').value    = name;
       document.getElementById('sTaxCode').value = taxCode;
       document.getElementById('sPhone').value   = phone;
@@ -403,14 +407,13 @@
   }
 
   document.getElementById('sCode').addEventListener('input', function () {
-    const pos = this.selectionStart;
-    this.value = this.value.toUpperCase();
-    this.setSelectionRange(pos, pos);
+    sanitizeCodeInput(this);
   });
 
   @if ($errors->any())
     openModal(
-      null,
+    //   null,
+      {{ old('id') ?: 'null' }},
       '{{ old("code") }}',
       '{{ addslashes(old("name")) }}',
       '{{ addslashes(old("tax_code")) }}',

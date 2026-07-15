@@ -160,7 +160,10 @@
                   @endif
                 </td>
 
-                <td class="small">{{ $emp->note ?? '-' }}</td>
+                {{-- Ghi chú --}}
+                <td class="small" title="{{ $emp->note }}">
+                {{ truncate_text($emp->note) }}
+                </td>
 
                 {{-- Trạng thái nhân viên --}}
                 <td class="text-center">
@@ -263,6 +266,7 @@
         <form id="employeeForm" method="POST">
           @csrf
           <input type="hidden" name="_method" id="empMethod" value="POST">
+          <input type="hidden" name="id" id="empFormId" value="{{ old('id') }}">
 
           <div class="modal-header">
             <h5 class="modal-title" id="employeeModalLabel">Thêm nhân viên</h5>
@@ -314,7 +318,13 @@
                       class="form-control {{ $errors->has('phone_number') ? 'is-invalid' : '' }}"
                       name="phone_number" id="empPhone"
                       value="{{ old('phone_number') }}"
-                      placeholder="Nhập số điện thoại" maxlength="20">
+                      placeholder="Nhập số điện thoại" maxlength="20"
+
+                      inputmode="numeric"
+                      onkeydown="blockInvalidNumberKeys(event)"
+                      onpaste="blockInvalidNumberPaste(event)"
+                      oninput="sanitizeDigitsOnly(this)">
+
                 @error('phone_number')
                   <div class="invalid-feedback">{{ $message }}</div>
                 @enderror
@@ -503,6 +513,8 @@
     const method  = document.getElementById('empMethod');
     const codeEl  = document.getElementById('empCode');
 
+    setModalFormId('empFormId', id);
+
     if (!keepErrors) {
       form.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
       form.querySelectorAll('.invalid-feedback').forEach(el => el.remove());
@@ -538,14 +550,13 @@
 
   // Auto viết hoa mã NV
   document.getElementById('empCode').addEventListener('input', function () {
-    const pos = this.selectionStart;
-    this.value = this.value.toUpperCase();
-    this.setSelectionRange(pos, pos);
+    sanitizeCodeInput(this);
   });
 
   @if ($errors->hasAny(['code', 'name', 'phone_number', 'department_id', 'note', 'status']))
     openEmployeeModal(
-      null,
+    //   null,
+      {{ old('id') ?: 'null' }},
       '{{ old("code") }}',
       '{{ addslashes(old("name")) }}',
       '{{ addslashes(old("phone_number")) }}',
@@ -559,7 +570,7 @@
   @if ($errors->hasAny(['username', 'password', 'password_confirmation', 'new_password', 'new_password_confirmation', 'role', 'account_status']))
     @php
       $errEmployeeId = old('employee_id') ?? request()->route('employee')?->id;
-      $errEmployee   = $errEmployeeId ? \App\Models\Employee::with('account.roles')->find($errEmployeeId) : null;
+      $errEmployee   = $errEmployeeId ? \App\Models\Master\Employee::with('account.roles')->find($errEmployeeId) : null;
       $errAccount    = $errEmployee?->account;
     @endphp
     openAccountModal(

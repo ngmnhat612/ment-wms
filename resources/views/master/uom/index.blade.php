@@ -38,7 +38,7 @@
 
   {{-- HEADER --}}
   <div class="d-flex justify-content-end mb-4">
-    <button class="btn btn-primary" onclick="openModal()">
+    <button class="btn btn-primary" onclick="clearValidationErrors('uomForm'); openModal()">
       <svg class="icon me-1"><use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-plus') }}"></use></svg>
       Thêm mới
     </button>
@@ -113,7 +113,9 @@
                   <code class="text-primary fw-medium">{{ $uom->code ?? '-' }}</code>
                 </td>
                 <td class="fw-medium">{{ $uom->name ?? '-' }}</td>
-                <td class="small">{{ $uom->note ?? '-' }}</td>
+                <td class="small" title="{{ $uom->note }}">
+                {{ truncate_text($uom->note) }}
+                </td>
                 <td class="text-center">
                   @if ($uom->status === \App\Enums\ActiveStatus::Active)
                     <span class="badge bg-success-subtle text-success border border-success-subtle">Hoạt động</span>
@@ -123,7 +125,7 @@
                 </td>
                 <td class="text-center">
                   <button class="btn btn-sm btn-outline-primary me-1"
-                          onclick="openModal(
+                          onclick="clearValidationErrors('uomForm'); openModal(
                               {{ $uom->id }},
                               '{{ addslashes($uom->code) }}',
                               '{{ addslashes($uom->name) }}',
@@ -172,6 +174,7 @@
         <form id="uomForm" method="POST">
           @csrf
           <input type="hidden" name="_method" id="formMethod" value="POST">
+          <input type="hidden" name="id" id="uomFormId" value="{{ old('id') }}">
 
           <div class="modal-header">
             <h5 class="modal-title" id="uomModalLabel">Thêm đơn vị tính</h5>
@@ -226,7 +229,7 @@
                 <div class="form-check">
                   <input class="form-check-input" type="radio" name="status"
                          id="uomStatusInactive" value="0">
-                  <label class="form-check-label text-secondary" for="uomStatusInactive">Ngừng hoạt động</label>
+                  <label class="form-check-label text-secondary" for="uomStatusInactive">Ngưng hoạt động</label>
                 </div>
               </div>
             </div>
@@ -289,6 +292,7 @@
     const method = document.getElementById('formMethod');
     const codeEl = document.getElementById('uomCode');
 
+    setModalFormId('uomFormId', id);
     document.getElementById('uomName').value = name;
     document.getElementById('uomNote').value = note;
     document.getElementById(status == 1 ? 'uomStatusActive' : 'uomStatusInactive').checked = true;
@@ -323,14 +327,13 @@
   }
 
   document.getElementById('uomCode').addEventListener('input', function () {
-    const pos = this.selectionStart;
-    this.value = this.value.toUpperCase();
-    this.setSelectionRange(pos, pos);
+    sanitizeCodeInput(this);
   });
 
   @if ($errors->any())
       openModal(
-          null,
+        //   null,
+          {{ old('id') ?: 'null' }},
           '{{ old("code") }}',
           '{{ addslashes(old("name")) }}',
           '{{ addslashes(old("note")) }}',

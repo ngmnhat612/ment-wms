@@ -24,6 +24,18 @@ class LoginRequest extends FormRequest
         ];
     }
 
+    /**
+     * Message tiếng Việt ghi đè cho lỗi validate mặc định (thay vì message
+     * tiếng Anh mặc định của Laravel khi bỏ trống ô nhập liệu).
+     */
+    public function messages(): array
+    {
+        return [
+            'username.required' => 'Chưa nhập tên đăng nhập.',
+            'password.required' => 'Chưa nhập mật khẩu.',
+        ];
+    }
+
     public function authenticate(): void
     {
         $this->ensureIsNotRateLimited();
@@ -32,7 +44,7 @@ class LoginRequest extends FormRequest
             RateLimiter::hit($this->throttleKey());
 
             throw ValidationException::withMessages([
-                'username' => trans('auth.failed'),
+                'username' => 'Tên đăng nhập hoặc mật khẩu không đúng.',
             ]);
         }
 

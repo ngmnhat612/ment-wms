@@ -29,7 +29,7 @@ class UpdateProductRequest extends FormRequest
             : $this->route('product');
 
         return [
-            'code'                => "nullable|string|max:50|regex:/^[A-Za-z0-9]+$/|unique:products,code,{$productId}", // ignore current;
+            'code'                => "nullable|string|max:50|unique:products,code,{$productId}", // ignore current;
             'name'                => 'required|string|max:200',
             'category_id'         => 'required|exists:categories,id',
             'uom_id'              => 'required|exists:uoms,id',
@@ -43,8 +43,8 @@ class UpdateProductRequest extends FormRequest
             'stock_rotation'      => 'required|in:1,2,3',
             'status'              => 'required|in:0,1',
             'image'               => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
-            'min_qty'             => 'nullable|integer|min:0|max:99999',
-            'max_qty'             => 'nullable|integer|min:0|max:99999|gte:min_qty',
+            'min_qty'             => 'nullable|integer|min:0|max:99999999',
+            'max_qty'             => 'nullable|integer|min:0|max:99999999|gte:min_qty',
             'location_id'         => 'nullable|exists:locations,id',
         ];
     }
@@ -54,7 +54,6 @@ class UpdateProductRequest extends FormRequest
         return [
             // 'code.required'                   => 'Vui lòng nhập mã MenT.',
             'code.max'                        => 'Mã MenT không được vượt quá 50 ký tự.',
-            'code.regex'                      => 'Mã MenT chỉ được phép chứa chữ cái và số, không chứa ký tự đặc biệt.',
             'code.unique'                     => 'Mã MenT đã tồn tại.',
             'name.required'                   => 'Vui lòng nhập tên vật tư.',
             'name.max'                        => 'Tên vật tư không được vượt quá 200 ký tự.',
@@ -75,8 +74,9 @@ class UpdateProductRequest extends FormRequest
             'image.image'                     => 'File không phải là hình ảnh hợp lệ.',
             'image.mimes'                     => 'Hình ảnh phải có định dạng jpeg, png, jpg hoặc webp.',
             'image.max'                       => 'Hình ảnh không được vượt quá 2MB.',
-            'max_qty.gte'                     => 'Ngưỡng tối đa phải >= ngưỡng tối thiểu.',
-            'min_qty.max'                     => 'Ngưỡng tối thiểu phải < 99999.',
+            'max_qty.gte'                     => 'Ngưỡng tối thiểu không được vượt quá ngưỡng tối đa.',
+            'min_qty.max'                     => 'Ngưỡng tối thiểu phải bé hơn 99999999.',
+            'max_qty.max'                     => 'Ngưỡng tối đa phải bé hơn 99999999.',
             'location_id'                     => 'nullable|exists:locations,id',
         ];
     }

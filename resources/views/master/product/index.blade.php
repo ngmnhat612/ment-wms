@@ -171,6 +171,7 @@
                 <td>
                   @if ($product->image_path)
                     <img src="{{ Storage::url($product->image_path) }}"
+                        class="img-zoomable"
                         style="width:50px; height:50px; object-fit:contain; cursor:zoom-in;"
                         alt="{{ $product->name }}"
                         data-preview="{{ Storage::url($product->image_path) }}">
@@ -185,7 +186,9 @@
                 </td>
                 <td><code class="text-primary fw-medium">{{ $product->code ?? '-' }}</code></td>
                 <td class="fw-medium">{{ $product->name ?? '-' }}</td>
-                <td class="small">{{ $product->specification ?? '-' }}</td>
+                <td class="small" title="{{ $product->specification }}">
+                  {{ truncate_text($product->specification) }}
+                </td>
                 <td class="small">{{ $product->category?->code ?? '-' }}</td>
                 <td class="small">{{ $product->uom?->name ?? '-' }}</td>
                 <td class="small">{{ $product->tracking_type?->label() ?? '-' }}</td>
@@ -267,7 +270,7 @@
           <input type="text" class="form-control text-uppercase"
                 id="pCode" name="code"
                 placeholder="Tự động"
-                oninput="this.value = this.value.toUpperCase()">
+                oninput="sanitizeCodeInput(this)">
         </div>
 
         {{-- Chế độ biến thể: Mã MenT gốc + Mã MenT biến thể (cùng hàng 50/50) --}}
@@ -279,7 +282,7 @@
                     id="pParentCode" name="parent_code"
                     placeholder="Nhập hoặc chọn"
                     list="parentCodeList"
-                    oninput="this.value = this.value.toUpperCase(); fetchParentProduct()"
+                    oninput="sanitizeCodeInput(this); fetchParentProduct()"
                     onblur="fetchParentProduct()">
               <datalist id="parentCodeList">
                 @foreach ($allProducts as $p)
@@ -292,7 +295,7 @@
               <input type="text" class="form-control text-uppercase"
                     id="pVariantCode" name="code"
                     placeholder="TỰ ĐỘNG"
-                    oninput="this.value = this.value.toUpperCase()">
+                    oninput="sanitizeCodeInput(this)">
             </div>
           </div>
         </div>
@@ -301,7 +304,7 @@
         <div class="mb-3 d-block" id="nameNormalWrap">
           <label class="form-label">Tên <span class="text-danger">*</span></label>
           <input type="text" class="form-control" id="pName" name="name"
-                placeholder="Nhập tên" required maxlength="200">
+                placeholder="Nhập tên" maxlength="200">
         </div>
 
         {{-- Chế độ biến thể: Tên --}}
@@ -413,22 +416,24 @@
 
           <div class="col-6">
             <label class="form-label">Ngưỡng tồn tối thiểu (Min)</label>
-            <input type="number" step="1" min="0" max="99999"
-                  class="form-control" id="pMinQty" name="min_qty"
-                  value="0"
-                  onkeydown="blockInvalidNumberKeys(event)"
-                  onpaste="blockInvalidNumberPaste(event)"
-                  oninput="sanitizeNumberInput(this)">
-          </div>
-          <div class="col-6">
+            <input type="text" inputmode="numeric" pattern="[0-9]*"
+                    class="form-control" id="pMinQty" name="min_qty"
+                    value="0"
+                    onkeydown="blockInvalidNumberKeys(event)"
+                    onpaste="blockInvalidNumberPaste(event)"
+                    oninput="sanitizeNumberInput(this)"
+                    data-max="99999999">
+            </div>
+            <div class="col-6">
             <label class="form-label">Ngưỡng tồn tối đa (Max)</label>
-            <input type="number" step="1" min="0" max="99999"
-                  class="form-control" id="pMaxQty" name="max_qty"
-                  value="0"
-                  onkeydown="blockInvalidNumberKeys(event)"
-                  onpaste="blockInvalidNumberPaste(event)"
-                  oninput="sanitizeNumberInput(this)">
-          </div>
+            <input type="text" inputmode="numeric" pattern="[0-9]*"
+                    class="form-control" id="pMaxQty" name="max_qty"
+                    value="0"
+                    onkeydown="blockInvalidNumberKeys(event)"
+                    onpaste="blockInvalidNumberPaste(event)"
+                    oninput="sanitizeNumberInput(this)"
+                    data-max="99999999">
+            </div>
 
           {{-- ===== Gợi ý vị trí ===== --}}
           <div class="col-12">
@@ -461,7 +466,7 @@
             <div class="form-check">
               <input class="form-check-input" type="radio" name="status"
                      id="pStatusInactive" value="0">
-              <label class="form-check-label text-secondary" for="pStatusInactive">Ngừng hoạt động</label>
+              <label class="form-check-label text-secondary" for="pStatusInactive">Ngưng hoạt động</label>
             </div>
           </div>
         </div>
@@ -522,6 +527,8 @@
   ">
     <img id="imgPreviewPopupImg" src="" style="width:500px;height:500px;object-fit:contain;">
   </div>
+
+@include('master.product.partials.image-zoom-modal')
 
 @endsection
 
@@ -738,7 +745,7 @@
 
     const alertHtml = `
       <div class="alert alert-danger alert-dismissible mb-3" role="alert">
-        <strong>Vui lòng kiểm tra lại:</strong>
+        <strong>Kiểm tra lại:</strong>
         <ul class="mb-0 mt-1 ps-3">
           @foreach ($errors->all() as $error)
             <li>{{ $error }}</li>
@@ -805,10 +812,10 @@
       document.getElementById('pLocationText').value = oldLoc2 ? `[${oldLoc2.code}] ${oldLoc2.name}` : '';
 
       setSelectValueSafe('pUom', @json(old('uom_id', '')));
-      
+
       const categoryId = p ? (p.category_id ?? '') : @json(old('category_id', ''));
       lockCategoryForEdit(categoryId);
-      
+
       if (p && p.image_url) {
         showImagePreview(p.image_url, p.image_name);
       }
@@ -862,8 +869,8 @@
     document.getElementById('pNameVariant').disabled = !isVariant;
     document.getElementById('pParentCode').disabled  = !isVariant;
 
-    document.getElementById('pName').required        = !isVariant;
-    document.getElementById('pNameVariant').required =  isVariant;
+    // document.getElementById('pName').required        = !isVariant;
+    // document.getElementById('pNameVariant').required =  isVariant;
 
     const lock = ['pCategory', 'pUom', 'pTracking', 'pRotation'];
     lock.forEach(id => {
@@ -984,4 +991,6 @@
     }
   }
 </script>
+
+  @vite('resources/js/product/product-index.js')
 @endpush

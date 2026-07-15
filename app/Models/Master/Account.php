@@ -3,6 +3,7 @@
 namespace App\Models\Master;
 
 use App\Enums\ActiveStatus;
+use Illuminate\Database\Eloquent\Factories\HasFactory;  
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
@@ -10,6 +11,7 @@ use Spatie\Permission\Traits\HasRoles;
 class Account extends Authenticatable
 {
     use Notifiable, HasRoles;
+    use HasFactory;
 
     protected $table = 'accounts';
 

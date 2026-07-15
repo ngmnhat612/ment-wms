@@ -26,15 +26,19 @@ return new class extends Migration
         });
 
         // CHECK: product_id và category_id không được cùng NULL hoặc cùng có giá trị
-        DB::statement("
-            ALTER TABLE putaway_rules
-            ADD CONSTRAINT chk_putaway_rule_target
-            CHECK (
-                (product_id IS NOT NULL AND category_id IS NULL)
-                OR
-                (product_id IS NULL AND category_id IS NOT NULL)
-            )
-        ");
+        // UPDATE
+        if (DB::connection()->getDriverName() !== 'sqlite') {
+            DB::statement("
+                ALTER TABLE putaway_rules
+                ADD CONSTRAINT chk_putaway_rule_target
+                CHECK (
+                    (product_id IS NOT NULL AND category_id IS NULL)
+                    OR
+                    (product_id IS NULL AND category_id IS NOT NULL)
+                )
+            ");
+        }
+        // UPDATE
     }
 
     public function down(): void

@@ -112,7 +112,9 @@
                   <code class="text-primary fw-medium">{{ $brand->code ?? '-' }}</code>
                 </td>
                 <td class="fw-medium">{{ $brand->name ?? '-' }}</td>
-                <td class="small">{{ $brand->note ?? '-' }}</td>
+                <td class="small" title="{{ $brand->note }}">
+                {{ truncate_text($brand->note) }}
+                </td>
                 <td class="text-center">
                   @if ($brand->status === \App\Enums\ActiveStatus::Active)
                     <span class="badge bg-success-subtle text-success border border-success-subtle">Hoạt động</span>
@@ -223,7 +225,7 @@
                 <div class="form-check">
                   <input class="form-check-input" type="radio" name="status"
                          id="bStatusInactive" value="0">
-                  <label class="form-check-label text-secondary" for="bStatusInactive">Ngừng hoạt động</label>
+                  <label class="form-check-label text-secondary" for="bStatusInactive">Ngưng hoạt động</label>
                 </div>
               </div>
             </div>
@@ -319,9 +321,7 @@
   }
 
   document.getElementById('bCode').addEventListener('input', function () {
-    const pos = this.selectionStart;
-    this.value = this.value.toUpperCase();
-    this.setSelectionRange(pos, pos);
+    sanitizeCodeInput(this); 
   });
 
   @if ($errors->any())

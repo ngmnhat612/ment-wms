@@ -17,7 +17,7 @@ class UpdateSnRequest extends FormRequest
 
         return [
             'name'   => "required|string|max:200",
-            'code'   => "nullable|string|max:50|unique:sns,code,{$snId}",
+            'code'   => "nullable|string|max:50|regex:/^[A-Za-z0-9]+$/|unique:sns,code,{$snId}",
             'note'   => 'nullable|string|max:500',
             'status' => 'required|in:0,1',
         ];
@@ -28,6 +28,7 @@ class UpdateSnRequest extends FormRequest
         return [
             'name.required' => 'Vui lòng nhập tên dự án.',
             'code.unique'   => 'Mã dự án đã tồn tại.',
+            'code.regex'    => 'Mã dự án chỉ được phép chứa chữ cái và số, không chứa ký tự đặc biệt.', 
         ];
     }
 }

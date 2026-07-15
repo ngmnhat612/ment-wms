@@ -11,9 +11,12 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use App\Models\Inventory\Lot;
 use App\Models\Inventory\Serial;
 use App\Models\Inventory\Stock;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Product extends Model
 {
+    use HasFactory;
+
     protected $table = 'products';
 
     protected $fillable = [

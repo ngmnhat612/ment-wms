@@ -135,7 +135,9 @@
                     <span class="text-body-secondary small">-</span>
                   @endif
                 </td>
-                <td class="small">{{ $rule->note ?: '-' }}</td>
+                <td class="small" title="{{ $rule->note }}">
+                  {{ truncate_text($rule->note) }}
+                </td>
                 <td class="text-center">
                   @if ($rule->status === \App\Enums\ActiveStatus::Active)
                     <span class="badge bg-success-subtle text-success border border-success-subtle">Hoạt động</span>
@@ -229,30 +231,32 @@
             <div class="row g-3 mb-3">
               <div class="col-6">
                 <label class="form-label fw-medium">Min <span class="text-danger">*</span></label>
-                <input type="number" step="1" min="0" max="99999"
-                      class="form-control {{ $errors->has('min_qty') ? 'is-invalid' : '' }}"
-                      id="rMinQty" name="min_qty"
-                      onkeydown="blockInvalidNumberKeys(event)"
-                      onpaste="blockInvalidNumberPaste(event)"
-                      oninput="sanitizeNumberInput(this)"
-                      value="{{ old('min_qty', 0) }}" required>
+                <input type="text" inputmode="numeric" pattern="[0-9]*"
+                        class="form-control {{ $errors->has('min_qty') ? 'is-invalid' : '' }}"
+                        id="rMinQty" name="min_qty"
+                        onkeydown="blockInvalidNumberKeys(event)"
+                        onpaste="blockInvalidNumberPaste(event)"
+                        oninput="sanitizeNumberInput(this)"
+                        data-max="99999999"
+                        value="{{ old('min_qty', 0) }}" required>
                 @error('min_qty')
-                  <div class="invalid-feedback">{{ $message }}</div>
+                    <div class="invalid-feedback">{{ $message }}</div>
                 @enderror
-              </div>
-              <div class="col-6">
+                </div>
+                <div class="col-6">
                 <label class="form-label fw-medium">Max <span class="text-danger">*</span></label>
-                <input type="number" step="1" min="0" max="99999"
-                      class="form-control {{ $errors->has('max_qty') ? 'is-invalid' : '' }}"
-                      id="rMaxQty" name="max_qty"
-                      onkeydown="blockInvalidNumberKeys(event)"
-                      onpaste="blockInvalidNumberPaste(event)"
-                      oninput="sanitizeNumberInput(this)"
-                      value="{{ old('max_qty', 0) }}" required>
+                <input type="text" inputmode="numeric" pattern="[0-9]*"
+                        class="form-control {{ $errors->has('max_qty') ? 'is-invalid' : '' }}"
+                        id="rMaxQty" name="max_qty"
+                        onkeydown="blockInvalidNumberKeys(event)"
+                        onpaste="blockInvalidNumberPaste(event)"
+                        oninput="sanitizeNumberInput(this)"
+                        data-max="99999999"
+                        value="{{ old('max_qty', 0) }}" required>
                 @error('max_qty')
-                  <div class="invalid-feedback">{{ $message }}</div>
+                    <div class="invalid-feedback">{{ $message }}</div>
                 @enderror
-              </div>
+                </div>
             </div>
 
             <div class="mb-3">
@@ -295,7 +299,7 @@
                 <div class="form-check">
                   <input class="form-check-input" type="radio" name="status"
                          id="rStatusInactive" value="0">
-                  <label class="form-check-label text-secondary" for="rStatusInactive">Ngừng hoạt động</label>
+                  <label class="form-check-label text-secondary" for="rStatusInactive">Ngưng hoạt động</label>
                 </div>
               </div>
             </div>
