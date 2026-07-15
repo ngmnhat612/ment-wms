@@ -40,3 +40,12 @@ function sanitizeDigitsOnly(el) {
     const cleaned = el.value.replace(/[^\d]/g, '');
     if (cleaned !== el.value) el.value = cleaned;
 }
+
+// Vite build file này dưới dạng ES module (scope riêng), trong khi nhiều Blade view
+// vẫn gọi các hàm qua thuộc tính inline (vd: onkeydown="blockInvalidNumberKeys(event)",
+// onpaste="blockInvalidNumberPaste(event)", oninput="sanitizeNumberInput(this)").
+// Gán ra window để giữ tương thích ngược, tránh phải sửa lại toàn bộ các view.
+window.blockInvalidNumberKeys = blockInvalidNumberKeys;
+window.blockInvalidNumberPaste = blockInvalidNumberPaste;
+window.sanitizeNumberInput = sanitizeNumberInput;
+window.sanitizeDigitsOnly = sanitizeDigitsOnly;

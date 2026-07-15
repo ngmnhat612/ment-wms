@@ -26,3 +26,11 @@ function clearValidationErrors(formId) {
     if (!form) return;
     form.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
 }
+
+// Vite build các file này dưới dạng ES module (scope riêng), trong khi nhiều Blade view
+// vẫn gọi các hàm này qua thuộc tính inline (vd: onclick="sanitizeCodeInput(this)",
+// oninput="clearValidationErrors('categoryForm')"). Gán ra window để giữ tương thích
+// ngược, tránh phải sửa lại toàn bộ các view đang dùng inline handler.
+window.sanitizeCodeInput = sanitizeCodeInput;
+window.setModalFormId = setModalFormId;
+window.clearValidationErrors = clearValidationErrors;

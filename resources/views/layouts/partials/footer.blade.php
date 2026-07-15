@@ -9,11 +9,11 @@
 <script src="{{ asset('vendor/coreui/js/coreui-chip-only.min.js') }}"></script>
 <script src="{{ asset('vendor/coreui/js/chip-input-bridge.js') }}"></script>
 
-{{-- public/js/number-input-guard.js --}}
-<script src="{{ asset('js/number-input-guard.js') }}"></script>
+{{-- resources/js/number-input-guard.js (đã chuyển từ public/js, build qua Vite) --}}
+@vite('resources/js/number-input-guard.js')
 
-{{-- public/js/crud-modal-helpers.js --}}
-<script src="{{ asset('js/crud-modal-helpers.js') }}"></script>
+{{-- resources/js/crud-modal-helpers.js (đã chuyển từ public/js, build qua Vite) --}}
+@vite('resources/js/crud-modal-helpers.js')
 
 {{-- Simplebar (scrollbar tuỳ chỉnh cho sidebar) --}}
 <script src="{{ asset('vendor/coreui/simplebar/simplebar.min.js') }}"></script>

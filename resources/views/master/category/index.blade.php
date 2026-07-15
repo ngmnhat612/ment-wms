@@ -335,14 +335,22 @@
   });
 
   @if ($errors->any())
-    openModal(
-    //   null,
-      {{ old('id') ?: 'null' }},
-      '{{ old("code") }}',
-      '{{ addslashes(old("name")) }}',
-      '{{ addslashes(old("note")) }}',
-      {{ old("status", 1) }}
-    );
+    // Bọc trong DOMContentLoaded vì openModal() gọi setModalFormId(), hàm này được
+    // định nghĩa trong resources/js/crud-modal-helpers.js và build qua Vite dưới dạng
+    // <script type="module">. Module luôn thực thi SAU khi parse xong toàn bộ HTML
+    // (tương đương defer), nghĩa là nếu gọi openModal() ngay lập tức tại đây (script
+    // thường, chạy đồng bộ ngay khi parse tới), window.setModalFormId có thể CHƯA tồn
+    // tại → "setModalFormId is not defined". DOMContentLoaded đảm bảo module đã chạy xong.
+    document.addEventListener('DOMContentLoaded', function () {
+      openModal(
+      //   null,
+        {{ old('id') ?: 'null' }},
+        '{{ old("code") }}',
+        '{{ addslashes(old("name")) }}',
+        '{{ addslashes(old("note")) }}',
+        {{ old("status", 1) }}
+      );
+    });
   @endif
 
   // ===== CHẶN SUBMIT LIÊN TỤC =====

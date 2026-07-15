@@ -554,17 +554,22 @@
   });
 
   @if ($errors->hasAny(['code', 'name', 'phone_number', 'department_id', 'note', 'status']))
-    openEmployeeModal(
-    //   null,
-      {{ old('id') ?: 'null' }},
-      '{{ old("code") }}',
-      '{{ addslashes(old("name")) }}',
-      '{{ addslashes(old("phone_number")) }}',
-      {{ old("department_id") ? old("department_id") : 'null' }},
-      '{{ addslashes(old("note")) }}',
-      {{ old("status", 1) }},
-      true   {{-- keepErrors --}}
-    );
+    // Bọc trong DOMContentLoaded để đảm bảo resources/js/crud-modal-helpers.js
+    // (build qua Vite dạng module, luôn chạy sau khi HTML parse xong) đã sẵn sàng
+    // trước khi openEmployeeModal() gọi setModalFormId().
+    document.addEventListener('DOMContentLoaded', function () {
+      openEmployeeModal(
+      //   null,
+        {{ old('id') ?: 'null' }},
+        '{{ old("code") }}',
+        '{{ addslashes(old("name")) }}',
+        '{{ addslashes(old("phone_number")) }}',
+        {{ old("department_id") ? old("department_id") : 'null' }},
+        '{{ addslashes(old("note")) }}',
+        {{ old("status", 1) }},
+        true   {{-- keepErrors --}}
+      );
+    });
   @endif
 
   @if ($errors->hasAny(['username', 'password', 'password_confirmation', 'new_password', 'new_password_confirmation', 'role', 'account_status']))
@@ -573,22 +578,26 @@
       $errEmployee   = $errEmployeeId ? \App\Models\Master\Employee::with('account.roles')->find($errEmployeeId) : null;
       $errAccount    = $errEmployee?->account;
     @endphp
-    openAccountModal(
-      {{ $errEmployeeId ?? 'null' }},
-      '{{ addslashes($errEmployee->name ?? '') }}',
-      '{{ addslashes($errEmployee->code ?? '') }}',
-      @if ($errAccount)
-        {
-          username: '{{ addslashes($errAccount->username) }}',
-          role: '{{ $errAccount->getRoleNames()->first() }}',
-          status: {{ $errAccount->status->value ?? 1 }}
-        }
-      @else
-        null
-      @endif
-      ,
-      true   {{-- keepErrors --}}
-    );
+    // Bọc trong DOMContentLoaded để đảm bảo module Vite đã sẵn sàng trước khi
+    // openAccountModal() chạy (nhất quán với openEmployeeModal() ở trên).
+    document.addEventListener('DOMContentLoaded', function () {
+      openAccountModal(
+        {{ $errEmployeeId ?? 'null' }},
+        '{{ addslashes($errEmployee->name ?? '') }}',
+        '{{ addslashes($errEmployee->code ?? '') }}',
+        @if ($errAccount)
+          {
+            username: '{{ addslashes($errAccount->username) }}',
+            role: '{{ $errAccount->getRoleNames()->first() }}',
+            status: {{ $errAccount->status->value ?? 1 }}
+          }
+        @else
+          null
+        @endif
+        ,
+        true   {{-- keepErrors --}}
+      );
+    });
   @endif
 
   // ===== CHẶN SUBMIT LIÊN TỤC =====

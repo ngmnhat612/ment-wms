@@ -388,17 +388,22 @@
   });
 
   @if ($errors->any())
-    openModal(
-    //   null, null, null,
-      {{ old('id') ?: 'null' }},
-      {{ old('parent_id') ?: 'null' }},
-      {{ old('warehouse_id') ?: 'null' }},
-      '{{ old('code') }}',
-      '{{ addslashes(old('name')) }}',
-      {{ old('type', 1) }},
-      {{ old('status', 1) }},
-      '{{ addslashes(old('note')) }}'
-    );
+    // Bọc trong DOMContentLoaded để đảm bảo resources/js/crud-modal-helpers.js
+    // (build qua Vite dạng module, luôn chạy sau khi HTML parse xong) đã sẵn sàng
+    // trước khi openModal() gọi setModalFormId().
+    document.addEventListener('DOMContentLoaded', function () {
+      openModal(
+      //   null, null, null,
+        {{ old('id') ?: 'null' }},
+        {{ old('parent_id') ?: 'null' }},
+        {{ old('warehouse_id') ?: 'null' }},
+        '{{ old('code') }}',
+        '{{ addslashes(old('name')) }}',
+        {{ old('type', 1) }},
+        {{ old('status', 1) }},
+        '{{ addslashes(old('note')) }}'
+      );
+    });
   @endif
 
   // ===== TREE HELPERS =====

@@ -331,14 +331,19 @@
   });
 
   @if ($errors->any())
-      openModal(
-        //   null,
-          {{ old('id') ?: 'null' }},
-          '{{ old("code") }}',
-          '{{ addslashes(old("name")) }}',
-          '{{ addslashes(old("note")) }}',
-          {{ old("status", 1) }}
-      );
+      // Bọc trong DOMContentLoaded để đảm bảo resources/js/crud-modal-helpers.js
+      // (build qua Vite dạng module, luôn chạy sau khi HTML parse xong) đã sẵn sàng
+      // trước khi openModal() gọi setModalFormId().
+      document.addEventListener('DOMContentLoaded', function () {
+        openModal(
+          //   null,
+            {{ old('id') ?: 'null' }},
+            '{{ old("code") }}',
+            '{{ addslashes(old("name")) }}',
+            '{{ addslashes(old("note")) }}',
+            {{ old("status", 1) }}
+        );
+      });
   @endif
 
   // ===== CHẶN SUBMIT LIÊN TỤC =====

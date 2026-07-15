@@ -17,8 +17,8 @@
 {{-- CoreUI Charts --}}
 <link rel="stylesheet" href="{{ asset('vendor/coreui/chartjs/coreui-chartjs.css') }}">
 
-{{-- Custom CSS của project --}}
-<link rel="stylesheet" href="{{ asset('css/breadcrumb.css') }}">
+{{-- Custom CSS của project (đã chuyển vào resources/css, build qua Vite) --}}
+@vite('resources/css/breadcrumb.css')
 
 {{-- Stack CSS riêng từng trang --}}
 @stack('styles')

@@ -6,7 +6,10 @@ export default defineConfig({
         laravel({
             input: [
                 'resources/css/app.css',
+                'resources/css/breadcrumb.css',
                 'resources/js/app.js',
+                'resources/js/crud-modal-helpers.js',
+                'resources/js/number-input-guard.js',
                 'resources/js/product/product-index.js'
             ],
             refresh: true,
