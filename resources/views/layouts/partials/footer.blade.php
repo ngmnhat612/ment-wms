@@ -23,22 +23,5 @@
 {{-- Tạm thời comment lại color-modes để tránh lỗi querySelector khi header không có UI switch theme --}}
 {{-- <script src="{{ asset('vendor/coreui/js/custom/color-modes.js') }}"></script> --}}
 
-{{-- Tắt validate mặc định của trình duyệt cho các form CRUD dùng modal (category, department,
-     sn, brand, location, supplier, uom, warehouse, employee...), để lỗi luôn đi qua server và
-     hiển thị đồng bộ qua banner "Vui lòng kiểm tra lại". Giữ nguyên required trong HTML (không xoá).
-     CHÚ Ý: không chọn '.offcanvas form' — productForm dùng offcanvas và đã được xử lý riêng. --}}
-<script>
-(function () {
-    function disableNativeValidationOnModals() {
-        document.querySelectorAll('.modal form').forEach(function (form) {
-            form.setAttribute('novalidate', 'novalidate');
-        });
-    }
-
-    document.body.addEventListener('htmx:afterSwap', disableNativeValidationOnModals);
-    document.addEventListener('DOMContentLoaded', disableNativeValidationOnModals);
-})();
-</script>
-
 {{-- Stack JS riêng từng trang --}}
 @stack('scripts')
