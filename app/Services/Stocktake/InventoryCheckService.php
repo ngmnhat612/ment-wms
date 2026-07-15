@@ -139,8 +139,7 @@ class InventoryCheckService
             }
 
             $inventoryCheck->update([
-                'status'       => InventoryCheckStatus::Completed->value,
-                'completed_at' => now(),
+                'status' => InventoryCheckStatus::Completed->value,
             ]);
 
             return $inventoryCheck->fresh();

@@ -51,11 +51,13 @@ $fmt = fn($n) => rtrim(rtrim(number_format((float)$n, 3, '.', ','), '0'), '.');
     <div class="card-body">
         <div class="row g-3">
             <div class="col-md-3">
-                <label class="form-label mb-1">Mã phiếu</label>
-                <div class="fw-semibold">{{ $receipt->code }}</div>
+                <label class="form-label mb-1 fw-semibold">Mã phiếu</label>
+                <div class="fw-medium">
+                    <code class="text-primary">{{ $receipt->code }}</code>
+                </div>
             </div>
             <div class="col-md-3">
-                <label class="form-label mb-1">Phiếu liên kết</label>
+                <label class="form-label mb-1 fw-semibold">Phiếu liên kết</label>
                 <div>
                     @if($receipt->stockInRequest)
                         <a href="{{ route('stock-in-requests.show', $receipt->stockInRequest) }}">
@@ -67,11 +69,11 @@ $fmt = fn($n) => rtrim(rtrim(number_format((float)$n, 3, '.', ','), '0'), '.');
                 </div>
             </div>
             <div class="col-md-3">
-                <label class="form-label mb-1">Ngày nhập</label>
+                <label class="form-label mb-1 fw-semibold">Ngày nhập</label>
                 <div>{{ $receipt->receipt_date ? \Carbon\Carbon::parse($receipt->receipt_date)->format('d/m/Y') : '-' }}</div>
             </div>
             <div class="col-md-3">
-                <label class="form-label mb-1">Ghi chú</label>
+                <label class="form-label mb-1 fw-semibold">Ghi chú</label>
                 <div>{{ $receipt->note ?? '-' }}</div>
             </div>
         </div>
@@ -123,8 +125,8 @@ $fmt = fn($n) => rtrim(rtrim(number_format((float)$n, 3, '.', ','), '0'), '.');
                             <div class="fw-medium">{{ $line->product->name ?? '-' }}</div>
                             <div class="small text-body-secondary font-monospace">{{ $line->product->code ?? '' }}</div>
                         </td>
-                        <td>{{ $line->product?->specification ?? '-' }}</td>
-                        <td>{{ $line->uom?->name ?? '-' }}</td>
+                        <td class="small">{{ $line->product?->specification ?? '-' }}</td>
+                        <td class="small">{{ $line->uom?->name ?? '-' }}</td>
                         <td class="text-end">{{ $fmt($line->expected_qty) }}</td>
                         <td class="text-end">
                             <span class="{{ $actualQty < $line->expected_qty ? 'text-warning' : 'text-success' }}">
@@ -147,7 +149,7 @@ $fmt = fn($n) => rtrim(rtrim(number_format((float)$n, 3, '.', ','), '0'), '.');
                                 <span class="text-body-secondary small">-</span>
                             @endif
                         </td>
-                        <td>{{ $line->sn?->code ?? '-' }}</td>
+                        <td class="small">{{ $line->sn?->code ?? '-' }}</td>
                         <td>{{ $lotNumber }}</td>
                         <td class="small">
                             @if($tracking === 2 && $serialNumbers !== '')
@@ -157,8 +159,8 @@ $fmt = fn($n) => rtrim(rtrim(number_format((float)$n, 3, '.', ','), '0'), '.');
                             @else -
                             @endif
                         </td>
-                        <td>{{ $firstDetail->sub_warehouse ?? '-' }}</td>
-                        <td>{{ $line->note ?? '-' }}</td>
+                        <td class="small">{{ $firstDetail->sub_warehouse ?? '-' }}</td>
+                        <td class="small">{{ $line->note ?? '-' }}</td>
                     </tr>
                 @empty
                 <tr><td colspan="13" class="text-center text-body-secondary py-5">Không có dòng chi tiết.</td></tr>

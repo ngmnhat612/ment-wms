@@ -58,4 +58,9 @@ class StockAdjustmentRepository implements StockAdjustmentRepositoryInterface
 
         return $prefix . str_pad((string) $seq, 4, '0', STR_PAD_LEFT);
     }
+
+    public function deleteDetails(StockAdjustment $adjustment): void
+    {
+        StockAdjustmentDetail::where('stock_adjustment_id', $adjustment->id)->delete();
+    }
 }

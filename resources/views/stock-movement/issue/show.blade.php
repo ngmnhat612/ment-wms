@@ -62,11 +62,13 @@ $typeLabels = [1 => 'Sản xuất', 2 => 'Bảo trì', 3 => 'Mượn', 4 => 'Tr�
     <div class="card-body">
         <div class="row g-3">
             <div class="col-md-3">
-                <label class="form-label mb-1">Mã phiếu</label>
-                <div class="fw-semibold">{{ $issue->code }}</div>
+                <label class="form-label mb-1 fw-semibold">Mã phiếu</label>
+                <div class="fw-semibold">
+                    <code class="text-primary">{{ $issue->code }}</code>
+                </div>
             </div>
             <div class="col-md-3">
-                <label class="form-label mb-1">Phiếu liên kết</label>
+                <label class="form-label mb-1 fw-semibold">Phiếu liên kết</label>
                 <div>
                     @if($issue->stockOutRequest)
                         <a href="{{ route('stock-out-requests.show', $issue->stockOutRequest) }}">
@@ -78,11 +80,11 @@ $typeLabels = [1 => 'Sản xuất', 2 => 'Bảo trì', 3 => 'Mượn', 4 => 'Tr�
                 </div>
             </div>
             <div class="col-md-3">
-                <label class="form-label mb-1">Ngày xuất</label>
+                <label class="form-label mb-1 fw-semibold">Ngày xuất</label>
                 <div>{{ $issue->issue_date ? \Carbon\Carbon::parse($issue->issue_date)->format('d/m/Y') : '-' }}</div>
             </div>
             <div class="col-md-3">
-                <label class="form-label mb-1">Ghi chú</label>
+                <label class="form-label mb-1 fw-semibold">Ghi chú</label>
                 <div>{{ $issue->note ?? '-' }}</div>
             </div>
         </div>
@@ -134,8 +136,8 @@ $typeLabels = [1 => 'Sản xuất', 2 => 'Bảo trì', 3 => 'Mượn', 4 => 'Tr�
                                 <div class="fw-medium">{{ $line->product->name ?? '-' }}</div>
                                 <div class="small text-body-secondary font-monospace">{{ $line->product->code ?? '' }}</div>
                             </td>
-                            <td>{{ $line->product?->specification ?? '-' }}</td>
-                            <td>{{ $line->uom?->name ?? '-' }}</td>
+                            <td class="small">{{ $line->product?->specification ?? '-' }}</td>
+                            <td class="small">{{ $line->uom?->name ?? '-' }}</td>
                             <td class="text-end">{{ $fmt($line->expected_qty) }}</td>
                             <td class="text-end">
                                 <span class="{{ $actualQty < $line->expected_qty ? 'text-warning' : 'text-success' }}">
@@ -158,7 +160,7 @@ $typeLabels = [1 => 'Sản xuất', 2 => 'Bảo trì', 3 => 'Mượn', 4 => 'Tr�
                                     <span class="text-body-secondary small">-</span>
                                 @endif
                             </td>
-                            <td>{{ $line->sn?->code ?? '-' }}</td>
+                            <td class="small">{{ $line->sn?->code ?? '-' }}</td>
                             <td>
                                 @if($tracking === 2)
                                     <span class="text-danger">{{ $lotNumber === '-' ? 'Chưa có lot' : $lotNumber }}</span>
@@ -174,8 +176,8 @@ $typeLabels = [1 => 'Sản xuất', 2 => 'Bảo trì', 3 => 'Mượn', 4 => 'Tr�
                                 @else -
                                 @endif
                             </td>
-                            <td>{{ $firstDetail->sub_warehouse ?? '-' }}</td>
-                            <td>{{ $line->note ?? '-' }}</td>
+                            <td class="small">{{ $firstDetail->sub_warehouse ?? '-' }}</td>
+                            <td class="small">{{ $line->note ?? '-' }}</td>
                         </tr>
                     @empty
                         <tr><td colspan="14" class="text-center text-body-secondary py-5">Không có dòng chi tiết.</td></tr>

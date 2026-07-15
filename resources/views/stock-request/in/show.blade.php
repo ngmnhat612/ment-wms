@@ -4,7 +4,7 @@
 
 @section('breadcrumb')
 <li class="breadcrumb-item">Nghiệp vụ kho</li>
-<li class="breadcrumb-item"><a href="{{ route('stock-requests.index') }}">Yêu cầu Nhập/Xuất kho</a></li>
+<li class="breadcrumb-item"><a href="{{ route('stock-requests.index') }}">Yêu cầu Nhập/Xuất</a></li>
 <li class="breadcrumb-item active">{{ $stockInRequest->code }}</li>
 @endsection
 
@@ -59,19 +59,17 @@ $fmt = fn($n) => rtrim(rtrim(number_format((float)$n, 3, '.', ','), '0'), '.');
     <div class="card-body">
         <div class="row g-3">
             <div class="col-md-3">
-                <label class="form-label mb-1">Mã phiếu</label>
-                <div class="fw-semibold">{{ $stockInRequest->code }}</div>
+                <label class="form-label mb-1 fw-semibold">Mã phiếu</label>
+                <div class="fw-medium">
+                    <code class="text-primary">{{ $stockInRequest->code }}</code>
+                </div>
             </div>
             <div class="col-md-3">
-                <label class="form-label mb-1">Người tạo</label>
-                <div>{{ $stockInRequest->createdBy?->display_name ?? '-' }}</div>
+                <label class="form-label mb-1 fw-semibold">Ngày yêu cầu</label>
+                <div>{{ $stockInRequest->request_date ? \Carbon\Carbon::parse($stockInRequest->request_date)->format('d/m/Y') : '-' }}</div>
             </div>
-            <div class="col-md-3">
-                <label class="form-label mb-1">Ngày tạo</label>
-                <div>{{ $stockInRequest->created_at?->format('d/m/Y H:i') ?? '-' }}</div>
-            </div>
-            <div class="col-md-12">
-                <label class="form-label mb-1">Ghi chú</label>
+            <div class="col-md-6">
+                <label class="form-label mb-1 fw-semibold">Ghi chú</label>
                 <div>{{ $stockInRequest->note ?? '-' }}</div>
             </div>
         </div>
@@ -94,38 +92,37 @@ $fmt = fn($n) => rtrim(rtrim(number_format((float)$n, 3, '.', ','), '0'), '.');
                         <th class="text-center" style="width:2%">#</th>
                         <th style="width:8%">Số PO/CU</th>
                         <th style="width:8%">Ngày nhận</th>
+                        <th style="min-width:100px">Mã MenT</th>
                         <th style="min-width:100px">Mã mới</th>
                         <th style="min-width:160px">Vật tư</th>
                         <th style="min-width:140px">TSKT</th>
-                        <th style="width:8%">Thương hiệu</th>
-                        <th style="width:6%" class="text-end">SL</th>
                         <th style="width:6%">ĐVT</th>
-                        <th style="width:6%">Số Lô</th>
+                        <th style="width:6%">Hãng</th>
+                        <th style="width:4%" class="text-end">SL</th>
+                        <th style="width:6%">Lô</th>
                         <th style="width:8%">Ngày QC</th>
                         <th style="min-width:120px">Người QC</th>
-                        <th style="min-width:100px">Kết quả QC</th>
-                        <th style="min-width:140px">Hướng khắc phục</th>
-                        <th style="min-width:120px">Người yêu cầu</th>
+                        <th style="min-width:120px">Kết quả QC</th>
+                        <th style="min-width:160px">Hướng khắc phục</th>
                         <th style="min-width:120px">Ghi chú</th>
+                        <th style="min-width:140px">Người yêu cầu</th>
                     </tr>
                 </thead>
                 <tbody>
                 @forelse($stockInRequest->details as $di => $detail)
                     <tr>
                         <td class="text-center text-body-secondary">{{ $di + 1 }}</td>
-                        <td>{{ $detail->reference_no ?? '-' }}</td>
-                        <td>{{ $detail->received_date ? \Carbon\Carbon::parse($detail->received_date)->format('d/m/Y') : '-' }}</td>
-                        <td>{{ $detail->new_product_code ?? '-' }}</td>
-                        <td>
-                            <div class="fw-medium">{{ $detail->product_name ?? '-' }}</div>
-                            <div class="small text-body-secondary font-monospace">{{ $detail->product_code ?? '' }}</div>
-                        </td>
-                        <td>{{ $detail->product_specification ?? '-' }}</td>
-                        <td>{{ $detail->brand_name ?? '-' }}</td>
+                        <td class="small">{{ $detail->reference_no ?? '-' }}</td>
+                        <td class="small">{{ $detail->received_date ? \Carbon\Carbon::parse($detail->received_date)->format('d/m/Y') : '-' }}</td>
+                        <td><code class="text-primary fw-medium">{{ $detail->product_code ?? '-' }}</code></td>
+                        <td><code class="text-primary fw-medium">{{ $detail->new_product_code ?? '-' }}</code></td>
+                        <td class="small">{{ $detail->product_name ?? '-' }}</td>
+                        <td class="small">{{ $detail->product_specification ?? '-' }}</td>
+                        <td class="small">{{ $detail->uom_name ?? '-' }}</td>
+                        <td class="small">{{ $detail->brand_name ?? '-' }}</td>
                         <td class="text-end">{{ $fmt($detail->quantity) }}</td>
-                        <td>{{ $detail->uom_name ?? '-' }}</td>
                         <td>{{ $detail->lot_number ?? '-' }}</td>
-                        <td>{{ $detail->qc_date ? \Carbon\Carbon::parse($detail->qc_date)->format('d/m/Y') : '-' }}</td>
+                        <td class="small">{{ $detail->qc_date ? \Carbon\Carbon::parse($detail->qc_date)->format('d/m/Y') : '-' }}</td>
                         <td>
                             @if ($detail->qcEmployee)
                                 <div class="fw-medium">{{ $detail->qcEmployee->name }}</div>
@@ -134,8 +131,9 @@ $fmt = fn($n) => rtrim(rtrim(number_format((float)$n, 3, '.', ','), '0'), '.');
                                 <span class="text-body-secondary small">-</span>
                             @endif
                         </td>
-                        <td>{{ $detail->qc_result ?? '-' }}</td>
-                        <td>{{ $detail->solution ?? '-' }}</td>
+                        <td class="small">{{ $detail->qc_result ?? '-' }}</td>
+                        <td class="small">{{ $detail->solution ?? '-' }}</td>
+                        <td class="small">{{ $detail->note ?? '-' }}</td>
                         <td>
                             @if ($detail->requester)
                                 <div class="fw-medium">{{ $detail->requester->name }}</div>
@@ -144,10 +142,9 @@ $fmt = fn($n) => rtrim(rtrim(number_format((float)$n, 3, '.', ','), '0'), '.');
                                 <span class="text-body-secondary small">-</span>
                             @endif
                         </td>
-                        <td>{{ $detail->note ?? '-' }}</td>
                     </tr>
                 @empty
-                <tr><td colspan="16" class="text-center text-body-secondary py-5">Không có dòng chi tiết.</td></tr>
+                <tr><td colspan="17" class="text-center text-body-secondary py-5">Không có dòng chi tiết.</td></tr>
                 @endforelse
                 </tbody>
             </table>

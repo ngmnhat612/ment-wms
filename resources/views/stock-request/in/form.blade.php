@@ -48,10 +48,10 @@ $action = $isEdit ? route('stock-in-requests.update', $stockInRequest->id) : rou
         <div class="card-body">
             <div class="row g-3">
 
-                {{-- Hiện chỉ có 1 kho, mặc định lấy kho đầu tiên, không hiển thị input --}}
+                 {{-- Hiện chỉ có 1 kho, mặc định lấy kho đầu tiên, không hiển thị input --}}
                 <input type="hidden" name="warehouse_id" value="{{ old('warehouse_id', $stockInRequest->warehouse_id ?? optional($warehouses->first())->id) }}">
                 <div class="col-md-3">
-                    <label class="form-label mb-1">Mã phiếu</label>
+                    <label class="form-label mb-1 fw-semibold">Mã phiếu</label>
                     <input type="text"
                         class="form-control text-uppercase @error('code') is-invalid @enderror"
                         name="code" value="{{ old('code', $stockInRequest->code ?? '') }}" placeholder="Tự động"
@@ -59,13 +59,22 @@ $action = $isEdit ? route('stock-in-requests.update', $stockInRequest->id) : rou
                     @error('code')<div class="invalid-feedback">{{ $message }}</div>@enderror
                 </div>
 
-                <div class="col-md-9">
-                    <label class="form-label mb-1">Ghi chú</label>
+                <div class="col-md-3">
+                    <label class="form-label mb-1 fw-semibold">Ngày yêu cầu <span class="text-danger">*</span></label>
+                    <input type="date"
+                        class="form-control @error('request_date') is-invalid @enderror"
+                        name="request_date" required
+                        value="{{ old('request_date', isset($stockInRequest) && $stockInRequest->request_date ? \Carbon\Carbon::parse($stockInRequest->request_date)->format('Y-m-d') : now()->format('Y-m-d')) }}">
+                    @error('request_date')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label mb-1 fw-semibold">Ghi chú</label>
                     <input type="text" class="form-control" name="note"
                         value="{{ old('note', $stockInRequest->note ?? '') }}" maxlength="500" placeholder="Ghi chú">
                 </div>
 
-            </div>
+             </div>
         </div>
     </div>
 
@@ -98,23 +107,23 @@ $action = $isEdit ? route('stock-in-requests.update', $stockInRequest->id) : rou
                 <table class="table table-hover align-middle mb-0" id="detailTable">
                     <thead class="table-light">
                         <tr>
-                            <th class="text-center" style="width:2%">#</th>
-                            <th style="width:8%">Số PO/CU</th>
-                            <th style="width:8%">Ngày về <span class="text-danger">*</span></th>
-                            <th style="min-width:100px">Mã MenT</th>
-                            <th style="min-width:100px">Mã mới</th>
+                            <th class="text-center" style="min-width:40px">#</th>
+                            <th style="min-width:120px">Số PO/CU</th>
+                            <th>Ngày về <span class="text-danger">*</span></th>
+                            <th style="min-width:160px">Mã MenT</th>
+                            <th style="min-width:120px">Mã mới</th>
                             <th style="min-width:160px">Tên vật tư <span class="text-danger">*</span></th>
-                            <th style="min-width:140px">TSKT</th>
-                            <th style="width:8%">Hãng</th>
-                            <th style="width:6%">SL <span class="text-danger">*</span></th>
-                            <th style="width:6%">ĐVT <span class="text-danger">*</span></th>
-                            <th style="width:6%">Lô hàng</th>
-                            <th style="width:8%">Ngày QC</th>
-                            <th style="min-width:120px">Người QC</th>
-                            <th style="min-width:100px">Kết quả</th>
-                            <th style="min-width:140px">Hướng khắc phục</th>
+                            <th style="min-width:160px">TSKT</th>
+                            <th style="min-width:100px">ĐVT <span class="text-danger">*</span></th>
+                            <th style="min-width:100px">Hãng</th>
+                            <th style="min-width:100px">SL <span class="text-danger">*</span></th>
+                            <th style="min-width:100px">Lô</th>
+                            <th>Ngày QC</th>
+                            <th style="min-width:160px">Người QC</th>
+                            <th style="min-width:140px">Kết quả QC</th>
+                            <th style="min-width:180px">Hướng khắc phục</th>
                             <th style="min-width:120px">Ghi chú</th>
-                            <th style="min-width:120px">Người yêu cầu</th>
+                            <th style="min-width:160px">Người yêu cầu</th>
                             <th style="width:2%"></th>
                         </tr>
                     </thead>
@@ -174,90 +183,86 @@ $action = $isEdit ? route('stock-in-requests.update', $stockInRequest->id) : rou
                         <tr>
                             <td class="text-center text-body-secondary small">{{ $i + 1 }}</td>
                             <td>
-                                <input type="text" class="form-control"
+                                <input type="text" class="form-control form-control-sm"
                                     name="details[{{ $i }}][reference_no]" value="{{ $referenceNo }}"
-                                    maxlength="100" placeholder="Số PO/CU">
+                                    maxlength="100" placeholder="Nhập">
                             </td>
                             <td>
-                                <input type="date" class="form-control @error('details.'.$i.'.received_date') is-invalid @enderror"
+                                <input type="date" class="form-control form-control-sm @error('details.'.$i.'.received_date') is-invalid @enderror"
                                     name="details[{{ $i }}][received_date]" value="{{ $receivedDate }}" required>
                             </td>
                             <td>
-                                <input type="text" class="form-control product-code-input" list="productDatalist"
+                                <input type="text" class="form-control form-control-sm product-code-input" list="productDatalist"
                                     name="details[{{ $i }}][product_code]" value="{{ $productCode }}"
                                     maxlength="50" placeholder="Nhập hoặc chọn" autocomplete="off"
                                     oninput="onProductCodeInput(this)">
                             </td>
                             <td>
-                                <input type="text" class="form-control new-product-code-input"
+                                <input type="text" class="form-control form-control-sm new-product-code-input"
                                     name="details[{{ $i }}][new_product_code]" value="{{ $newProductCode }}"
-                                    maxlength="50" placeholder="Mã mới" oninput="onNewProductCodeInput(this)"
+                                    maxlength="50" placeholder="Nhập" oninput="onNewProductCodeInput(this)"
                                     {{ $productCode !== '' ? 'readonly' : '' }}>
                             </td>
                             <td>
-                                <input type="text" class="form-control product-name-input"
+                                <input type="text" class="form-control form-control-sm product-name-input"
                                     name="details[{{ $i }}][product_name]" value="{{ $productName }}"
-                                    maxlength="200" placeholder="Tên vật tư" required
+                                    maxlength="200" placeholder="Nhập" required
                                     {{ $productCode !== '' ? 'readonly' : '' }}>
                             </td>
                             <td>
-                                <input type="text" class="form-control product-spec-input"
+                                <input type="text" class="form-control form-control-sm product-spec-input"
                                     name="details[{{ $i }}][product_specification]" value="{{ $productSpec }}"
-                                    maxlength="500" placeholder="Thông số kỹ thuật"
+                                    maxlength="500" placeholder="Nhập"
                                     {{ $productCode !== '' ? 'readonly' : '' }}>
                             </td>
                             <td>
-                                <input type="text" class="form-control"
-                                    name="details[{{ $i }}][brand_name]" value="{{ $brandName }}"
-                                    maxlength="200" placeholder="Thương hiệu">
-                            </td>
-                            <td>
-                                <input type="number" class="form-control text-end"
-                                    name="details[{{ $i }}][quantity]" value="{{ $quantity }}" min="0.001"
-                                    step="0.001" required>
-                            </td>
-                            <td>
-                                <input type="text" class="form-control uom-name-input"
+                                <input type="text" class="form-control form-control-sm uom-name-input"
                                     name="details[{{ $i }}][uom_name]" value="{{ $uomName }}"
-                                    maxlength="50" placeholder="ĐVT" required
+                                    maxlength="50" placeholder="Nhập" required
                                     {{ $productCode !== '' ? 'readonly' : '' }}>
                             </td>
                             <td>
-                                <input type="text" class="form-control"
+                                <input type="text" class="form-control form-control-sm"
+                                    name="details[{{ $i }}][brand_name]" value="{{ $brandName }}"
+                                    maxlength="200" placeholder="Nhập">
+                            </td>
+
+                            <td>
+                                <input type="text" class="form-control form-control-sm"
                                     name="details[{{ $i }}][lot_number]" value="{{ $lotNumber }}"
-                                    maxlength="50" placeholder="Lô hàng">
+                                    maxlength="50" placeholder="Nhập">
                             </td>
                             <td>
-                                <input type="date" class="form-control"
+                                <input type="date" class="form-control form-control-sm"
                                     name="details[{{ $i }}][qc_date]" value="{{ $qcDate }}">
                             </td>
                             <td>
                                 <input type="hidden" name="details[{{ $i }}][qc_employee_id]"
                                     class="qc-employee-id-hidden" value="{{ $qcEmployeeId }}">
-                                <input type="text" class="form-control qc-employee-input" list="employeeDatalist"
+                                <input type="text" class="form-control form-control-sm qc-employee-input" list="employeeDatalist"
                                     value="{{ $selQcEmployee ? $selQcEmployee->code.' - '.$selQcEmployee->name : '' }}"
                                     placeholder="Nhập hoặc chọn" autocomplete="off"
                                     oninput="onQcEmployeeInput(this)">
                             </td>
                             <td>
-                                <input type="text" class="form-control"
+                                <input type="text" class="form-control form-control-sm"
                                     name="details[{{ $i }}][qc_result]" value="{{ $qcResult }}"
-                                    maxlength="100" placeholder="Kết quả QC">
+                                    maxlength="100" placeholder="Nhập">
                             </td>
                             <td>
-                                <input type="text" class="form-control"
+                                <input type="text" class="form-control form-control-sm"
                                     name="details[{{ $i }}][solution]" value="{{ $solution }}"
-                                    maxlength="500" placeholder="Hướng giải quyết">
+                                    maxlength="500" placeholder="Nhập">
                             </td>
                             <td>
-                                <input type="text" class="form-control"
+                                <input type="text" class="form-control form-control-sm"
                                     name="details[{{ $i }}][note]" value="{{ $note }}"
-                                    placeholder="Ghi chú" maxlength="500">
+                                    placeholder="Nhập" maxlength="500">
                             </td>
                             <td>
                                 <input type="hidden" name="details[{{ $i }}][requester_id]"
                                     class="requester-id-hidden" value="{{ $requesterId }}">
-                                <input type="text" class="form-control requester-input" list="employeeDatalist"
+                                <input type="text" class="form-control form-control-sm requester-input" list="employeeDatalist"
                                     value="{{ $selRequester ? $selRequester->code.' - '.$selRequester->name : '' }}"
                                     placeholder="Nhập hoặc chọn" autocomplete="off"
                                     oninput="onRequesterInput(this)">
@@ -451,55 +456,55 @@ function rowTemplate(i) {
 <tr>
   <td class="text-center text-body-secondary small">${i + 1}</td>
   <td>
-    <input type="text" class="form-control" name="details[${i}][reference_no]" maxlength="100" placeholder="Số PO/CU">
+    <input type="text" class="form-control form-control-sm" name="details[${i}][reference_no]" maxlength="100" placeholder="Nhập">
   </td>
   <td>
-    <input type="date" class="form-control" name="details[${i}][received_date]" required>
+    <input type="date" class="form-control form-control-sm" name="details[${i}][received_date]" required>
   </td>
   <td>
-    <input type="text" class="form-control product-code-input" list="productDatalist" name="details[${i}][product_code]" maxlength="50" placeholder="Nhập hoặc chọn" autocomplete="off" oninput="onProductCodeInput(this)">
+    <input type="text" class="form-control form-control-sm product-code-input" list="productDatalist" name="details[${i}][product_code]" maxlength="50" placeholder="Nhập hoặc chọn" autocomplete="off" oninput="onProductCodeInput(this)">
   </td>
   <td>
-    <input type="text" class="form-control new-product-code-input" name="details[${i}][new_product_code]" maxlength="50" placeholder="Mã mới" oninput="onNewProductCodeInput(this)">
+    <input type="text" class="form-control form-control-sm new-product-code-input" name="details[${i}][new_product_code]" maxlength="50" placeholder="Nhập" oninput="onNewProductCodeInput(this)">
   </td>
   <td>
-    <input type="text" class="form-control product-name-input" name="details[${i}][product_name]" maxlength="200" placeholder="Tên vật tư" required>
+    <input type="text" class="form-control form-control-sm product-name-input" name="details[${i}][product_name]" maxlength="200" placeholder="Nhập" required>
   </td>
   <td>
-    <input type="text" class="form-control product-spec-input" name="details[${i}][product_specification]" maxlength="500" placeholder="Thông số kỹ thuật">
+    <input type="text" class="form-control form-control-sm product-spec-input" name="details[${i}][product_specification]" maxlength="500" placeholder="Nhập">
   </td>
   <td>
-    <input type="text" class="form-control" name="details[${i}][brand_name]" maxlength="200" placeholder="Thương hiệu">
+    <input type="text" class="form-control form-control-sm uom-name-input" name="details[${i}][uom_name]" maxlength="50" placeholder="Nhập" required>
   </td>
   <td>
-    <input type="number" class="form-control text-end" name="details[${i}][quantity]" min="0.001" step="0.001" required placeholder="0">
+    <input type="text" class="form-control form-control-sm" name="details[${i}][brand_name]" maxlength="200" placeholder="Nhập">
   </td>
   <td>
-    <input type="text" class="form-control uom-name-input" name="details[${i}][uom_name]" maxlength="50" placeholder="ĐVT" required>
+    <input type="number" class="form-control form-control-sm text-end" name="details[${i}][quantity]" min="0" step="1" required placeholder="0">
   </td>
   <td>
-    <input type="text" class="form-control" name="details[${i}][lot_number]" maxlength="50" placeholder="Lô hàng">
+    <input type="text" class="form-control form-control-sm" name="details[${i}][lot_number]" maxlength="50" placeholder="Nhập">
   </td>
   <td>
-    <input type="date" class="form-control" name="details[${i}][qc_date]">
+    <input type="date" class="form-control form-control-sm" name="details[${i}][qc_date]">
   </td>
   <td>
     <input type="hidden" name="details[${i}][qc_employee_id]" class="qc-employee-id-hidden" value="">
-    <input type="text" class="form-control qc-employee-input" list="employeeDatalist"
+    <input type="text" class="form-control form-control-sm qc-employee-input" list="employeeDatalist"
            placeholder="Nhập hoặc chọn" autocomplete="off" oninput="onQcEmployeeInput(this)">
   </td>
   <td>
-    <input type="text" class="form-control" name="details[${i}][qc_result]" maxlength="100" placeholder="Kết quả QC">
+    <input type="text" class="form-control form-control-sm" name="details[${i}][qc_result]" maxlength="100" placeholder="Nhập">
   </td>
   <td>
-    <input type="text" class="form-control" name="details[${i}][solution]" maxlength="500" placeholder="Hướng giải quyết">
+    <input type="text" class="form-control form-control-sm" name="details[${i}][solution]" maxlength="500" placeholder="Nhập">
   </td>
   <td>
-    <input type="text" class="form-control" name="details[${i}][note]" placeholder="Ghi chú" maxlength="500">
+    <input type="text" class="form-control form-control-sm" name="details[${i}][note]" placeholder="Nhập" maxlength="500">
   </td>
   <td>
     <input type="hidden" name="details[${i}][requester_id]" class="requester-id-hidden" value="">
-    <input type="text" class="form-control requester-input" list="employeeDatalist"
+    <input type="text" class="form-control form-control-sm requester-input" list="employeeDatalist"
            placeholder="Nhập hoặc chọn" autocomplete="off" oninput="onRequesterInput(this)">
   </td>
   <td class="text-end pe-3" style="align-items:center; justify-content:flex-end;">

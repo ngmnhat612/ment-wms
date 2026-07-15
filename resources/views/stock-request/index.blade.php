@@ -131,7 +131,7 @@
           <thead class="table-light">
             <tr>
               <th class="text-center" style="width:4%">#</th>
-              <th style="width:8%">Loại</th>
+              <th style="width:10%">Loại</th>
               <th style="width:14%">
                   <a href="{{ $sortUrl('code') }}" class="text-decoration-none text-reset d-inline-flex align-items-center">
                       Mã phiếu {!! $sortIcon('code') !!}
@@ -142,9 +142,9 @@
                       Người tạo {!! $sortIcon('created_by') !!}
                   </a>
               </th>
-              <th style="width:10%">
+              <th style="width:14%">
                   <a href="{{ $sortUrl('doc_date') }}" class="text-decoration-none text-reset d-inline-flex align-items-center">
-                      Ngày tạo {!! $sortIcon('doc_date') !!}
+                      Ngày yêu cầu {!! $sortIcon('doc_date') !!}
                   </a>
               </th>
               <th style="width:20%">
