@@ -232,7 +232,7 @@
                 <td class="small text-body-secondary text-truncate" style="max-width:200px" title="{{ $movement->note }}">
                   {{ $movement->note ?? '-' }}
                 </td>
-                <td class="text-center">
+                <td class="text-center small">
                   <span class="{{ $status->badgeClass() }}" style="font-size:11px">
                     {{ $status->label('movement') }}
                   </span>

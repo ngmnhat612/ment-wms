@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Kiểm kê kho')
+@section('title', 'Kiểm kê')
 
 @section('breadcrumb')
   <li class="breadcrumb-item">Nghiệp vụ kho</li>
@@ -40,7 +40,7 @@
     <a href="{{ Route::has('stocktakes.create') ? route('stocktakes.create') : '#' }}"
        class="btn btn-primary {{ Route::has('stocktakes.create') ? '' : 'disabled' }}">
       <svg class="icon me-1"><use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-plus') }}"></use></svg>
-      Tạo phiếu kiểm kê
+      Kiểm kê
     </a>
   </div>
 
@@ -51,43 +51,21 @@
 
         {{-- CỘT 1: Tiêu đề --}}
         <div class="flex-shrink-0">
-        <span class="fw-semibold text-nowrap">Kiểm kê kho</span>
+        <span class="fw-semibold text-nowrap">Kiểm kê</span>
         </div>
 
-        {{-- CỘT 2 + CỘT 3: chiếm hết khoảng trống giữa, chia đều nhau --}}
+        {{-- CỘT 2: chiếm hết khoảng trống giữa, chia 2 cột con 2.1 và 2.2 --}}
         <div class="flex-grow-1" style="min-width:400px">
         <div class="row g-2">
 
-            {{-- CỘT 2: Tìm kiếm --}}
-            <div class="col-6 d-flex align-items-center">
+            {{-- CỘT 2.1: Tìm kiếm (dòng 1), Từ - Đến ngày (dòng 2) --}}
+            <div class="col-6 d-flex flex-column gap-2">
             <div class="input-group">
                 <span class="input-group-text">
                 <svg class="icon"><use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-search') }}"></use></svg>
                 </span>
                 <input type="text" class="form-control" name="search"
                     value="{{ request('search') }}" placeholder="Mã phiếu, mục đích...">
-            </div>
-            </div>
-
-            {{-- CỘT 3: Phạm vi + Trạng thái (dòng 1), Từ - Đến ngày (dòng 2) --}}
-            <div class="col-6 d-flex flex-column gap-2">
-            <div class="d-flex gap-2">
-                <select class="form-select" name="check_scope" onchange="this.form.submit()">
-                <option value="">Phạm vi</option>
-                @foreach (\App\Enums\InventoryCheckScope::cases() as $case)
-                  <option value="{{ $case->value }}" {{ request('check_scope') == $case->value ? 'selected' : '' }}>
-                    {{ $case->label() }}
-                  </option>
-                @endforeach
-                </select>
-                <select class="form-select" name="status" onchange="this.form.submit()">
-                <option value="">Trạng thái</option>
-                @foreach (\App\Enums\InventoryCheckStatus::cases() as $case)
-                  <option value="{{ $case->value }}" {{ request('status') == $case->value ? 'selected' : '' }}>
-                    {{ $case->label() }}
-                  </option>
-                @endforeach
-                </select>
             </div>
             <div class="d-flex gap-2">
                 <div class="input-group">
@@ -101,13 +79,45 @@
             </div>
             </div>
 
+            {{-- CỘT 2.2: Phạm vi + Loại kiểm kê (dòng 1), Trạng thái (dòng 2) --}}
+            <div class="col-6 d-flex flex-column gap-2">
+            <div class="d-flex gap-2">
+                <select class="form-select" name="check_scope" onchange="this.form.submit()">
+                <option value="">Phạm vi</option>
+                @foreach (\App\Enums\InventoryCheckScope::cases() as $case)
+                  <option value="{{ $case->value }}" {{ request('check_scope') == $case->value ? 'selected' : '' }}>
+                    {{ $case->label() }}
+                  </option>
+                @endforeach
+                </select>
+                <select class="form-select" name="check_type" onchange="this.form.submit()">
+                <option value="">Loại kiểm kê</option>
+                @foreach (\App\Enums\InventoryCheckType::cases() as $case)
+                  <option value="{{ $case->value }}" {{ request('check_type') == $case->value ? 'selected' : '' }}>
+                    {{ $case->label() }}
+                  </option>
+                @endforeach
+                </select>
+            </div>
+            <div>
+                <select class="form-select" name="status" onchange="this.form.submit()">
+                <option value="">Trạng thái</option>
+                @foreach (\App\Enums\InventoryCheckStatus::cases() as $case)
+                  <option value="{{ $case->value }}" {{ request('status') == $case->value ? 'selected' : '' }}>
+                    {{ $case->label() }}
+                  </option>
+                @endforeach
+                </select>
+            </div>
+            </div>
+
         </div>
         </div>
 
-        {{-- CỘT 4: Nút Lọc --}}
+        {{-- CỘT 3: Nút Lọc --}}
         <div class="flex-shrink-0">
         @php
-            $hasFilter = request('search') || request('check_scope') || request('status') || request('date_from') || request('date_to');
+            $hasFilter = request('search') || request('check_scope') || request('check_type') || request('status') || request('date_from') || request('date_to');
         @endphp
         @if ($hasFilter)
             <a href="{{ url()->current() }}" class="btn btn-outline-secondary">
@@ -150,7 +160,11 @@
                     </a>
                 </th>
                 <th style="width:10%">Phạm vi</th>
-                <th style="width:12%">Loại kiểm kê</th>
+                <th style="width:12%">
+                    <a href="{{ $sortUrl('check_type') }}" class="text-decoration-none text-reset d-inline-flex align-items-center">
+                        Loại kiểm kê {!! $sortIcon('check_type') !!}
+                    </a>
+                </th>
                 <th>
                     <a href="{{ $sortUrl('created_by') }}" class="text-decoration-none text-reset d-inline-flex align-items-center">
                         Người tạo {!! $sortIcon('created_by') !!}
@@ -164,6 +178,11 @@
                 <th style="width:14%">
                     <a href="{{ $sortUrl('purpose') }}" class="text-decoration-none text-reset d-inline-flex align-items-center">
                         Mục đích {!! $sortIcon('purpose') !!}
+                    </a>
+                </th>
+                <th style="width:14%">
+                    <a href="{{ $sortUrl('note') }}" class="text-decoration-none text-reset d-inline-flex align-items-center">
+                        Ghi chú {!! $sortIcon('note') !!}
                     </a>
                 </th>
                 <th class="text-center" style="width:8%">Trạng thái</th>
@@ -213,6 +232,9 @@
                 <td class="small text-body-secondary text-truncate" style="max-width:180px" title="{{ $check->purpose }}">
                   {{ $check->purpose ?? '-' }}
                 </td>
+                <td class="small text-body-secondary text-truncate" style="max-width:180px" title="{{ $check->note }}">
+                  {{ $check->note ?? '-' }}
+                </td>
                 <td class="text-center">
                   <span class="{{ $status->badgeClass() }}" style="font-size:11px">
                     {{ $status->label() }}
@@ -234,7 +256,7 @@
               </tr>
             @empty
               <tr>
-                <td colspan="8" class="text-center text-body-secondary py-5">
+                <td colspan="9" class="text-center text-body-secondary py-5">
                   <svg class="icon icon-3xl d-block mx-auto mb-2 opacity-25">
                     <use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-clipboard') }}"></use>
                   </svg>

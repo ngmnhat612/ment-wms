@@ -4,7 +4,7 @@
 
 @section('breadcrumb')
 <li class="breadcrumb-item">Nghiệp vụ kho</li>
-<li class="breadcrumb-item"><a href="{{ route('stock-requests.index') }}">Yêu cầu Nhập/Xuất kho</a></li>
+<li class="breadcrumb-item"><a href="{{ route('stock-requests.index') }}">Yêu cầu Nhập/Xuất</a></li>
 <li class="breadcrumb-item active">{{ isset($stockOutRequest) ? $stockOutRequest->code : 'Thêm phiếu yêu cầu xuất' }}</li>
 @endsection
 
@@ -51,7 +51,7 @@ $action = $isEdit ? route('stock-out-requests.update', $stockOutRequest->id) : r
                 {{-- Hiện chỉ có 1 kho, mặc định lấy kho đầu tiên, không hiển thị input --}}
                 <input type="hidden" name="warehouse_id" value="{{ old('warehouse_id', $stockOutRequest->warehouse_id ?? optional($warehouses->first())->id) }}">
                 <div class="col-md-3">
-                    <label class="form-label mb-1">Mã phiếu</label>
+                    <label class="form-label mb-1 fw-semibold">Mã phiếu</label>
                     <input type="text"
                         class="form-control text-uppercase @error('code') is-invalid @enderror"
                         name="code" value="{{ old('code', $stockOutRequest->code ?? '') }}" placeholder="Tự động"
@@ -59,8 +59,17 @@ $action = $isEdit ? route('stock-out-requests.update', $stockOutRequest->id) : r
                     @error('code')<div class="invalid-feedback">{{ $message }}</div>@enderror
                 </div>
 
-                <div class="col-md-9">
-                    <label class="form-label mb-1">Ghi chú</label>
+                <div class="col-md-3">
+                    <label class="form-label mb-1 fw-semibold">Ngày yêu cầu <span class="text-danger">*</span></label>
+                    <input type="date"
+                        class="form-control @error('request_date') is-invalid @enderror"
+                        name="request_date" required
+                        value="{{ old('request_date', isset($stockOutRequest) && $stockOutRequest->request_date ? \Carbon\Carbon::parse($stockOutRequest->request_date)->format('Y-m-d') : now()->format('Y-m-d')) }}">
+                    @error('request_date')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label mb-1 fw-semibold">Ghi chú</label>
                     <input type="text" class="form-control" name="note"
                         value="{{ old('note', $stockOutRequest->note ?? '') }}" maxlength="500" placeholder="Ghi chú">
                 </div>
@@ -102,8 +111,8 @@ $action = $isEdit ? route('stock-out-requests.update', $stockOutRequest->id) : r
                             <th style="width:8%">Ngày xuất</th>
                             <th style="min-width:100px">Mã vật tư</th>
                             <th style="min-width:160px">Tên vật tư <span class="text-danger">*</span></th>
-                            <th style="width:6%">SL <span class="text-danger">*</span></th>
                             <th style="width:6%">ĐVT <span class="text-danger">*</span></th>
+                            <th style="width:6%">SL <span class="text-danger">*</span></th>
                             <th style="width:6%">Thực xuất</th>
                             <th style="min-width:120px">Người nhận</th>
                             <th style="width:8%">Mã dự án</th>
@@ -160,66 +169,66 @@ $action = $isEdit ? route('stock-out-requests.update', $stockOutRequest->id) : r
                         <tr>
                             <td class="text-center text-body-secondary small">{{ $i + 1 }}</td>
                             <td>
-                                <input type="date" class="form-control"
+                                <input type="date" class="form-control form-control-sm"
                                     name="details[{{ $i }}][issue_date]" value="{{ $issueDate }}">
                             </td>
                             <td>
-                                <input type="text" class="form-control product-code-input" list="productDatalist"
+                                <input type="text" class="form-control form-control-sm product-code-input" list="productDatalist"
                                     name="details[{{ $i }}][product_code]" value="{{ $productCode }}"
                                     maxlength="50" placeholder="Nhập hoặc chọn" autocomplete="off"
                                     oninput="onProductCodeInput(this)">
                             </td>
                             <td>
-                                <input type="text" class="form-control product-name-input"
+                                <input type="text" class="form-control form-control-sm product-name-input"
                                     name="details[{{ $i }}][product_name]" value="{{ $productName }}"
-                                    maxlength="200" placeholder="Tên vật tư" required
+                                    maxlength="200" placeholder="Nhập" required
                                     {{ $productCode !== '' ? 'readonly' : '' }}>
                             </td>
                             <td>
-                                <input type="number" class="form-control text-end"
-                                    name="details[{{ $i }}][quantity]" value="{{ $quantity }}" min="0.001"
-                                    step="0.001" required>
-                            </td>
-                            <td>
-                                <input type="text" class="form-control uom-name-input"
+                                <input type="text" class="form-control form-control-sm uom-name-input"
                                     name="details[{{ $i }}][uom_name]" value="{{ $uomName }}"
-                                    maxlength="50" placeholder="ĐVT" required
+                                    maxlength="50" placeholder="Nhập" required
                                     {{ $productCode !== '' ? 'readonly' : '' }}>
                             </td>
                             <td>
-                                <input type="number" class="form-control text-end"
+                                <input type="number" class="form-control form-control-sm text-end"
+                                    name="details[{{ $i }}][quantity]" value="{{ $quantity }}" min="0"
+                                    step="1" required>
+                            </td>
+                            <td>
+                                <input type="number" class="form-control form-control-sm text-end"
                                     name="details[{{ $i }}][actual_qty]" value="{{ $actualQty }}" min="0"
-                                    step="0.001" placeholder="0">
+                                    step="0" placeholder="0">
                             </td>
                             <td>
                                 <input type="hidden" name="details[{{ $i }}][receiver_id]"
                                     class="receiver-id-hidden" value="{{ $receiverId }}">
-                                <input type="text" class="form-control receiver-input" list="employeeDatalist"
+                                <input type="text" class="form-control form-control-sm receiver-input" list="employeeDatalist"
                                     value="{{ $selReceiver ? $selReceiver->code.' - '.$selReceiver->name : '' }}"
                                     placeholder="Nhập hoặc chọn" autocomplete="off"
                                     oninput="onReceiverInput(this)">
                             </td>
                             <td>
-                                <input type="text" class="form-control"
+                                <input type="text" class="form-control form-control-sm"
                                     name="details[{{ $i }}][sn_code]" value="{{ $snCode }}"
-                                    maxlength="50" placeholder="Mã dự án">
+                                    maxlength="50" placeholder="Nhập">
                             </td>
                             <td>
-                                <input type="number" class="form-control"
+                                <input type="number" class="form-control form-control-sm"
                                     name="details[{{ $i }}][lot_number]" value="{{ $lotNumber }}"
-                                    placeholder="Số lô" min="1" step="1">
+                                    placeholder="Nhập" min="1" step="1">
                             </td>
                             <td>
-                                <input type="text" class="form-control serial-input {{ $trackingForRow === 1 ? 'bg-body-secondary' : '' }}"
+                                <input type="text" class="form-control form-control-sm serial-input {{ $trackingForRow === 1 ? 'bg-body-secondary' : '' }}"
                                     name="details[{{ $i }}][serial_number]" value="{{ $serialNumber }}"
                                     maxlength="500" placeholder="{{ $trackingForRow === 1 ? '-' : 'SN0001 SN0002 ...' }}"
                                     autocomplete="off"
                                     {{ $trackingForRow === 1 ? 'readonly' : '' }}>
                             </td>
                             <td>
-                                <input type="text" class="form-control"
+                                <input type="text" class="form-control form-control-sm"
                                     name="details[{{ $i }}][note]" value="{{ $note }}"
-                                    placeholder="Ghi chú" maxlength="500">
+                                    placeholder="Nhập" maxlength="500">
                             </td>
                             <td class="text-end pe-3" style="align-items:center; justify-content:flex-end;">
                                 <button type="button" class="btn btn-sm btn-outline-danger"
@@ -391,39 +400,39 @@ function rowTemplate(i) {
 <tr>
   <td class="text-center text-body-secondary small">${i + 1}</td>
   <td>
-    <input type="date" class="form-control" name="details[${i}][issue_date]">
+    <input type="date" class="form-control form-control-sm" name="details[${i}][issue_date]">
   </td>
   <td>
-    <input type="text" class="form-control product-code-input" list="productDatalist" name="details[${i}][product_code]" maxlength="50" placeholder="Nhập hoặc chọn" autocomplete="off" oninput="onProductCodeInput(this)">
+    <input type="text" class="form-control form-control-sm product-code-input" list="productDatalist" name="details[${i}][product_code]" maxlength="50" placeholder="Nhập hoặc chọn" autocomplete="off" oninput="onProductCodeInput(this)">
   </td>
   <td>
-    <input type="text" class="form-control product-name-input" name="details[${i}][product_name]" maxlength="200" placeholder="Tên vật tư" required>
+    <input type="text" class="form-control form-control-sm product-name-input" name="details[${i}][product_name]" maxlength="200" placeholder="Nhập" required>
   </td>
   <td>
-    <input type="number" class="form-control text-end" name="details[${i}][quantity]" min="0.001" step="0.001" required placeholder="0">
+    <input type="text" class="form-control form-control-sm uom-name-input" name="details[${i}][uom_name]" maxlength="50" placeholder="Nhập" required>
   </td>
   <td>
-    <input type="text" class="form-control uom-name-input" name="details[${i}][uom_name]" maxlength="50" placeholder="ĐVT" required>
+    <input type="number" class="form-control form-control-sm text-end" name="details[${i}][quantity]" min="0" step="1" required placeholder="0">
   </td>
   <td>
-    <input type="number" class="form-control text-end" name="details[${i}][actual_qty]" min="0" step="0.001" placeholder="0">
+    <input type="number" class="form-control form-control-sm text-end" name="details[${i}][actual_qty]" min="0" step="1" placeholder="0">
   </td>
   <td>
     <input type="hidden" name="details[${i}][receiver_id]" class="receiver-id-hidden" value="">
-    <input type="text" class="form-control receiver-input" list="employeeDatalist"
+    <input type="text" class="form-control form-control-sm receiver-input" list="employeeDatalist"
            placeholder="Nhập hoặc chọn" autocomplete="off" oninput="onReceiverInput(this)">
   </td>
   <td>
-    <input type="text" class="form-control" name="details[${i}][sn_code]" maxlength="50" placeholder="Mã dự án">
+    <input type="text" class="form-control form-control-sm" name="details[${i}][sn_code]" maxlength="50" placeholder="Nhập">
   </td>
   <td>
-    <input type="number" class="form-control" name="details[${i}][lot_number]" placeholder="Số lô" min="1" step="1">
+    <input type="number" class="form-control form-control-sm" name="details[${i}][lot_number]" placeholder="Nhập" min="1" step="1">
   </td>
   <td>
-    <input type="text" class="form-control serial-input bg-body-secondary" name="details[${i}][serial_number]" maxlength="500" placeholder="-" autocomplete="off" readonly>
+    <input type="text" class="form-control form-control-sm serial-input bg-body-secondary" name="details[${i}][serial_number]" maxlength="500" placeholder="-" autocomplete="off" readonly>
   </td>
   <td>
-    <input type="text" class="form-control" name="details[${i}][note]" placeholder="Ghi chú" maxlength="500">
+    <input type="text" class="form-control form-control-sm" name="details[${i}][note]" placeholder="Nhập" maxlength="500">
   </td>
   <td class="text-end pe-3" style="align-items:center; justify-content:flex-end;">
     <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeRow(this)" title="Xóa dòng">

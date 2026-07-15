@@ -4,6 +4,7 @@
 
 @section('breadcrumb')
   <li class="breadcrumb-item">Danh mục</li>
+  <li class="breadcrumb-item">Đối tác & Kho</li>
   <li class="breadcrumb-item active">Vị trí kho</li>
 @endsection
 

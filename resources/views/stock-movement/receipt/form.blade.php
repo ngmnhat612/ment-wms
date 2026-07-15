@@ -52,7 +52,7 @@ $action = $isEdit ? route('receipts.update', $receipt->id) : route('receipts.sto
                 <input type="hidden" name="warehouse_id" value="{{ old('warehouse_id', $receipt->warehouse_id ?? optional($warehouses->first())->id) }}">
 
                 <div class="col-md-3">
-                    <label class="form-label mb-1">Mã phiếu</label>
+                    <label class="form-label mb-1 fw-semibold">Mã phiếu</label>
                     <input type="text"
                         class="form-control text-uppercase @error('code') is-invalid @enderror"
                         name="code" value="{{ old('code', $receipt->code ?? '') }}" placeholder="Tự động"
@@ -61,7 +61,7 @@ $action = $isEdit ? route('receipts.update', $receipt->id) : route('receipts.sto
                 </div>
 
                 <div class="col-md-3">
-                    <label class="form-label mb-1">Phiếu liên kết</label>
+                    <label class="form-label mb-1 fw-semibold">Phiếu liên kết</label>
                     <input type="text"
                         class="form-control @error('stock_in_request_id') is-invalid @enderror"
                         id="stock_in_request_code"
@@ -84,7 +84,7 @@ $action = $isEdit ? route('receipts.update', $receipt->id) : route('receipts.sto
                 </div>
 
                 <div class="col-md-3">
-                    <label class="form-label mb-1">Ngày nhập <span class="text-danger">*</span></label>
+                    <label class="form-label mb-1 fw-semibold">Ngày nhập <span class="text-danger">*</span></label>
                     <input type="date" class="form-control @error('receipt_date') is-invalid @enderror"
                         name="receipt_date"
                         value="{{ old('receipt_date', isset($receipt->receipt_date) ? \Carbon\Carbon::parse($receipt->receipt_date)->format('Y-m-d') : date('Y-m-d')) }}"
@@ -93,9 +93,9 @@ $action = $isEdit ? route('receipts.update', $receipt->id) : route('receipts.sto
                 </div>
 
                 <div class="col-md-3">
-                    <label class="form-label mb-1">Ghi chú</label>
+                    <label class="form-label mb-1 fw-semibold">Ghi chú</label>
                     <input type="text" class="form-control" name="note"
-                        value="{{ old('note', $receipt->note ?? '') }}" maxlength="500" placeholder="Ghi chú">
+                        value="{{ old('note', $receipt->note ?? '') }}" maxlength="500" placeholder="Nhập ghi chú">
                 </div>
 
             </div>
@@ -217,27 +217,28 @@ $action = $isEdit ? route('receipts.update', $receipt->id) : route('receipts.sto
                             <td>
                                 <input type="hidden" name="lines[{{ $i }}][product_id]"
                                     class="product-id-hidden" value="{{ $productId }}">
-                                <input type="text" class="form-control product-input" list="productDatalist"
+                                <input type="text" class="form-control form-control-sm product-input" list="productDatalist"
                                     value="{{ $product ? $product->code.' - '.$product->name : '' }}"
                                     placeholder="Nhập hoặc chọn" autocomplete="off"
                                     oninput="onProductInput(this)" required>
                             </td>
+<td>
+    <input type="hidden" name="lines[{{ $i }}][tskt]" class="tskt-hidden"
+        value="{{ $product->specification ?? '' }}">
+    <span class="tskt-label text-body-secondary small">{{ $product->specification ?? '-' }}</span>
+</td>
+<td>
+    <input type="hidden" name="lines[{{ $i }}][uom_id]" class="uom-hidden"
+        value="{{ $uomId }}">
+    <span class="uom-label text-body-secondary small">{{ $uomName }}</span>
+</td>
                             <td>
-                                <input type="text" class="form-control tskt-label" value="{{ $product->specification ?? '' }}"
-                                    placeholder="-" readonly tabindex="-1">
-                            </td>
-                            <td>
-                                <input type="hidden" name="lines[{{ $i }}][uom_id]" class="uom-hidden"
-                                    value="{{ $uomId }}">
-                                <span class="uom-label text-body-secondary small">{{ $uomName }}</span>
-                            </td>
-                            <td>
-                                <input type="number" class="form-control text-end"
+                                <input type="number" class="form-control form-control-sm text-end"
                                     name="lines[{{ $i }}][expected_qty]" value="{{ $expectedQty }}" min="0"
                                     step="1" required oninput="updateTotals()">
                             </td>
                             <td>
-                                <input type="number" class="form-control text-end actual-qty-input"
+                                <input type="number" class="form-control form-control-sm text-end actual-qty-input"
                                     name="lines[{{ $i }}][actual_qty]" value="{{ $actualQty }}" min="0" step="1"
                                     {{ $tracking === 2 ? 'readonly' : '' }}>
                             </td>
@@ -245,7 +246,7 @@ $action = $isEdit ? route('receipts.update', $receipt->id) : route('receipts.sto
                                 @php $selLoc = $locations->firstWhere('id', (int) $locationId); @endphp
                                 <input type="hidden" name="lines[{{ $i }}][location_id]"
                                     class="location-id-hidden" value="{{ $locationId }}">
-                                <input type="text" class="form-control location-input" list="locationDatalist"
+                                <input type="text" class="form-control form-control-sm location-input" list="locationDatalist"
                                     value="{{ $selLoc ? $selLoc->code.($selLoc->name ? ' - '.$selLoc->name : '') : '' }}"
                                     placeholder="Nhập hoặc chọn" autocomplete="off"
                                     oninput="onLocationInput(this)" required>
@@ -254,13 +255,13 @@ $action = $isEdit ? route('receipts.update', $receipt->id) : route('receipts.sto
                                 @php $selEmp = $employees->firstWhere('id', (int) $receiverId); @endphp
                                 <input type="hidden" name="lines[{{ $i }}][receiver_id]"
                                     class="receiver-id-hidden" value="{{ $receiverId }}">
-                                <input type="text" class="form-control receiver-input" list="employeeDatalist"
+                                <input type="text" class="form-control form-control-sm receiver-input" list="employeeDatalist"
                                     value="{{ $selEmp ? $selEmp->code.' - '.$selEmp->name : '' }}"
                                     placeholder="Nhập hoặc chọn" autocomplete="off"
                                     oninput="onReceiverInput(this)" required>
                             </td>
                             <td>
-                                <select class="form-select" name="lines[{{ $i }}][sn_id]">
+                                <select class="form-select form-select-sm" name="lines[{{ $i }}][sn_id]">
                                     <option value="">- Chọn -</option>
                                     @foreach($sns as $s)
                                     <option value="{{ $s->id }}"
@@ -281,7 +282,7 @@ $action = $isEdit ? route('receipts.update', $receipt->id) : route('receipts.sto
                                     class="old-lot-id-hidden"
                                     value="{{ is_array($lineRow) ? ($lineRow['old_lot_id'] ?? '') : ($firstDetail->lot_id ?? '') }}">
                                 <input type="number"
-                                    class="form-control lot-input"
+                                    class="form-control form-control-sm lot-input"
                                     name="lines[{{ $i }}][lot_number]" value="{{ $lotNumber }}"
                                     placeholder="Tự động" min="1" step="1"
                                     oninput="clearFieldError(this)">
@@ -289,7 +290,7 @@ $action = $isEdit ? route('receipts.update', $receipt->id) : route('receipts.sto
                             {{-- Serial field: chuỗi text, mỗi mã cách nhau <space> --}}
                             <td>
                                 <input type="text"
-                                    class="form-control serial-input {{ $tracking === 1 ? 'bg-body-secondary' : '' }}"
+                                    class="form-control form-control-sm serial-input {{ $tracking === 1 ? 'bg-body-secondary' : '' }}"
                                     name="lines[{{ $i }}][serial_numbers]" value="{{ $serialNumbers }}"
                                     placeholder="{{ $tracking === 1 ? '-' : 'SN0001 SN0002 ...' }}"
                                     maxlength="5000" autocomplete="off"
@@ -297,14 +298,14 @@ $action = $isEdit ? route('receipts.update', $receipt->id) : route('receipts.sto
                                     {{ $tracking === 1 ? 'readonly' : '' }}>
                             </td>
                             <td>
-                                <input type="text" class="form-control"
+                                <input type="text" class="form-control form-control-sm"
                                     name="lines[{{ $i }}][sub_warehouse]" value="{{ $subWarehouse }}"
                                     maxlength="50" placeholder="Nhập">
                             </td>
                             <td>
-                                <input type="text" class="form-control"
+                                <input type="text" class="form-control form-control-sm"
                                     name="lines[{{ $i }}][note]" value="{{ $note }}"
-                                    placeholder="Ghi chú" maxlength="500">
+                                    placeholder="Nhập" maxlength="500">
                             </td>
                             <td class="text-end pe-3" style="align-items:center; justify-content:flex-end;">
                                 <button type="button" class="btn btn-sm btn-outline-danger"
@@ -439,7 +440,8 @@ function onProductInput(input) {
 
         tr.querySelector('.uom-label').textContent = p.uom || '-';
         tr.querySelector('.uom-hidden').value = p.uom_id || '';
-        tr.querySelector('.tskt-label').value = p.specification ?? '';
+        tr.querySelector('.tskt-hidden').value = p.specification ?? '';
+        tr.querySelector('.tskt-label').textContent = p.specification || '-';
 
         applyTracking(tr, parseInt(p.tracking) || TRACKING_LOT);
     } else {
@@ -448,7 +450,8 @@ function onProductInput(input) {
         input.classList.toggle('is-invalid', input.value.trim() !== '');
         tr.querySelector('.uom-label').textContent = '-';
         tr.querySelector('.uom-hidden').value = '';
-        tr.querySelector('.tskt-label').value = '';
+        tr.querySelector('.tskt-hidden').value = '';
+        tr.querySelector('.tskt-label').textContent = '-';
     }
 }
 
@@ -506,56 +509,57 @@ function rowTemplate(i) {
   <td class="text-center text-body-secondary small">${i + 1}</td>
   <td>
     <input type="hidden" name="lines[${i}][product_id]" class="product-id-hidden" value="">
-    <input type="text" class="form-control product-input" list="productDatalist"
+    <input type="text" class="form-control form-control-sm product-input" list="productDatalist"
            placeholder="Nhập hoặc chọn" autocomplete="off" oninput="onProductInput(this)" required>
   </td>
-  <td>
-    <input type="text" class="form-control tskt-label" placeholder="-" readonly tabindex="-1">
-  </td>
+<td>
+  <input type="hidden" name="lines[${i}][tskt]" class="tskt-hidden" value="">
+  <span class="tskt-label text-body-secondary small">-</span>
+</td>
   <td>
     <input type="hidden" name="lines[${i}][uom_id]" class="uom-hidden" value="">
     <span class="uom-label text-body-secondary small">-</span>
   </td>
   <td>
-    <input type="number" class="form-control text-end" name="lines[${i}][expected_qty]"
+    <input type="number" class="form-control form-control-sm text-end" name="lines[${i}][expected_qty]"
            min="0" step="1" required placeholder="0" oninput="updateTotals()">
   </td>
   <td>
-    <input type="number" class="form-control text-end actual-qty-input" name="lines[${i}][actual_qty]"
+    <input type="number" class="form-control form-control-sm text-end actual-qty-input" name="lines[${i}][actual_qty]"
            min="0" step="1" placeholder="0">
   </td>
   <td>
     <input type="hidden" name="lines[${i}][location_id]" class="location-id-hidden" value="">
-    <input type="text" class="form-control location-input" list="locationDatalist"
+    <input type="text" class="form-control form-control-sm location-input" list="locationDatalist"
            placeholder="Nhập hoặc chọn" autocomplete="off" oninput="onLocationInput(this)" required>
   </td>
   <td>
     <input type="hidden" name="lines[${i}][receiver_id]" class="receiver-id-hidden" value="">
-    <input type="text" class="form-control receiver-input" list="employeeDatalist"
+    <input type="text" class="form-control form-control-sm receiver-input" list="employeeDatalist"
            placeholder="Nhập hoặc chọn" autocomplete="off" oninput="onReceiverInput(this)" required>
   </td>
   <td>
-    <select class="form-select" name="lines[${i}][sn_id]">
+    <select class="form-select form-select-sm" name="lines[${i}][sn_id]">
       <option value="">- Chọn -</option>
       ${snOptions}
     </select>
   </td>
   <td>
     <input type="hidden" name="lines[${i}][old_lot_id]" class="old-lot-id-hidden" value="">
-    <input type="number" class="form-control lot-input"
+    <input type="number" class="form-control form-control-sm lot-input"
         name="lines[${i}][lot_number]" placeholder="Tự động" min="1" step="1"
         oninput="clearFieldError(this)">
   </td>
   <td>
-    <input type="text" class="form-control serial-input bg-body-secondary"
+    <input type="text" class="form-control form-control-sm serial-input bg-body-secondary"
            name="lines[${i}][serial_numbers]" placeholder="-" maxlength="5000" readonly
            oninput="onSerialInput(this)">
   </td>
   <td>
-    <input type="text" class="form-control" name="lines[${i}][sub_warehouse]" maxlength="50" placeholder="Nhập">
+    <input type="text" class="form-control form-control-sm" name="lines[${i}][sub_warehouse]" maxlength="50" placeholder="Nhập">
   </td>
   <td>
-    <input type="text" class="form-control" name="lines[${i}][note]" placeholder="Ghi chú" maxlength="500">
+    <input type="text" class="form-control form-control-sm" name="lines[${i}][note]" placeholder="Nhập" maxlength="500">
   </td>
   <td class="text-end pe-3" style="align-items:center; justify-content:flex-end;">
     <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeRow(this)" title="Xóa dòng">

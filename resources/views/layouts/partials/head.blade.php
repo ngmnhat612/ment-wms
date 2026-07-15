@@ -12,6 +12,7 @@
 
 {{-- CoreUI CSS --}}
 <link rel="stylesheet" href="{{ asset('vendor/coreui/css/style.min.css') }}">
+<link rel="stylesheet" href="{{ asset('vendor/coreui/css/chip-component.css') }}">
 
 {{-- CoreUI Charts --}}
 <link rel="stylesheet" href="{{ asset('vendor/coreui/chartjs/coreui-chartjs.css') }}">

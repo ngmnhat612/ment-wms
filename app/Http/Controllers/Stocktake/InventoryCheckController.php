@@ -25,19 +25,19 @@ class InventoryCheckController extends Controller
     public function index(Request $request): View
     {
         Gate::authorize('viewAny', InventoryCheck::class);
-
-        $filters = $request->only(['search', 'check_scope', 'status', 'date_from', 'date_to', 'sort', 'dir']);
-
+ 
+        $filters = $request->only(['search', 'check_scope', 'check_type', 'status', 'date_from', 'date_to', 'sort', 'dir']);
+ 
         $checks = $this->checkRepository->paginateForList($filters)
             ->through(function (InventoryCheck $check) {
                 $check->created_by      = $check->createdBy?->employee?->name;
                 $check->created_by_code = $check->createdBy?->employee?->code;
                 $check->lines_count     = $check->details_count;
                 $check->active_freeze   = $check->activeFreeze;
-
+ 
                 return $check;
             });
-
+ 
         return view('stocktake.index', [
             'checks' => $checks,
         ]);

@@ -13,6 +13,7 @@ return new class extends Migration
             $table->unsignedBigInteger('warehouse_id');
             $table->unsignedBigInteger('created_by')->comment('Người tạo (accounts.id)');
             $table->string('code', 50)->unique()->comment('Mã phiếu, tự sinh');
+            $table->date('request_date')->nullable()->comment('Ngày yêu cầu');
             $table->tinyInteger('status')->default(1)
                   ->comment('1=Draft, 2=Completed, 3=Cancelled');
             $table->string('note', 500)->nullable();

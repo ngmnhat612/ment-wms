@@ -119,4 +119,36 @@ class StockAdjustmentService
             throw new \DomainException('Chỉ có thể thao tác trên phiếu điều chỉnh ở trạng thái Nháp.');
         }
     }
+
+    /**
+     * Cập nhật phiếu điều chỉnh còn ở trạng thái Draft — thay thế toàn bộ
+     * danh sách dòng chênh lệch và thông tin header (adjustment_date, note).
+     */
+    public function update(StockAdjustment $adjustment, array $header, array $detailIds): StockAdjustment
+    {
+        $this->assertDraft($adjustment);
+
+        $inventoryCheck = $adjustment->inventoryCheck;
+
+        $checkDetails = $inventoryCheck->details()
+            ->whereIn('id', $detailIds)
+            ->whereRaw('diff_qty != 0')
+            ->get();
+
+        if ($checkDetails->isEmpty()) {
+            throw new \DomainException('Không có dòng chênh lệch hợp lệ nào được chọn để điều chỉnh.');
+        }
+
+        return DB::transaction(function () use ($adjustment, $header, $checkDetails) {
+            $adjustment->update([
+                'adjustment_date' => $header['adjustment_date'],
+                'note'            => $header['note'] ?? null,
+            ]);
+
+            $this->adjustmentRepository->deleteDetails($adjustment);
+            $this->adjustmentRepository->createDetailsFromCheckDetails($adjustment, $checkDetails);
+
+            return $adjustment->fresh('details');
+        });
+    }
 }

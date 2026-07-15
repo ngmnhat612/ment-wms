@@ -5,6 +5,7 @@ namespace App\Policies\Stocktake;
 use App\Models\Master\Account;
 use App\Models\Stocktake\StockAdjustment;
 use App\Policies\Concerns\HasRoleDepartmentAuthorization;
+use App\Enums\DocumentStatus;
 
 class StockAdjustmentPolicy
 {
@@ -35,5 +36,14 @@ class StockAdjustmentPolicy
     public function cancel(Account $account, StockAdjustment $adjustment): bool
     {
         return $this->allow($account);
+    }
+
+    /**
+     * Chỉ Admin hoặc Quản lý bộ phận Kho được sửa phiếu điều chỉnh,
+     * và chỉ khi phiếu còn ở trạng thái Draft.
+     */
+    public function update(Account $account, StockAdjustment $adjustment): bool
+    {
+        return $this->allow($account) && $adjustment->status === DocumentStatus::Draft;
     }
 }

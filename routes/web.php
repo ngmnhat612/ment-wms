@@ -187,6 +187,10 @@ Route::middleware('auth')->group(function () {
         ->name('stocktakes.adjustment.create');
     Route::post('stocktakes/{stocktake}/adjustment', [StockAdjustmentController::class, 'store'])
         ->name('stocktakes.adjustment.store');
+    Route::get('stocktakes/{stocktake}/adjustment/{adjustment}/edit', [StockAdjustmentController::class, 'edit'])
+        ->name('stocktakes.adjustment.edit');
+    Route::put('stocktakes/{stocktake}/adjustment/{adjustment}', [StockAdjustmentController::class, 'update'])
+        ->name('stocktakes.adjustment.update');
     Route::get('stocktakes/{stocktake}/adjustment/{adjustment}', [StockAdjustmentController::class, 'show'])
         ->name('stocktakes.adjustment.show');
     Route::post('stocktakes/{stocktake}/adjustment/{adjustment}/complete', [StockAdjustmentController::class, 'complete'])

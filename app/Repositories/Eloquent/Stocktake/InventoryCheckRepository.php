@@ -22,7 +22,12 @@ class InventoryCheckRepository implements InventoryCheckRepositoryInterface
         $sort = $filters['sort'] ?? '';
         $dir  = $filters['dir'] ?? '';
 
-        if ($sort && in_array($dir, ['asc', 'desc'], true)) {
+        $sortable = ['code', 'created_by', 'check_date', 'purpose', 'note', 'check_type'];
+
+        if ($sort === 'created_by') {
+            // created_by hiển thị là tên nhân viên (quan hệ), không sort trực tiếp trên cột này.
+            $query->orderByDesc('created_at');
+        } elseif (in_array($sort, $sortable, true) && in_array($dir, ['asc', 'desc'], true)) {
             $query->orderBy($sort, $dir);
         } else {
             $query->orderByDesc('created_at');
@@ -126,6 +131,10 @@ class InventoryCheckRepository implements InventoryCheckRepositoryInterface
 
         if (isset($filters['check_scope']) && $filters['check_scope'] !== '') {
             $query->where('check_scope', $filters['check_scope']);
+        }
+
+        if (isset($filters['check_type']) && $filters['check_type'] !== '') {
+            $query->where('check_type', $filters['check_type']);
         }
 
         if (isset($filters['status']) && $filters['status'] !== '') {
