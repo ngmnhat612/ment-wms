@@ -6,6 +6,8 @@
 
 {{-- CoreUI Bundle (Bootstrap + CoreUI JS) --}}
 <script src="{{ asset('vendor/coreui/js/coreui.bundle.min.js') }}"></script>
+<script src="{{ asset('vendor/coreui/js/coreui-chip-only.min.js') }}"></script>
+<script src="{{ asset('vendor/coreui/js/chip-input-bridge.js') }}"></script>
 
 {{-- public/js/number-input-guard.js --}}
 <script src="{{ asset('js/number-input-guard.js') }}"></script>

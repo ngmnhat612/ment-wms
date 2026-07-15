@@ -17,17 +17,17 @@
   <table class="table table-hover align-middle mb-0">
     <thead class="table-light">
       <tr>
-        <th style="width:36px">#</th>
-        <th>Mặt hàng</th>
-        <th>Vị trí HT</th>
-        <th>Vị trí thực tế</th>
-        <th>Lô</th>
-        <th style="width:40px">ĐVT</th>
-        <th class="text-end" style="width:100px">Tồn HT</th>
-        <th class="text-end" style="width:120px">Thực tế</th>
-        <th class="text-end" style="width:100px">Chênh lệch</th>
-        <th style="width:110px">Người kiểm</th>
-        <th class="text-center" style="width:80px">Trạng thái</th>
+        <th class="text-center" style="width:4%">#</th>
+        <th>Vật tư</th>
+        <th style="width:8%">ĐVT</th>
+        <th style="width:4%">Lô</th>
+        <th style="width:10%">Vị trí hệ thống</th>
+        <th style="width:10%">Vị trí thực tế</th>
+        <th class="text-end" style="width:10%">Tồn hệ thống</th>
+        <th class="text-end" style="width:10%">Tồn thực tế</th>
+        <th class="text-end" style="width:10%">Chênh lệch</th>
+        <th style="width:10%">Người kiểm</th>
+        <th class="text-center" style="width:10%">Trạng thái</th>
       </tr>
     </thead>
     <tbody>
@@ -43,11 +43,17 @@
       <tr class="{{ $rowClass }}">
         <td class="text-body-secondary small">{{ $loop->iteration }}</td>
 
-        {{-- Mặt hàng --}}
+        {{-- Vật tư --}}
         <td>
           <div class="fw-semibold small">{{ $detail->product->name ?? '—' }}</div>
           <div class="text-body-secondary" style="font-size:11px">{{ $detail->product->code ?? '' }}</div>
         </td>
+
+        {{-- ĐVT --}}
+        <td class="small text-center text-body-secondary">{{ $detail->uom->name ?? '—' }}</td>
+
+        {{-- Lô --}}
+        <td class="small text-body-secondary">{{ $detail->lot->lot_code ?? '—' }}</td>
 
         {{-- Vị trí hệ thống --}}
         <td class="small text-body-secondary">{{ $detail->systemLocation->code ?? '—' }}</td>
@@ -70,12 +76,6 @@
             <span class="text-body-secondary">{{ $detail->actualLocation->code ?? '—' }}</span>
           @endif
         </td>
-
-        {{-- Lô --}}
-        <td class="small text-body-secondary">{{ $detail->lot->lot_code ?? '—' }}</td>
-
-        {{-- ĐVT --}}
-        <td class="small text-center text-body-secondary">{{ $detail->uom->name ?? '—' }}</td>
 
         {{-- Tồn hệ thống --}}
         <td class="text-end fw-semibold">{{ number_format($detail->system_qty, 0) }}</td>
@@ -125,13 +125,13 @@
         {{-- Trạng thái dòng --}}
         <td class="text-center">
           @if(!$isCounted)
-            <span class="badge bg-secondary-subtle text-secondary-emphasis border border-secondary-subtle rounded-pill"
+            <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle"
                   style="font-size:10px">Chưa kiểm</span>
           @elseif($hasDiff)
-            <span class="badge bg-danger-subtle text-danger-emphasis border border-danger-subtle rounded-pill"
+            <span class="badge bg-danger-subtle text-danger border border-danger-subtle"
                   style="font-size:10px">Lệch</span>
           @else
-            <span class="badge bg-success-subtle text-success-emphasis border border-success-subtle rounded-pill"
+            <span class="badge bg-success-subtle text-success border border-success-subtle"
                   style="font-size:10px">Khớp</span>
           @endif
         </td>

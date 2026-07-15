@@ -11,13 +11,13 @@ interface StockAdjustmentRepositoryInterface
 
     public function create(array $headerData): StockAdjustment;
 
-    /**
-     * Copy dữ liệu từ các InventoryCheckDetail đã chọn (đã có chênh lệch)
-     * sang StockAdjustmentDetail, giữ liên kết check_detail_id.
-     *
-     * @param \Illuminate\Support\Collection<int, InventoryCheckDetail> $checkDetails
-     */
     public function createDetailsFromCheckDetails(StockAdjustment $adjustment, $checkDetails): void;
+
+    /**
+     * Xóa toàn bộ StockAdjustmentDetail hiện có của phiếu, dùng khi
+     * cập nhật lại danh sách dòng chênh lệch (edit).
+     */
+    public function deleteDetails(StockAdjustment $adjustment): void;
 
     public function generateCode(): string;
 }

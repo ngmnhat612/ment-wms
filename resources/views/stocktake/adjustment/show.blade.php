@@ -3,7 +3,8 @@
 @section('title', 'Phiếu điều chỉnh ' . $adjustment->code)
 
 @section('breadcrumb')
-  <li class="breadcrumb-item"><a href="{{ route('stocktakes.index') }}">Kiểm kê kho</a></li>
+  <li class="breadcrumb-item">Nghiệp vụ kho</li>
+  <li class="breadcrumb-item"><a href="{{ route('stocktakes.index') }}">Kiểm kê</a></li>
   <li class="breadcrumb-item"><a href="{{ route('stocktakes.show', $inventoryCheck) }}">{{ $inventoryCheck->code }}</a></li>
   <li class="breadcrumb-item active">{{ $adjustment->code }}</li>
 @endsection
@@ -24,7 +25,7 @@
 @endphp
 
 {{-- HEADER --}}
-<div class="d-flex justify-content-between align-items-start mb-4 flex-wrap gap-3">
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
   <div>
     <div class="d-flex align-items-center gap-2 mb-1">
       <h4 class="mb-0 fw-semibold">{{ $adjustment->code }}</h4>
@@ -32,121 +33,78 @@
         {{ $status->label() }}
       </span>
     </div>
-    <small class="text-body-secondary">
-      Từ phiếu kiểm kê:
-      <a href="{{ route('stocktakes.show', $inventoryCheck) }}" class="text-decoration-none">{{ $inventoryCheck->code }}</a>
-      &nbsp;·&nbsp; Ngày: {{ $adjustment->adjustment_date ? \Carbon\Carbon::parse($adjustment->adjustment_date)->format('d/m/Y') : '—' }}
-      &nbsp;·&nbsp; Người tạo: {{ $adjustment->createdBy->employee->name ?? '—' }}
-    </small>
   </div>
-
-  <div class="d-flex gap-2">
-    <a href="{{ route('stocktakes.show', $inventoryCheck) }}" class="btn btn-outline-secondary">
-      <svg class="icon me-1"><use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-arrow-left') }}"></use></svg>
-      Quay lại
-    </a>
-
-    @if($canCancel)
-      <form method="POST" action="{{ route('stocktakes.adjustment.cancel', [$inventoryCheck, $adjustment]) }}"
-            onsubmit="return confirm('Hủy phiếu điều chỉnh này?')">
-        @csrf
-        <button class="btn btn-outline-danger">
-          <svg class="icon me-1"><use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-x-circle') }}"></use></svg>
-          Hủy phiếu
-        </button>
-      </form>
-    @endif
-
+  <div class="d-flex gap-2 flex-wrap">
     @if($canComplete)
       <form method="POST" action="{{ route('stocktakes.adjustment.complete', [$inventoryCheck, $adjustment]) }}"
             onsubmit="return confirm('Xác nhận điều chỉnh? Tồn kho sẽ được cập nhật ngay lập tức và không thể hoàn tác.')">
         @csrf
-        <button class="btn btn-danger">
-          <svg class="icon me-1"><use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-check-circle') }}"></use></svg>
-          Xác nhận điều chỉnh
+        <button class="btn btn-success">
+          Duyệt
         </button>
       </form>
     @endif
+
+    @if($canCancel)
+      <a href="{{ route('stocktakes.adjustment.edit', [$inventoryCheck, $adjustment]) }}" class="btn btn-primary">
+        Chỉnh sửa
+      </a>
+    @endif
+
+    <a href="{{ route('stocktakes.show', $inventoryCheck) }}" class="btn btn-outline-secondary">
+      Quay lại
+    </a>
   </div>
 </div>
 
 {{-- THÔNG TIN PHIẾU --}}
-<div class="card mb-4">
-  <div class="card-header fw-semibold">Thông tin phiếu điều chỉnh</div>
+<div class="card mb-3">
+  <div class="card-header fw-semibold d-flex align-items-center" style="min-height:44px">
+    Thông tin phiếu
+  </div>
   <div class="card-body">
     <div class="row g-3">
-      <div class="col-sm-6 col-lg-3">
-        <div class="text-body-secondary small mb-1">Mã phiếu</div>
-        <div class="fw-semibold">{{ $adjustment->code }}</div>
+      <div class="col-sm-3">
+        <label class="form-label mb-1 d-block fw-semibold">Mã phiếu</label>
+        <input type="text" class="form-control" value="{{ $adjustment->code }}" disabled>
       </div>
-      <div class="col-sm-6 col-lg-3">
-        <div class="text-body-secondary small mb-1">Phiếu kiểm kê</div>
-        <a href="{{ route('stocktakes.show', $inventoryCheck) }}" class="fw-semibold text-decoration-none">
-          {{ $inventoryCheck->code }}
-        </a>
+      <div class="col-sm-3">
+        <label class="form-label mb-1 d-block fw-semibold">Từ phiếu kiểm kê</label>
+        <input type="text" class="form-control" value="{{ $inventoryCheck->code }}" disabled>
       </div>
-      <div class="col-sm-6 col-lg-3">
-        <div class="text-body-secondary small mb-1">Ngày điều chỉnh</div>
-        <div>{{ $adjustment->adjustment_date ? \Carbon\Carbon::parse($adjustment->adjustment_date)->format('d/m/Y') : '—' }}</div>
+      <div class="col-sm-3">
+        <label class="form-label fw-semibold">Ngày điều chỉnh</label>
+        <input type="text" class="form-control"
+               value="{{ $adjustment->adjustment_date ? \Carbon\Carbon::parse($adjustment->adjustment_date)->format('d/m/Y') : '—' }}" disabled>
       </div>
-      <div class="col-sm-6 col-lg-3">
-        <div class="text-body-secondary small mb-1">Trạng thái</div>
-        <span class="{{ $status->badgeClass() }}">
-          {{ $status->label() }}
-        </span>
+      <div class="col-sm-3">
+        <label class="form-label fw-semibold">Ghi chú</label>
+        <textarea class="form-control" rows="1" disabled>{{ $adjustment->note }}</textarea>
       </div>
-      <div class="col-sm-6 col-lg-3">
-        <div class="text-body-secondary small mb-1">Người tạo</div>
-        <div>{{ $adjustment->createdBy->employee->name ?? '—' }}</div>
-      </div>
-      @if($adjustment->approvedBy)
-      <div class="col-sm-6 col-lg-3">
-        <div class="text-body-secondary small mb-1">Người duyệt</div>
-        <div>{{ $adjustment->approvedBy->employee->name ?? '—' }}</div>
-      </div>
-      @endif
-      @if($adjustment->note)
-      <div class="col-12">
-        <div class="text-body-secondary small mb-1">Ghi chú</div>
-        <div>{{ $adjustment->note }}</div>
-      </div>
-      @endif
     </div>
   </div>
 </div>
 
 {{-- BẢNG CHÊNH LỆCH --}}
-<div class="card">
-  <div class="card-header d-flex justify-content-between align-items-center">
+<div class="card mb-3">
+  <div class="card-header fw-semibold d-flex justify-content-between align-items-center" style="min-height:44px">
     <span class="fw-semibold">Chi tiết điều chỉnh tồn kho</span>
-    <small class="text-body-secondary">{{ $details->count() }} dòng</small>
   </div>
 
-  @if($canComplete)
-  <div class="alert alert-warning mx-3 mt-3 mb-0 d-flex align-items-start gap-2">
-    <svg class="icon flex-shrink-0 mt-1"><use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-warning') }}"></use></svg>
-    <div>
-      <strong>Lưu ý trước khi xác nhận:</strong> Thao tác "Xác nhận điều chỉnh" sẽ cập nhật tồn kho thực tế và ghi vào
-      sổ cái kho. Hành động này <strong>không thể hoàn tác</strong>.
-    </div>
-  </div>
-  @endif
-
-  <div class="card-body p-0 mt-3">
+  <div class="card-body p-0">
     <div class="table-responsive">
       <table class="table table-hover align-middle mb-0">
         <thead class="table-light">
           <tr>
-            <th style="width:36px">#</th>
-            <th>Mặt hàng</th>
-            <th>Vị trí HT</th>
-            <th>Vị trí thực tế</th>
-            <th>Lô</th>
-            <th style="width:50px">ĐVT</th>
-            <th class="text-end" style="width:100px">Tồn HT</th>
-            <th class="text-end" style="width:100px">Thực tế</th>
-            <th class="text-end" style="width:100px">Chênh lệch</th>
-            <th class="text-center" style="width:90px">Loại</th>
+            <th class="text-center" style="width:4%">#</th>
+            <th>Vật tư</th>
+            <th style="width:8%">ĐVT</th>
+            <th style="width:4%">Lô</th>
+            <th style="width:10%">Vị trí hệ thống</th>
+            <th style="width:10%">Vị trí thực tế</th>
+            <th class="text-end" style="width:10%">Tồn hệ thống</th>
+            <th class="text-end" style="width:10%">Tồn thực tế</th>
+            <th class="text-end" style="width:10%">Chênh lệch</th>
           </tr>
         </thead>
         <tbody>
@@ -157,37 +115,24 @@
             $rowClass = $isPlus ? 'table-success' : 'table-danger';
           @endphp
           <tr class="{{ $rowClass }}">
-            <td class="text-body-secondary small">{{ $loop->iteration }}</td>
+            <td class="text-center text-body-secondary">{{ $loop->iteration }}</td>
             <td>
               <div class="fw-semibold small">{{ $d->product->name ?? '—' }}</div>
               <div class="text-body-secondary" style="font-size:11px">{{ $d->product->code ?? '' }}</div>
             </td>
+            <td class="small text-center text-body-secondary">{{ $d->uom->name ?? '—' }}</td>
+            <td class="small text-body-secondary">{{ $d->lot->lot_code ?? '—' }}</td>
             <td class="small text-body-secondary">{{ $d->systemLocation->code ?? '—' }}</td>
             <td class="small text-body-secondary">{{ $d->actualLocation->code ?? '—' }}</td>
-            <td class="small text-body-secondary">{{ $d->lot->lot_code ?? '—' }}</td>
-            <td class="small text-center text-body-secondary">{{ $d->uom->name ?? '—' }}</td>
             <td class="text-end">{{ number_format($d->system_qty, 0) }}</td>
             <td class="text-end fw-semibold">{{ number_format($d->actual_qty, 0) }}</td>
             <td class="text-end fw-bold {{ $isPlus ? 'text-success' : 'text-danger' }}">
               {{ $isPlus ? '+' : '' }}{{ number_format($diff, 0) }}
             </td>
-            <td class="text-center">
-              @if($isPlus)
-                <span class="badge bg-success-subtle text-success-emphasis border border-success-subtle rounded-pill" style="font-size:10px">
-                  <svg class="icon icon-sm"><use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-arrow-top') }}"></use></svg>
-                  Tăng tồn
-                </span>
-              @else
-                <span class="badge bg-danger-subtle text-danger-emphasis border border-danger-subtle rounded-pill" style="font-size:10px">
-                  <svg class="icon icon-sm"><use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-arrow-bottom') }}"></use></svg>
-                  Giảm tồn
-                </span>
-              @endif
-            </td>
           </tr>
           @empty
           <tr>
-            <td colspan="10" class="text-center text-body-secondary py-5">Không có dữ liệu.</td>
+            <td colspan="9" class="text-center text-body-secondary py-5">Không có dữ liệu.</td>
           </tr>
           @endforelse
         </tbody>
@@ -202,7 +147,6 @@
                 {{ $netTotal >= 0 ? '+' : '' }}{{ number_format($netTotal, 0) }}
               </span>
             </td>
-            <td></td>
           </tr>
         </tfoot>
         @endif
@@ -210,5 +154,13 @@
     </div>
   </div>
 </div>
+
+@if($canCancel)
+<div class="d-flex gap-2 justify-content-end mt-3">
+  <button type="button" class="btn btn-outline-danger" data-coreui-toggle="modal" data-coreui-target="#cancelModal">
+    Hủy
+  </button>
+</div>
+@endif
 
 @endsection

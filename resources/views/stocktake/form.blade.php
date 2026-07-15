@@ -5,6 +5,7 @@
 @section('title', $isEdit ? 'Chỉnh sửa phiếu kiểm kê' : 'Thêm phiếu kiểm kê')
 
 @section('breadcrumb')
+  <li class="breadcrumb-item">Nghiệp vụ kho</li>
   <li class="breadcrumb-item"><a href="{{ route('stocktakes.index') }}">Kiểm kê</a></li>
   @if($isEdit)
     <li class="breadcrumb-item"><a href="{{ route('stocktakes.show', $inventoryCheck) }}">{{ $inventoryCheck->code }}</a></li>
@@ -104,7 +105,7 @@
           @enderror
         </div>
 
-        <div class="col-md-6">
+        <div class="col-md-4">
           <label class="form-label mb-1 fw-semibold" for="purpose">Mục đích</label>
           <textarea class="form-control @error('purpose') is-invalid @enderror"
                     id="purpose" name="purpose" rows="2" maxlength="200"
@@ -114,7 +115,7 @@
           @enderror
         </div>
 
-        <div class="col-md-6">
+        <div class="col-md-8">
           <label class="form-label mb-1 fw-semibold" for="note">Ghi chú</label>
           <textarea class="form-control @error('note') is-invalid @enderror" id="note" name="note"
                     rows="2" maxlength="500" placeholder="Nhập ghi chú">{{ old('note', $inventoryCheck->note ?? '') }}</textarea>
@@ -129,14 +130,14 @@
 
   {{-- ── PHẠM VI: THEO KHU VỰC ── --}}
   <div class="card mb-3" id="scope-area" style="display:none">
-<div class="card-header fw-semibold d-flex justify-content-between align-items-center" style="min-height:44px">
-  <span>Vị trí kiểm kê</span>
-  <div class="d-flex gap-2">
-    <button type="button" class="btn btn-sm btn-primary" id="toggleLocationsBtn" onclick="toggleAllLocations()" title="Chọn tất cả">
-      <svg class="icon" id="toggleLocationsIcon"><use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-check-circle') }}"></use></svg>
-    </button>
-  </div>
-</div>
+    <div class="card-header fw-semibold d-flex justify-content-between align-items-center" style="min-height:44px">
+      <span>Vị trí kiểm kê</span>
+      <div class="d-flex gap-2">
+        <button type="button" class="btn btn-sm btn-primary" id="toggleLocationsBtn" onclick="toggleAllLocations()" title="Chọn tất cả">
+          <svg class="icon" id="toggleLocationsIcon"><use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-check-circle') }}"></use></svg>
+        </button>
+      </div>
+    </div>
     <div class="card-body">
       @error('location_ids')
         <div class="alert alert-danger py-2 mb-3">{{ $message }}</div>
@@ -188,14 +189,6 @@
 
   document.getElementById('check_scope').addEventListener('change', updateScopeVisibility);
   updateScopeVisibility();
-
-  // // Chọn/bỏ chọn tất cả vị trí
-  // function selectAllLocations() {
-  //   document.querySelectorAll('.location-cb').forEach(cb => cb.checked = true);
-  // }
-  // function clearLocations() {
-  //   document.querySelectorAll('.location-cb').forEach(cb => cb.checked = false);
-  // }
 
   function toggleAllLocations() {
     const checkboxes = document.querySelectorAll('.location-cb');

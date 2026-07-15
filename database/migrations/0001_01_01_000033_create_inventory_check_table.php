@@ -20,7 +20,6 @@ return new class extends Migration
             $table->date('check_date')->comment('Ngày kiểm kê');
             $table->string('purpose', 200)->nullable()->comment('Mục đích');
             $table->string('note', 500)->nullable();
-            $table->dateTime('completed_at')->nullable()->comment('Thời điểm hoàn thành kiểm kê thực tế');
             $table->timestamps();
 
             $table->foreign('warehouse_id')

@@ -12,13 +12,14 @@ class StockInRequest extends Model
     protected $table = 'stock_in_request';
 
     protected $fillable = [
-        'warehouse_id', 'created_by', 'code', 'status', 'note',
+        'warehouse_id', 'created_by', 'code', 'request_date', 'status', 'note',
     ];
 
     protected $casts = [
         'status'       => DocumentStatus::class,
         'warehouse_id' => 'integer',
         'created_by'   => 'integer',
+        'request_date' => 'date',
     ];
 
     public function warehouse()

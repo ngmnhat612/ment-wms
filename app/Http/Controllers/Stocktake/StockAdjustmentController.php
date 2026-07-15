@@ -84,4 +84,34 @@ class StockAdjustmentController extends Controller
         return redirect()->route('stocktakes.adjustment.show', [$stocktake, $adjustment])
             ->with('success', "Đã hủy phiếu {$adjustment->code}.");
     }
+
+    public function edit(InventoryCheck $stocktake, StockAdjustment $adjustment): View
+    {
+        Gate::authorize('update', $adjustment);
+
+        return view('stocktake.adjustment.form', [
+            'inventoryCheck' => $stocktake->load('details.product', 'details.uom', 'details.lot', 'details.systemLocation', 'details.actualLocation'),
+            'adjustment'     => $this->adjustmentRepository->findWithDetails($adjustment->id),
+        ]);
+    }
+
+    public function update(StockAdjustmentRequest $request, InventoryCheck $stocktake, StockAdjustment $adjustment)
+    {
+        Gate::authorize('update', $adjustment);
+
+        try {
+            $this->adjustmentService->update(
+                $adjustment,
+                $request->only(['adjustment_date', 'note']),
+                $request->input('detail_ids', [])
+            );
+        } catch (\DomainException $e) {
+            return redirect()->route('stocktakes.adjustment.edit', [$stocktake, $adjustment])
+                ->withInput()
+                ->with('error', $e->getMessage());
+        }
+
+        return redirect()->route('stocktakes.adjustment.show', [$stocktake, $adjustment])
+            ->with('success', 'Đã cập nhật phiếu điều chỉnh thành công.');
+    }
 }

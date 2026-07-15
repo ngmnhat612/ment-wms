@@ -20,7 +20,7 @@ class InventoryCheck extends Model
 
     protected $fillable = [
         'warehouse_id', 'code', 'check_scope', 'check_type', 'created_by',
-        'status', 'check_date', 'purpose', 'note', 'completed_at',
+        'status', 'check_date', 'purpose', 'note',
     ];
 
     protected function casts(): array
@@ -32,7 +32,6 @@ class InventoryCheck extends Model
             'check_type'   => InventoryCheckType::class,
             'status'       => InventoryCheckStatus::class,
             'check_date'   => 'date',
-            'completed_at' => 'datetime',
         ];
     }
 

@@ -4,7 +4,7 @@
 
 @section('breadcrumb')
 <li class="breadcrumb-item">Nghiệp vụ kho</li>
-<li class="breadcrumb-item"><a href="{{ route('stock-requests.index') }}">Yêu cầu Nhập/Xuất kho</a></li>
+<li class="breadcrumb-item"><a href="{{ route('stock-requests.index') }}">Yêu cầu Nhập/Xuất</a></li>
 <li class="breadcrumb-item active">{{ $stockOutRequest->code }}</li>
 @endsection
 
@@ -58,19 +58,17 @@ $fmt = fn($n) => rtrim(rtrim(number_format((float)$n, 3, '.', ','), '0'), '.');
     <div class="card-body">
         <div class="row g-3">
             <div class="col-md-3">
-                <label class="form-label mb-1">Mã phiếu</label>
-                <div class="fw-semibold">{{ $stockOutRequest->code }}</div>
+                <label class="form-label mb-1 fw-semibold">Mã phiếu</label>
+                <div class="fw-medium">
+                    <code class="text-primary">{{ $stockOutRequest->code }}</code>
+                </div>
             </div>
             <div class="col-md-3">
-                <label class="form-label mb-1">Người tạo</label>
-                <div>{{ $stockOutRequest->createdBy?->display_name ?? '-' }}</div>
+                <label class="form-label mb-1 fw-semibold">Ngày yêu cầu</label>
+                <div>{{ $stockOutRequest->request_date ? \Carbon\Carbon::parse($stockOutRequest->request_date)->format('d/m/Y') : '-' }}</div>
             </div>
-            <div class="col-md-3">
-                <label class="form-label mb-1">Ngày tạo</label>
-                <div>{{ $stockOutRequest->created_at?->format('d/m/Y H:i') ?? '-' }}</div>
-            </div>
-            <div class="col-md-12">
-                <label class="form-label mb-1">Ghi chú</label>
+            <div class="col-md-6">
+                <label class="form-label mb-1 fw-semibold">Ghi chú</label>
                 <div>{{ $stockOutRequest->note ?? '-' }}</div>
             </div>
         </div>
@@ -92,13 +90,14 @@ $fmt = fn($n) => rtrim(rtrim(number_format((float)$n, 3, '.', ','), '0'), '.');
                     <tr>
                         <th class="text-center" style="width:2%">#</th>
                         <th style="width:8%">Ngày xuất</th>
+                        <th style="min-width:100px">Mã vật tư</th>
                         <th style="min-width:160px">Vật tư</th>
-                        <th style="width:6%" class="text-end">SL</th>
                         <th style="width:6%">ĐVT</th>
+                        <th style="width:4%" class="text-end">SL</th>
                         <th style="width:6%" class="text-end">Thực xuất</th>
                         <th style="min-width:120px">Người nhận</th>
                         <th style="width:8%">Mã dự án</th>
-                        <th style="width:6%">Số Lô</th>
+                        <th style="width:6%">Lô</th>
                         <th style="min-width:150px">Sê-ri</th>
                         <th style="min-width:120px">Ghi chú</th>
                     </tr>
@@ -107,13 +106,11 @@ $fmt = fn($n) => rtrim(rtrim(number_format((float)$n, 3, '.', ','), '0'), '.');
                 @forelse($stockOutRequest->details as $di => $detail)
                     <tr>
                         <td class="text-center text-body-secondary">{{ $di + 1 }}</td>
-                        <td>{{ $detail->issue_date ? \Carbon\Carbon::parse($detail->issue_date)->format('d/m/Y') : '-' }}</td>
-                        <td>
-                            <div class="fw-medium">{{ $detail->product_name ?? '-' }}</div>
-                            <div class="small text-body-secondary font-monospace">{{ $detail->product_code ?? '' }}</div>
-                        </td>
+                        <td class="small">{{ $detail->issue_date ? \Carbon\Carbon::parse($detail->issue_date)->format('d/m/Y') : '-' }}</td>
+                        <td><code class="text-primary fw-medium">{{ $detail->product_code ?? '-' }}</code></td>
+                        <td class="small">{{ $detail->product_name ?? '-' }}</td>
+                        <td class="small">{{ $detail->uom_name ?? '-' }}</td>
                         <td class="text-end">{{ $fmt($detail->quantity) }}</td>
-                        <td>{{ $detail->uom_name ?? '-' }}</td>
                         <td class="text-end">
                             @if($detail->actual_qty !== null)
                                 <span class="{{ (float)$detail->actual_qty < (float)$detail->quantity ? 'text-warning' : 'text-success' }}">
@@ -131,7 +128,7 @@ $fmt = fn($n) => rtrim(rtrim(number_format((float)$n, 3, '.', ','), '0'), '.');
                                 <span class="text-body-secondary small">-</span>
                             @endif
                         </td>
-                        <td>{{ $detail->sn_code ?? '-' }}</td>
+                        <td class="small">{{ $detail->sn_code ?? '-' }}</td>
                         <td>{{ $detail->lot_number ?? '-' }}</td>
                         <td class="small">
                             @if($detail->serial_number)
@@ -139,10 +136,10 @@ $fmt = fn($n) => rtrim(rtrim(number_format((float)$n, 3, '.', ','), '0'), '.');
                             @else -
                             @endif
                         </td>
-                        <td>{{ $detail->note ?? '-' }}</td>
+                        <td class="small">{{ $detail->note ?? '-' }}</td>
                     </tr>
                 @empty
-                <tr><td colspan="11" class="text-center text-body-secondary py-5">Không có dòng chi tiết.</td></tr>
+                <tr><td colspan="12" class="text-center text-body-secondary py-5">Không có dòng chi tiết.</td></tr>
                 @endforelse
                 </tbody>
             </table>

@@ -188,10 +188,10 @@ class ProductService
      */
     public function delete(Product $product): void
     {
-        $this->guardNotInUse('products', 'id', $product->id, 'Vật tư', $product->name);
-
         $this->reorderRuleService->deleteForProduct($product->id);
         $this->putawayRuleService->deleteForProduct($product->id);
+
+        $this->guardNotInUse('products', 'id', $product->id, 'Vật tư', $product->name);
 
         $this->productRepository->delete($product);
     }
