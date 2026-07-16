@@ -275,9 +275,7 @@
                     id="sEmail" name="email"
                     value="{{ old('email') }}"
                     placeholder="Nhập email" maxlength="200">
-              @error('email')
-                <div class="invalid-feedback">{{ $message }}</div>
-              @enderror
+              <div class="invalid-feedback" id="sEmailError">@error('email'){{ $message }}@enderror</div>
             </div>
 
             <div class="mb-3 mt-3">
@@ -429,16 +427,33 @@
   @endif
 
   document.getElementById('supplierForm').addEventListener('submit', function (e) {
-    const nameEl = document.getElementById('sName');
-    const name   = nameEl.value.trim();
+    const nameEl  = document.getElementById('sName');
+    const name    = nameEl.value.trim();
+    const emailEl = document.getElementById('sEmail');
+    const email   = emailEl.value.trim();
+    // Regex đơn giản đủ khớp mục đích của rule 'email' phía backend (chặn các
+    // lỗi rõ ràng như thiếu @, thiếu domain...); không cần chính xác tuyệt đối
+    // theo RFC vì backend vẫn là lớp validate cuối cùng.
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
     nameEl.classList.remove('is-invalid');
+    emailEl.classList.remove('is-invalid');
+    document.getElementById('sEmailError').textContent = '';
 
     if (!name) {
       nameEl.classList.add('is-invalid');
       document.getElementById('sSupplierNameError').textContent = 'Vui lòng nhập tên nhà cung cấp.';
       e.preventDefault();
       nameEl.focus();
+      return;
+    }
+
+    // email là nullable -> chỉ check định dạng khi có nhập
+    if (email && !emailPattern.test(email)) {
+      emailEl.classList.add('is-invalid');
+      document.getElementById('sEmailError').textContent = 'Email không hợp lệ.';
+      e.preventDefault();
+      emailEl.focus();
       return;
     }
 
