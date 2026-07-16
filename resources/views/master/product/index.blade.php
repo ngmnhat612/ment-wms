@@ -298,7 +298,7 @@
               <input type="text" class="form-control text-uppercase"
                     id="pVariantCode" name="code"
                     placeholder="TỰ ĐỘNG"
-                    oninput="sanitizeCodeInput(this); this.classList.remove('is-invalid')"
+                    oninput="sanitizeVariantCodeInput(this); this.classList.remove('is-invalid')"
                     onblur="checkProductCodeUnique(this, 'pVariantCodeError')">
               <div class="invalid-feedback" id="pVariantCodeError"></div>
             </div>
@@ -783,9 +783,11 @@
       document.getElementById('pIsVariant').checked = true;
       toggleVariantMode(true);
 
-      // Điền lại old input
+      // Điền lại old input (sanitize lại vì gán thẳng .value không đi qua oninput
+      // -> nếu người dùng từng gõ ký tự đặc biệt bị backend từ chối, giá trị đó
+      // vẫn hiện nguyên khi mở lại nếu không lọc lại ở đây)
       document.getElementById('pParentCode').value  = @json(old('parent_code', ''));
-      document.getElementById('pVariantCode').value = @json(old('code', ''));
+      document.getElementById('pVariantCode').value = @json(old('code', '')).toUpperCase().replace(/[^A-Z0-9]/g, '');
       document.getElementById('pNameVariant').value = @json(old('name', ''));
       document.getElementById('pSpec').value        = @json(old('specification', ''));
       document.getElementById(
@@ -816,7 +818,7 @@
       codeInput.setAttribute('readonly', true);
       codeInput.classList.add('bg-body-secondary');
 
-      document.getElementById('pCode').value     = @json(old('code', ''));
+      document.getElementById('pCode').value     = @json(old('code', '')).toUpperCase().replace(/[^A-Z0-9]/g, '');
       document.getElementById('pName').value     = @json(old('name', ''));
       document.getElementById('pSpec').value     = @json(old('specification', ''));
       document.getElementById('pTracking').value = @json(old('tracking_type', 1));
@@ -848,7 +850,7 @@
       toggleVariantMode(false);
       unlockCategoryForCreate();
 
-      document.getElementById('pCode').value      = @json(old('code', ''));
+      document.getElementById('pCode').value      = @json(old('code', '')).toUpperCase().replace(/[^A-Z0-9]/g, '');
       document.getElementById('pName').value      = @json(old('name', ''));
       setSelectValueSafe('pCategory', @json(old('category_id', '')));
       setSelectValueSafe('pUom', @json(old('uom_id', '')));

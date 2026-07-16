@@ -9,6 +9,22 @@ function sanitizeCodeInput(el) {
     }
 }
 
+// Dùng riêng cho ô "Mã MenT biến thể" (pVariantCode) — giống sanitizeCodeInput
+// nhưng CHO PHÉP thêm dấu chấm '.', vì mã biến thể thường đặt theo quy ước
+// <mã gốc>.<số thứ tự> (vd: CH0003.1). Không dùng chung với sanitizeCodeInput
+// vì các mã khác (category, department, sản phẩm gốc, mã gốc biến thể...)
+// không có dấu chấm trong quy ước, khớp rule 'regex:/^[A-Za-z0-9.]+$/' ở
+// StoreProductVariantRequest (chỉ áp dụng cho field 'code', không áp dụng cho
+// 'parent_code' — mã gốc vẫn không cho dấu chấm).
+function sanitizeVariantCodeInput(el) {
+    const pos = el.selectionStart;
+    const cleaned = el.value.toUpperCase().replace(/[^A-Z0-9.]/g, '');
+    if (cleaned !== el.value) {
+        el.value = cleaned;
+        el.setSelectionRange(pos, pos);
+    }
+}
+
 // Dùng cho ô "Tên đăng nhập" (tài khoản đăng nhập của nhân viên).
 // Chuyển thường, chỉ giữ a-z, 0-9 và 3 ký tự @ _ . (khớp rule
 // 'regex:/^[a-z0-9@_.]+$/' trong StoreAccountRequest), giữ nguyên vị trí con trỏ.
@@ -44,6 +60,7 @@ function clearValidationErrors(formId) {
 // oninput="clearValidationErrors('categoryForm')"). Gán ra window để giữ tương thích
 // ngược, tránh phải sửa lại toàn bộ các view đang dùng inline handler.
 window.sanitizeCodeInput = sanitizeCodeInput;
+window.sanitizeVariantCodeInput = sanitizeVariantCodeInput;
 window.sanitizeUsernameInput = sanitizeUsernameInput;
 window.setModalFormId = setModalFormId;
 window.clearValidationErrors = clearValidationErrors;

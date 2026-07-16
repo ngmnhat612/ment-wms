@@ -25,7 +25,10 @@ class StoreProductVariantRequest extends FormRequest
             ],
             'code' => [
                 'nullable', 'string', 'max:50',
-                'regex:/^[A-Za-z0-9]+$/',
+                // Cho phép thêm dấu chấm '.' vì mã biến thể thường đặt theo quy ước
+                // <mã gốc>.<số thứ tự>, ví dụ CH0003.1 — khác với mã vật tư thường
+                // (StoreProductRequest) không cho dấu chấm.
+                'regex:/^[A-Za-z0-9.]+$/',
                 Rule::unique('products', 'code'),
             ],
             'name'          => 'required|string|max:200',
@@ -46,7 +49,7 @@ class StoreProductVariantRequest extends FormRequest
             'parent_code.required' => 'Vui lòng nhập mã MenT gốc.',
             'parent_code.exists'   => 'Mã MenT gốc không tồn tại trong hệ thống.',
             'code.max'             => 'Mã biến thể không được vượt quá 50 ký tự.',
-            'code.regex'           => 'Mã biến thể chỉ được phép chứa chữ cái và số, không chứa ký tự đặc biệt hoặc icon.',
+            'code.regex'           => 'Mã biến thể chỉ được phép chứa chữ cái, số và dấu chấm (.), không chứa ký tự đặc biệt khác hoặc icon.',
             'code.unique'          => 'Mã biến thể đã tồn tại.',
             'name.required'        => 'Vui lòng nhập tên biến thể.',
             'name.max'             => 'Tên không được vượt quá 200 ký tự.',
