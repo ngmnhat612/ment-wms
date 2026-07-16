@@ -281,7 +281,7 @@
                        class="form-control text-uppercase {{ $errors->has('code') ? 'is-invalid' : '' }}"
                        name="code" id="empCode"
                        value="{{ old('code') }}"
-                       placeholder="Tự động" maxlength="50">
+                       placeholder="Tự động" maxlength="20">
                 @error('code')
                   <div class="invalid-feedback">{{ $message }}</div>
                 @enderror
@@ -292,7 +292,7 @@
                        class="form-control {{ $errors->has('name') ? 'is-invalid' : '' }}"
                        name="name" id="empName"
                        value="{{ old('name') }}"
-                       placeholder="Nhập họ và tên" maxlength="200" required
+                       placeholder="Nhập họ và tên" maxlength="100" required
                        oninput="this.classList.remove('is-invalid')">
                 @error('name')
                   <div class="invalid-feedback">{{ $message }}</div>

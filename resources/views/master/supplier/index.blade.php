@@ -226,7 +226,7 @@
                     class="form-control text-uppercase {{ $errors->has('code') ? 'is-invalid' : '' }}"
                     id="sCode" name="code"
                     value="{{ old('code') }}"
-                    placeholder="Tự động" maxlength="50" style="letter-spacing:1px">
+                    placeholder="Tự động" maxlength="20" style="letter-spacing:1px">
               @error('code')
                 <div class="invalid-feedback">{{ $message }}</div>
               @enderror
@@ -279,7 +279,7 @@
                     class="form-control {{ $errors->has('email') ? 'is-invalid' : '' }}"
                     id="sEmail" name="email"
                     value="{{ old('email') }}"
-                    placeholder="Nhập email" maxlength="200"
+                    placeholder="Nhập email" maxlength="100"
                     oninput="this.classList.remove('is-invalid')">
               <div class="invalid-feedback" id="sEmailError">@error('email'){{ $message }}@enderror</div>
             </div>
@@ -287,7 +287,7 @@
             <div class="mb-3 mt-3">
               <label class="form-label fw-medium">Địa chỉ</label>
               <textarea class="form-control" id="sAddress" name="address"
-                        rows="1" maxlength="500"
+                        rows="1" maxlength="200"
                         placeholder="Nhập địa chỉ">{{ old('address') }}</textarea>
             </div>
 

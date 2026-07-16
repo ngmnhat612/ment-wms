@@ -188,7 +188,7 @@
                      class="form-control text-uppercase {{ $errors->has('code') ? 'is-invalid' : '' }}"
                      id="uomCode" name="code"
                      value="{{ old('code') }}"
-                     placeholder="Tự động" maxlength="50" style="letter-spacing:1px">
+                     placeholder="Tự động" maxlength="20" style="letter-spacing:1px">
               @error('code')
                 <div class="invalid-feedback">{{ $message }}</div>
               @enderror

@@ -189,7 +189,7 @@
                     class="form-control {{ $errors->has('code') ? 'is-invalid' : '' }}"
                     id="sCode" name="code"
                     value="{{ old('code') }}"
-                    placeholder="TỰ ĐỘNG" maxlength="50">
+                    placeholder="TỰ ĐỘNG" maxlength="20">
               @error('code')
                 <div class="invalid-feedback">{{ $message }}</div>
               @enderror

@@ -270,6 +270,7 @@
           <input type="text" class="form-control text-uppercase"
                 id="pCode" name="code"
                 placeholder="Tự động"
+                maxlength="20"
                 oninput="sanitizeCodeInput(this); this.classList.remove('is-invalid')"
                 onblur="checkProductCodeUnique(this, 'pCodeError')">
           <div class="invalid-feedback" id="pCodeError"></div>
@@ -284,6 +285,7 @@
                     id="pParentCode" name="parent_code"
                     placeholder="Nhập hoặc chọn"
                     list="parentCodeList"
+                    maxlength="20"
                     oninput="sanitizeCodeInput(this); fetchParentProduct()"
                     onblur="fetchParentProduct()">
               <div class="invalid-feedback" id="pParentCodeError"></div>
@@ -298,6 +300,7 @@
               <input type="text" class="form-control text-uppercase"
                     id="pVariantCode" name="code"
                     placeholder="TỰ ĐỘNG"
+                    maxlength="20"
                     oninput="sanitizeVariantCodeInput(this); this.classList.remove('is-invalid')"
                     onblur="checkProductCodeUnique(this, 'pVariantCodeError')">
               <div class="invalid-feedback" id="pVariantCodeError"></div>
