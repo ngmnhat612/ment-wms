@@ -263,7 +263,11 @@
                     class="form-control {{ $errors->has('phone') ? 'is-invalid' : '' }}"
                     id="sPhone" name="phone"
                     value="{{ old('phone') }}"
-                    placeholder="Nhập số điện thoại" maxlength="20">
+                    placeholder="Nhập số điện thoại" maxlength="20"
+                    inputmode="numeric"
+                    onkeydown="blockInvalidNumberKeys(event)"
+                    onpaste="blockInvalidNumberPaste(event)"
+                    oninput="sanitizeDigitsOnly(this); this.classList.remove('is-invalid')">
               @error('phone')
                 <div class="invalid-feedback">{{ $message }}</div>
               @enderror
@@ -414,6 +418,7 @@
     // trước khi openModal() gọi setModalFormId().
     document.addEventListener('DOMContentLoaded', function () {
       openModal(
+      //   null,
         {{ old('id') ?: 'null' }},
         '{{ old("code") }}',
         '{{ addslashes(old("name")) }}',
