@@ -203,9 +203,7 @@
                      id="uomName" name="name"
                      value="{{ old('name') }}"
                      placeholder="Nhập tên" required maxlength="200">
-              @error('name')
-                <div class="invalid-feedback">{{ $message }}</div>
-              @enderror
+              <div class="invalid-feedback" id="uomNameError">@error('name'){{ $message }}@enderror</div>
             </div>
 
             <div class="mb-3">
@@ -346,8 +344,21 @@
       });
   @endif
 
-  // ===== CHẶN SUBMIT LIÊN TỤC =====
-  document.getElementById('uomForm').addEventListener('submit', function () {
+  document.getElementById('uomForm').addEventListener('submit', function (e) {
+    const nameEl = document.getElementById('uomName');
+    const name   = nameEl.value.trim();
+
+    nameEl.classList.remove('is-invalid');
+
+    if (!name) {
+      nameEl.classList.add('is-invalid');
+      document.getElementById('uomNameError').textContent = 'Vui lòng nhập tên đơn vị tính.';
+      e.preventDefault();
+      nameEl.focus();
+      return;
+    }
+
+    // ===== CHẶN SUBMIT LIÊN TỤC =====
     const btn     = document.getElementById('uomSubmitBtn');
     const spinner = document.getElementById('uomSubmitSpinner');
     const icon    = document.getElementById('uomSubmitIcon');

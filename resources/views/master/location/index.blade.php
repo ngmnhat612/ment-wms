@@ -228,9 +228,7 @@
                     id="lName" name="name"
                     value="{{ old('name') }}"
                     placeholder="Nhập tên" required maxlength="100">
-              @error('name')
-                <div class="invalid-feedback">{{ $message }}</div>
-              @enderror
+              <div class="invalid-feedback" id="lNameError">@error('name'){{ $message }}@enderror</div>
             </div>
 
             {{-- Ghi chú --}}
@@ -362,8 +360,21 @@
     sanitizeCodeInput(this);
   });
 
-  // ===== CHẶN SUBMIT LIÊN TỤC =====
-  document.getElementById('locationForm').addEventListener('submit', function () {
+  document.getElementById('locationForm').addEventListener('submit', function (e) {
+    const nameEl = document.getElementById('lName');
+    const name   = nameEl.value.trim();
+
+    nameEl.classList.remove('is-invalid');
+
+    if (!name) {
+      nameEl.classList.add('is-invalid');
+      document.getElementById('lNameError').textContent = 'Vui lòng nhập tên vị trí.';
+      e.preventDefault();
+      nameEl.focus();
+      return;
+    }
+
+    // ===== CHẶN SUBMIT LIÊN TỤC =====
     const btn     = document.getElementById('locSubmitBtn');
     const spinner = document.getElementById('locSubmitSpinner');
     const icon    = document.getElementById('locSubmitIcon');

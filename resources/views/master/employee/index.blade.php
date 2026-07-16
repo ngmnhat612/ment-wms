@@ -505,6 +505,26 @@
   const routeBase    = '{{ url('master/employee') }}';
   const routeAccBase = '{{ url('master/employee') }}'; // /{id}/account
 
+  // ===== VALIDATE THỦ CÔNG (thay cho required, vì form trong .modal đã bị
+  // gán novalidate ở footer.blade.php để đồng bộ lỗi qua server). Các form ở
+  // đây tự xoá hết .invalid-feedback mỗi lần mở lại modal (xem openEmployeeModal/
+  // openAccountModal) nên helper này tạo lại div nếu cần, thay vì giả định nó
+  // luôn tồn tại sẵn trong HTML. =====
+  function showFieldError(el, msg) {
+    el.classList.add('is-invalid');
+    let feedback = el.nextElementSibling;
+    if (!feedback || !feedback.classList.contains('invalid-feedback')) {
+      feedback = document.createElement('div');
+      feedback.className = 'invalid-feedback';
+      el.insertAdjacentElement('afterend', feedback);
+    }
+    feedback.textContent = msg;
+  }
+
+  function clearFieldError(el) {
+    el.classList.remove('is-invalid');
+  }
+
   // ===== HỒ SƠ NHÂN VIÊN =====
   function openEmployeeModal(id = null, code = '', name = '', phone = '', departmentId = null, note = '', status = 1, keepErrors = false) {
     const modal   = new coreui.Modal(document.getElementById('employeeModal'));
@@ -600,8 +620,31 @@
     });
   @endif
 
-  // ===== CHẶN SUBMIT LIÊN TỤC =====
-  document.getElementById('employeeForm').addEventListener('submit', function () {
+  document.getElementById('employeeForm').addEventListener('submit', function (e) {
+    const nameEl = document.getElementById('empName');
+    const deptEl = document.getElementById('empDepartment');
+
+    clearFieldError(nameEl);
+    clearFieldError(deptEl);
+
+    let firstInvalid = null;
+
+    if (!nameEl.value.trim()) {
+      showFieldError(nameEl, 'Vui lòng nhập họ và tên.');
+      firstInvalid = firstInvalid || nameEl;
+    }
+    if (!deptEl.value) {
+      showFieldError(deptEl, 'Vui lòng chọn bộ phận.');
+      firstInvalid = firstInvalid || deptEl;
+    }
+
+    if (firstInvalid) {
+      e.preventDefault();
+      firstInvalid.focus();
+      return;
+    }
+
+    // ===== CHẶN SUBMIT LIÊN TỤC =====
     const btn     = document.getElementById('empSubmitBtn');
     const spinner = document.getElementById('empSubmitSpinner');
     const icon    = document.getElementById('empSubmitIcon');
@@ -679,6 +722,52 @@
     modal.show();
     setTimeout(() => userEl.focus(), 300);
   }
+
+  document.getElementById('accountForm').addEventListener('submit', function (e) {
+    const isCreate      = document.getElementById('accMethod').value === 'POST';
+    const userEl        = document.getElementById('accUsername');
+    const passEl        = document.getElementById('accPassword');
+    const passConfirmEl = document.getElementById('accPasswordConfirm');
+    const roleEl        = document.getElementById('accRole');
+
+    [userEl, passEl, passConfirmEl, roleEl].forEach(clearFieldError);
+
+    let firstInvalid = null;
+    const markInvalid = function (el, msg) {
+      showFieldError(el, msg);
+      firstInvalid = firstInvalid || el;
+    };
+
+    // Tên đăng nhập: chỉ bắt buộc khi Thêm mới (khi Sửa, field bị disable/đổi tên)
+    if (isCreate && !userEl.value.trim()) {
+      markInvalid(userEl, 'Vui lòng nhập tên đăng nhập.');
+    }
+
+    // Mật khẩu: bắt buộc khi Thêm mới; khi Sửa được phép để trống (không đổi mật khẩu)
+    if (isCreate && !passEl.value) {
+      markInvalid(passEl, 'Vui lòng nhập mật khẩu.');
+    } else if (passEl.value && passEl.value.length < 8) {
+      markInvalid(passEl, 'Mật khẩu phải có ít nhất 8 ký tự.');
+    }
+
+    // Xác nhận mật khẩu: bắt buộc khớp nếu có nhập mật khẩu
+    if (passEl.value && passEl.value !== passConfirmEl.value) {
+      markInvalid(passConfirmEl, 'Xác nhận mật khẩu không khớp.');
+    } else if (isCreate && !passConfirmEl.value) {
+      markInvalid(passConfirmEl, 'Vui lòng xác nhận mật khẩu.');
+    }
+
+    // Vai trò: luôn bắt buộc (cả Thêm lẫn Sửa)
+    if (!roleEl.value) {
+      markInvalid(roleEl, 'Vui lòng chọn vai trò.');
+    }
+
+    if (firstInvalid) {
+      e.preventDefault();
+      firstInvalid.focus();
+      return;
+    }
+  });
 
   // ===== XÓA NHÂN VIÊN =====
   function confirmDelete(id, name, hasAccount) {

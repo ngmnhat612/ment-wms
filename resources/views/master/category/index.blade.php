@@ -212,9 +212,7 @@
                     id="catName" name="name"
                     value="{{ old('name') }}"
                     placeholder="Nhập tên" required maxlength="200">
-              @error('name')
-                <div class="invalid-feedback">{{ $message }}</div>
-              @enderror
+              <div class="invalid-feedback" id="catNameError">@error('name'){{ $message }}@enderror</div>
             </div>
 
             <div class="mb-3 mt-3">
@@ -298,6 +296,7 @@
       const codeEl  = document.getElementById('catCode');
 
       setModalFormId('catFormId', id);
+      clearValidationErrors('categoryForm');
       document.getElementById('catName').value = name;
       document.getElementById('catDesc').value = desc;
       document.getElementById(status == 1 ? 'catStatusActive' : 'catStatusInactive').checked = true;
@@ -353,8 +352,20 @@
     });
   @endif
 
-  // ===== CHẶN SUBMIT LIÊN TỤC =====
-  document.getElementById('categoryForm').addEventListener('submit', function () {
+  document.getElementById('categoryForm').addEventListener('submit', function (e) {
+    const nameEl = document.getElementById('catName');
+    const name   = nameEl.value.trim();
+
+    nameEl.classList.remove('is-invalid');
+
+    if (!name) {
+      nameEl.classList.add('is-invalid');
+      document.getElementById('catNameError').textContent = 'Vui lòng nhập tên danh mục.';
+      e.preventDefault();
+      nameEl.focus();
+      return;
+    }
+
     const btn     = document.getElementById('catSubmitBtn');
     const spinner = document.getElementById('catSubmitSpinner');
     const icon    = document.getElementById('catSubmitIcon');

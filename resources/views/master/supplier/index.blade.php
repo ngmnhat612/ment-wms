@@ -241,9 +241,7 @@
                     id="sName" name="name"
                     value="{{ old('name') }}"
                     placeholder="Tên công ty / cá nhân" required maxlength="200">
-              @error('name')
-                <div class="invalid-feedback">{{ $message }}</div>
-              @enderror
+              <div class="invalid-feedback" id="sSupplierNameError">@error('name'){{ $message }}@enderror</div>
             </div>
 
             <div class="mb-3">
@@ -430,8 +428,21 @@
     });
   @endif
 
-  // ===== CHẶN SUBMIT LIÊN TỤC =====
-  document.getElementById('supplierForm').addEventListener('submit', function () {
+  document.getElementById('supplierForm').addEventListener('submit', function (e) {
+    const nameEl = document.getElementById('sName');
+    const name   = nameEl.value.trim();
+
+    nameEl.classList.remove('is-invalid');
+
+    if (!name) {
+      nameEl.classList.add('is-invalid');
+      document.getElementById('sSupplierNameError').textContent = 'Vui lòng nhập tên nhà cung cấp.';
+      e.preventDefault();
+      nameEl.focus();
+      return;
+    }
+
+    // ===== CHẶN SUBMIT LIÊN TỤC =====
     const btn     = document.getElementById('sSubmitBtn');
     const spinner = document.getElementById('sSubmitSpinner');
     const icon    = document.getElementById('sSubmitIcon');

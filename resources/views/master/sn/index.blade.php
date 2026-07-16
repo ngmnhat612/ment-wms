@@ -204,9 +204,7 @@
                     id="sName" name="name"
                     value="{{ old('name') }}"
                     placeholder="Tên dự án" required maxlength="200">
-              @error('name')
-                <div class="invalid-feedback">{{ $message }}</div>
-              @enderror
+              <div class="invalid-feedback" id="sNameError">@error('name'){{ $message }}@enderror</div>
             </div>
 
             <div class="mb-3 mt-3">
@@ -342,8 +340,21 @@
     });
   @endif
 
-  // ===== CHẶN SUBMIT LIÊN TỤC =====
-  document.getElementById('snForm').addEventListener('submit', function () {
+  document.getElementById('snForm').addEventListener('submit', function (e) {
+    const nameEl = document.getElementById('sName');
+    const name   = nameEl.value.trim();
+
+    nameEl.classList.remove('is-invalid');
+
+    if (!name) {
+      nameEl.classList.add('is-invalid');
+      document.getElementById('sNameError').textContent = 'Vui lòng nhập tên dự án.';
+      e.preventDefault();
+      nameEl.focus();
+      return;
+    }
+
+    // ===== CHẶN SUBMIT LIÊN TỤC =====
     const btn     = document.getElementById('sSubmitBtn');
     const spinner = document.getElementById('sSubmitSpinner');
     const icon    = document.getElementById('sSubmitIcon');

@@ -203,9 +203,7 @@
                     id="bName" name="name"
                     value="{{ old('name') }}"
                     placeholder="Nhập tên" required maxlength="200">
-              @error('name')
-                <div class="invalid-feedback">{{ $message }}</div>
-              @enderror
+              <div class="invalid-feedback" id="bNameError">@error('name'){{ $message }}@enderror</div>
             </div>
 
             <div class="mb-3 mt-3">
@@ -288,6 +286,7 @@
       const method  = document.getElementById('formMethod');
       const codeEl  = document.getElementById('bCode');
 
+      clearValidationErrors('brandForm');
       document.getElementById('bName').value = name;
       document.getElementById('bNote').value = note;
       document.getElementById(status == 1 ? 'bStatusActive' : 'bStatusInactive').checked = true;
@@ -339,8 +338,21 @@
     });
   @endif
 
-  // ===== CHẶN SUBMIT LIÊN TỤC =====
-  document.getElementById('brandForm').addEventListener('submit', function () {
+  document.getElementById('brandForm').addEventListener('submit', function (e) {
+    const nameEl = document.getElementById('bName');
+    const name   = nameEl.value.trim();
+
+    nameEl.classList.remove('is-invalid');
+
+    if (!name) {
+      nameEl.classList.add('is-invalid');
+      document.getElementById('bNameError').textContent = 'Vui lòng nhập tên thương hiệu.';
+      e.preventDefault();
+      nameEl.focus();
+      return;
+    }
+
+    // ===== CHẶN SUBMIT LIÊN TỤC =====
     const btn     = document.getElementById('bSubmitBtn');
     const spinner = document.getElementById('bSubmitSpinner');
     const icon    = document.getElementById('bSubmitIcon');

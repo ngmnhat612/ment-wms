@@ -224,9 +224,7 @@
                       id="wName" name="name"
                       value="{{ old('name') }}"
                       placeholder="Tên kho" required maxlength="200">
-                @error('name')
-                    <div class="invalid-feedback">{{ $message }}</div>
-                @enderror
+                <div class="invalid-feedback" id="wNameError">@error('name'){{ $message }}@enderror</div>
             </div>
 
             <div class="mb-3">
@@ -364,6 +362,8 @@
     const method = document.getElementById('formMethod');
     const codeEl = document.getElementById('wCode');
 
+    clearValidationErrors('warehouseForm');
+
     if (id) {
         title.textContent = 'Chỉnh sửa kho hàng';
         form.action       = `${routeBase}/${id}`;
@@ -423,8 +423,21 @@
       });
   @endif
 
-  // ===== CHẶN SUBMIT LIÊN TỤC =====
-  document.getElementById('warehouseForm').addEventListener('submit', function () {
+  document.getElementById('warehouseForm').addEventListener('submit', function (e) {
+    const nameEl = document.getElementById('wName');
+    const name   = nameEl.value.trim();
+
+    nameEl.classList.remove('is-invalid');
+
+    if (!name) {
+      nameEl.classList.add('is-invalid');
+      document.getElementById('wNameError').textContent = 'Vui lòng nhập tên kho hàng.';
+      e.preventDefault();
+      nameEl.focus();
+      return;
+    }
+
+    // ===== CHẶN SUBMIT LIÊN TỤC =====
     const btn     = document.getElementById('wSubmitBtn');
     const spinner = document.getElementById('wSubmitSpinner');
     const icon    = document.getElementById('wSubmitIcon');

@@ -205,9 +205,7 @@
                     id="dName" name="name"
                     value="{{ old('name') }}"
                     placeholder="Tên bộ phận" required maxlength="200">
-              @error('name')
-                <div class="invalid-feedback">{{ $message }}</div>
-              @enderror
+              <div class="invalid-feedback" id="dNameError">@error('name'){{ $message }}@enderror</div>
             </div>
 
             <div class="mb-3 mt-3">
@@ -343,8 +341,21 @@
     });
   @endif
 
-  // ===== CHẶN SUBMIT LIÊN TỤC =====
-  document.getElementById('departmentForm').addEventListener('submit', function () {
+  document.getElementById('departmentForm').addEventListener('submit', function (e) {
+    const nameEl = document.getElementById('dName');
+    const name   = nameEl.value.trim();
+
+    nameEl.classList.remove('is-invalid');
+
+    if (!name) {
+      nameEl.classList.add('is-invalid');
+      document.getElementById('dNameError').textContent = 'Vui lòng nhập tên bộ phận.';
+      e.preventDefault();
+      nameEl.focus();
+      return;
+    }
+
+    // ===== CHẶN SUBMIT LIÊN TỤC =====
     const btn     = document.getElementById('dSubmitBtn');
     const spinner = document.getElementById('dSubmitSpinner');
     const icon    = document.getElementById('dSubmitIcon');
