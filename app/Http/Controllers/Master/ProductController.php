@@ -156,4 +156,23 @@ class ProductController extends Controller
             'image_url'      => $product->image_path ? Storage::url($product->image_path) : null,
         ]);
     }
+
+    // ===== CHECK CODE (AJAX, dùng lúc blur ở form Thêm/Sửa vật tư & biến thể) =====
+
+    public function checkCode(Request $request): JsonResponse
+    {
+        Gate::authorize('viewAny', Product::class);
+
+        $request->validate([
+            'code'       => 'required|string|max:50',
+            'exclude_id' => 'nullable|integer',
+        ]);
+
+        $exists = $this->productService->codeExists(
+            $request->string('code')->toString(),
+            $request->integer('exclude_id') ?: null
+        );
+
+        return response()->json(['exists' => $exists]);
+    }
 }

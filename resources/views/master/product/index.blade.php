@@ -257,7 +257,7 @@
       <button type="button" class="btn-close" data-coreui-dismiss="offcanvas"></button>
     </div>
     <div class="offcanvas-body">
-      <form id="productForm" method="POST" enctype="multipart/form-data">
+      <form id="productForm" method="POST" enctype="multipart/form-data" novalidate>
         @csrf
         <input type="hidden" name="_method" id="formMethod" value="POST">
 
@@ -270,7 +270,9 @@
           <input type="text" class="form-control text-uppercase"
                 id="pCode" name="code"
                 placeholder="Tự động"
-                oninput="sanitizeCodeInput(this)">
+                oninput="sanitizeCodeInput(this)"
+                onblur="checkProductCodeUnique(this, 'pCodeError')">
+          <div class="invalid-feedback" id="pCodeError"></div>
         </div>
 
         {{-- Chế độ biến thể: Mã MenT gốc + Mã MenT biến thể (cùng hàng 50/50) --}}
@@ -284,6 +286,7 @@
                     list="parentCodeList"
                     oninput="sanitizeCodeInput(this); fetchParentProduct()"
                     onblur="fetchParentProduct()">
+              <div class="invalid-feedback" id="pParentCodeError"></div>
               <datalist id="parentCodeList">
                 @foreach ($allProducts as $p)
                   <option value="{{ $p->code }}">{{ $p->name }}</option>
@@ -295,7 +298,9 @@
               <input type="text" class="form-control text-uppercase"
                     id="pVariantCode" name="code"
                     placeholder="TỰ ĐỘNG"
-                    oninput="sanitizeCodeInput(this)">
+                    oninput="sanitizeCodeInput(this)"
+                    onblur="checkProductCodeUnique(this, 'pVariantCodeError')">
+              <div class="invalid-feedback" id="pVariantCodeError"></div>
             </div>
           </div>
         </div>
@@ -305,6 +310,7 @@
           <label class="form-label">Tên <span class="text-danger">*</span></label>
           <input type="text" class="form-control" id="pName" name="name"
                 placeholder="Nhập tên" maxlength="200">
+          <div class="invalid-feedback" id="pNameError"></div>
         </div>
 
         {{-- Chế độ biến thể: Tên --}}
@@ -312,6 +318,7 @@
           <label class="form-label">Tên <span class="text-danger">*</span></label>
           <input type="text" class="form-control" id="pNameVariant" name="name"
                 placeholder="Nhập tên" maxlength="200">
+          <div class="invalid-feedback" id="pNameVariantError"></div>
         </div>
 
         {{-- Danh mục + ĐVT (khoá khi là biến thể) --}}
@@ -323,6 +330,7 @@
               <option value="{{ $cat->id }}">{{ $cat->name }}</option>
             @endforeach
           </select>
+          <div class="invalid-feedback" id="pCategoryError"></div>
           <input type="hidden" id="pCategoryHidden">
         </div>
         <div class="mb-3">
@@ -333,6 +341,7 @@
               <option value="{{ $uom->id }}">{{ $uom->name }}</option>
             @endforeach
           </select>
+          <div class="invalid-feedback" id="pUomError"></div>
         </div>
 
         {{-- Ảnh --}}
@@ -412,6 +421,7 @@
             </label>
             <input type="number" class="form-control" id="pAlertExpiry"
                   name="alert_before_expiry" min="1" placeholder="Ví dụ: 30">
+            <div class="invalid-feedback" id="pAlertExpiryError"></div>
           </div>
 
           <div class="col-6">
@@ -422,7 +432,9 @@
                     onkeydown="blockInvalidNumberKeys(event)"
                     onpaste="blockInvalidNumberPaste(event)"
                     oninput="sanitizeNumberInput(this)"
+                    onblur="validateMinMaxQty()"
                     data-max="99999999">
+            <div class="invalid-feedback" id="pMinQtyError"></div>
             </div>
             <div class="col-6">
             <label class="form-label">Ngưỡng tồn tối đa (Max)</label>
@@ -432,7 +444,9 @@
                     onkeydown="blockInvalidNumberKeys(event)"
                     onpaste="blockInvalidNumberPaste(event)"
                     oninput="sanitizeNumberInput(this)"
+                    onblur="validateMinMaxQty()"
                     data-max="99999999">
+            <div class="invalid-feedback" id="pMaxQtyError"></div>
             </div>
 
           {{-- ===== Gợi ý vị trí ===== --}}
@@ -886,7 +900,11 @@
 
   // Khi blur khỏi ô Mã MenT gốc → fetch thông tin cha để điền sẵn
   async function fetchParentProduct() {
-    const parentCode = document.getElementById('pParentCode').value.trim();
+    const parentCodeEl = document.getElementById('pParentCode');
+    const parentCode    = parentCodeEl.value.trim();
+
+    parentCodeEl.classList.remove('is-invalid');
+    document.getElementById('pParentCodeError').textContent = '';
     if (!parentCode) return;
 
     try {
@@ -894,7 +912,14 @@
         headers: { 'X-Requested-With': 'XMLHttpRequest' },
       });
       const data = await res.json();
-      if (!res.ok) return;
+
+      if (!res.ok) {
+        // parent_code.exists: mã gốc không tồn tại trong hệ thống
+        parentCodeEl.classList.add('is-invalid');
+        document.getElementById('pParentCodeError').textContent =
+          data.error || 'Mã MenT gốc không tồn tại trong hệ thống.';
+        return;
+      }
 
       setSelectValueSafe('pCategory', data.category_id ?? '');
       setSelectValueSafe('pUom', data.uom_id ?? '');
@@ -913,9 +938,145 @@
     } catch {}
   }
 
+  // ===== code.unique (AJAX, dùng lúc blur ở Mã MenT thường & Mã MenT biến thể) =====
+  // Không check khi field đang readonly (đang Sửa vật tư -> mã bị khoá, luôn là
+  // mã hiện tại của chính nó nên không thể trùng) hoặc khi để trống (hệ thống
+  // sẽ tự sinh mã, không cần kiểm tra).
+  async function checkProductCodeUnique(inputEl, errorId) {
+    const code = inputEl.value.trim();
+
+    inputEl.classList.remove('is-invalid');
+    document.getElementById(errorId).textContent = '';
+    if (!code || inputEl.readOnly) return;
+
+    try {
+      const res = await fetch(
+        `{{ route('master.product.checkCode') }}?code=${encodeURIComponent(code)}`,
+        { headers: { 'X-Requested-With': 'XMLHttpRequest' } }
+      );
+      if (!res.ok) return; // lỗi mạng/server: để backend chặn thật lúc submit
+      const data = await res.json();
+
+      if (data.exists) {
+        inputEl.classList.add('is-invalid');
+        document.getElementById(errorId).textContent = 'Mã MenT đã tồn tại.';
+      }
+    } catch {}
+  }
+
+  // ===== min_qty <= max_qty (kiểm tra được ngay phía client, không cần AJAX) =====
+  function validateMinMaxQty() {
+    const minEl = document.getElementById('pMinQty');
+    const maxEl = document.getElementById('pMaxQty');
+    const min   = parseInt(minEl.value || '0', 10);
+    const max   = parseInt(maxEl.value || '0', 10);
+
+    minEl.classList.remove('is-invalid');
+    maxEl.classList.remove('is-invalid');
+    document.getElementById('pMinQtyError').textContent = '';
+    document.getElementById('pMaxQtyError').textContent = '';
+
+    // KHÔNG được coi max == 0 là "không giới hạn" rồi bỏ qua check: 2 field này
+    // luôn có giá trị (mặc định "0", không để trống được), nên backend
+    // ('max_qty' => '...|gte:min_qty') LUÔN so sánh min-max kể cả khi max = 0.
+    // Ví dụ Min=100, Max=0 (chưa sửa Max) vẫn phải bị chặn ở đây, nếu không sẽ
+    // lọt xuống server và bị redirect back (reload).
+    if (min > max) {
+      maxEl.classList.add('is-invalid');
+      document.getElementById('pMaxQtyError').textContent =
+        'Ngưỡng tối thiểu không được vượt quá ngưỡng tối đa.';
+      return false;
+    }
+    return true;
+  }
+
   // ===== CHẶN SUBMIT LIÊN TỤC =====
   document.getElementById('productForm').addEventListener('submit', function (e) {
     resolveLocation();
+
+    // ===== VALIDATE THỦ CÔNG (form dùng novalidate để đồng bộ 1 kiểu message
+    // tiếng Việt cho mọi field, khớp với rule thật trong StoreProductRequest /
+    // StoreProductVariantRequest) =====
+    const isVariant = document.getElementById('pIsVariant').checked;
+    let firstInvalid = null;
+
+    const markInvalid = function (el, errorId, msg) {
+      el.classList.add('is-invalid');
+      document.getElementById(errorId).textContent = msg;
+      firstInvalid = firstInvalid || el;
+    };
+    const clearInvalid = function (el, errorId) {
+      el.classList.remove('is-invalid');
+      document.getElementById(errorId).textContent = '';
+    };
+
+    if (isVariant) {
+      const parentCodeEl = document.getElementById('pParentCode');
+      const nameEl        = document.getElementById('pNameVariant');
+
+      clearInvalid(parentCodeEl, 'pParentCodeError');
+      clearInvalid(nameEl, 'pNameVariantError');
+
+      if (!parentCodeEl.value.trim()) {
+        markInvalid(parentCodeEl, 'pParentCodeError', 'Vui lòng nhập mã MenT gốc.');
+      }
+      if (!nameEl.value.trim()) {
+        markInvalid(nameEl, 'pNameVariantError', 'Vui lòng nhập tên biến thể.');
+      }
+    } else {
+      const nameEl = document.getElementById('pName');
+      const catEl  = document.getElementById('pCategory');
+      const uomEl  = document.getElementById('pUom');
+
+      clearInvalid(nameEl, 'pNameError');
+      clearInvalid(catEl, 'pCategoryError');
+      clearInvalid(uomEl, 'pUomError');
+
+      if (!nameEl.value.trim()) {
+        markInvalid(nameEl, 'pNameError', 'Vui lòng nhập tên vật tư.');
+      }
+      if (!catEl.disabled && !catEl.value) {
+        markInvalid(catEl, 'pCategoryError', 'Vui lòng chọn danh mục vật tư.');
+      }
+      if (!uomEl.disabled && !uomEl.value) {
+        markInvalid(uomEl, 'pUomError', 'Vui lòng chọn đơn vị tính.');
+      }
+
+      // Cảnh báo trước hết hạn: chỉ bắt buộc khi chọn FEFO (đọc lại thuộc tính
+      // .required do listener 'change' của pRotation đã tự tính sẵn ở trên)
+      const alertEl = document.getElementById('pAlertExpiry');
+      clearInvalid(alertEl, 'pAlertExpiryError');
+      if (alertEl.required && !alertEl.value) {
+        markInvalid(alertEl, 'pAlertExpiryError', 'Vui lòng nhập số ngày cảnh báo trước hết hạn khi dùng FEFO.');
+      }
+    }
+
+    if (firstInvalid) {
+      e.preventDefault();
+      firstInvalid.focus();
+      return;
+    }
+
+    // min_qty <= max_qty: áp dụng cho cả 2 chế độ (StoreProductRequest và
+    // StoreProductVariantRequest đều có rule 'max_qty' => '...|gte:min_qty')
+    if (!validateMinMaxQty()) {
+      e.preventDefault();
+      document.getElementById('pMaxQty').focus();
+      return;
+    }
+
+    // Nếu mã MenT / mã MenT gốc đang bị đánh dấu lỗi từ lần kiểm tra AJAX lúc
+    // blur trước đó (trùng mã / mã gốc không tồn tại) -> chặn, không cho submit
+    // trong lúc chưa sửa lại. Đây chỉ là lớp UX phụ — FormRequest phía backend
+    // vẫn là lớp chặn thật cuối cùng (vd: mã vừa bị người khác tạo trùng ngay
+    // trước khi submit thì AJAX blur không kịp bắt, backend vẫn sẽ chặn).
+    const codeEl        = isVariant ? document.getElementById('pVariantCode') : document.getElementById('pCode');
+    const parentCodeEl2 = document.getElementById('pParentCode');
+    if (codeEl.classList.contains('is-invalid') || (isVariant && parentCodeEl2.classList.contains('is-invalid'))) {
+      e.preventDefault();
+      (codeEl.classList.contains('is-invalid') ? codeEl : parentCodeEl2).focus();
+      return;
+    }
 
     // Nếu người dùng đã nhập text nhưng không khớp vị trí nào -> chặn submit
     const locationText = document.getElementById('pLocationText').value.trim();

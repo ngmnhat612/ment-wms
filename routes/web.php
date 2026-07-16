@@ -87,6 +87,8 @@ Route::middleware('auth')->group(function () {
         // Vật tư
         Route::get('product/find', [ProductController::class, 'find'])
             ->name('product.find');
+        Route::get('product/check-code', [ProductController::class, 'checkCode'])
+            ->name('product.checkCode');
         Route::post('product/variant', [ProductController::class, 'storeVariant'])
             ->name('product.storeVariant');
         Route::resource('product', ProductController::class)
@@ -107,7 +109,7 @@ Route::middleware('auth')->group(function () {
         // Kho
         Route::resource('warehouse', WarehouseController::class)
             ->only(['index', 'store', 'update', 'destroy']);
-        
+
         // Bộ phận
         Route::resource('department', DepartmentController::class)
             ->only(['index', 'store', 'update', 'destroy']);
@@ -155,14 +157,14 @@ Route::middleware('auth')->group(function () {
     // ── YÊU CẦU NHẬP / XUẤT KHO ──────────────────────────────────────────────
     Route::get('stock-requests', [StockRequestController::class, 'index'])
         ->name('stock-requests.index');
- 
+
     // ── YÊU CẦU NHẬP KHO ─────────────────────────────────────────────────────
     Route::resource('stock-in-requests', StockInRequestController::class)->except(['index']);
     Route::post('stock-in-requests/{stock_in_request}/complete', [StockInRequestController::class, 'complete'])
         ->name('stock-in-requests.complete');
     Route::post('stock-in-requests/{stock_in_request}/cancel', [StockInRequestController::class, 'cancel'])
         ->name('stock-in-requests.cancel');
- 
+
     // ── YÊU CẦU XUẤT KHO ─────────────────────────────────────────────────────
     Route::resource('stock-out-requests', StockOutRequestController::class)->except(['index']);
     Route::post('stock-out-requests/{stock_out_request}/complete', [StockOutRequestController::class, 'complete'])
@@ -172,7 +174,7 @@ Route::middleware('auth')->group(function () {
 
     // ── KIỂM KÊ KHO ──────────────────────────────────────────────────────────
     Route::resource('stocktakes', InventoryCheckController::class)->except(['destroy']);
- 
+
     Route::post('stocktakes/{stocktake}/start', [InventoryCheckController::class, 'start'])
         ->name('stocktakes.start');
     Route::post('stocktakes/{stocktake}/complete', [InventoryCheckController::class, 'complete'])
@@ -181,7 +183,7 @@ Route::middleware('auth')->group(function () {
         ->name('stocktakes.cancel');
     Route::put('stocktakes/{stocktake}/details', [InventoryCheckController::class, 'updateDetails'])
         ->name('stocktakes.details.update');
- 
+
     // ── PHIẾU ĐIỀU CHỈNH ──────────────────────────────────────────────────────
     Route::get('stocktakes/{stocktake}/adjustment/create', [StockAdjustmentController::class, 'create'])
         ->name('stocktakes.adjustment.create');

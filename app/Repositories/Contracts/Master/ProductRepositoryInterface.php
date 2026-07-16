@@ -68,6 +68,13 @@ interface ProductRepositoryInterface
     public function allOrdered(): Collection;
 
     /**
+     * Kiểm tra mã MenT (code) đã tồn tại chưa (loại trừ product hiện tại nếu đang sửa).
+     * Dùng cho validate AJAX (blur) ở form Thêm/Sửa vật tư & biến thể, khớp với
+     * rule 'code' => Rule::unique('products', 'code') trong Store/UpdateProductRequest.
+     */
+    public function codeExists(string $code, ?int $excludeId = null): bool;
+
+    /**
      * Tìm vật tư gốc theo code.
      */
     public function findRootByCode(string $code): ?Product;

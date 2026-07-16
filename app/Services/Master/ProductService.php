@@ -250,6 +250,19 @@ class ProductService
     }
 
     /**
+     * Kiểm tra mã MenT đã tồn tại chưa — dùng cho validate AJAX (blur) ở
+     * form Thêm/Sửa vật tư & biến thể. Chuẩn hoá code giống lúc lưu (create())
+     * để so sánh nhất quán (uppercase, trim).
+     */
+    public function codeExists(string $code, ?int $excludeId = null): bool
+    {
+        return $this->productRepository->codeExists(
+            strtoupper(trim($code)),
+            $excludeId
+        );
+    }
+
+    /**
      * Chuyển toàn bộ mã trong cùng gia đình (mã gốc + mọi biến thể) sang Ngưng hoạt động,
      * ngoại trừ biến thể vừa được tạo.
      */

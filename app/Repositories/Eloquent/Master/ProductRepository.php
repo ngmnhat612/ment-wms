@@ -94,6 +94,13 @@ class ProductRepository implements ProductRepositoryInterface
             ->exists();
     }
 
+    public function codeExists(string $code, ?int $excludeId = null): bool
+    {
+        return Product::where('code', $code)
+            ->when($excludeId, fn($q) => $q->where('id', '!=', $excludeId))
+            ->exists();
+    }
+
     public function allRootActive(): Collection
     {
         return Product::select('id', 'code', 'name')
