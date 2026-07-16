@@ -227,7 +227,8 @@
                     class="form-control {{ $errors->has('name') ? 'is-invalid' : '' }}"
                     id="lName" name="name"
                     value="{{ old('name') }}"
-                    placeholder="Nhập tên" required maxlength="100">
+                    placeholder="Nhập tên" required maxlength="100"
+                    oninput="this.classList.remove('is-invalid')">
               <div class="invalid-feedback" id="lNameError">@error('name'){{ $message }}@enderror</div>
             </div>
 

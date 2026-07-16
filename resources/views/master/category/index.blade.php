@@ -211,7 +211,8 @@
                     class="form-control {{ $errors->has('name') ? 'is-invalid' : '' }}"
                     id="catName" name="name"
                     value="{{ old('name') }}"
-                    placeholder="Nhập tên" required maxlength="200">
+                    placeholder="Nhập tên" required maxlength="200"
+                    oninput="this.classList.remove('is-invalid')">
               <div class="invalid-feedback" id="catNameError">@error('name'){{ $message }}@enderror</div>
             </div>
 
@@ -342,7 +343,6 @@
     // tại → "setModalFormId is not defined". DOMContentLoaded đảm bảo module đã chạy xong.
     document.addEventListener('DOMContentLoaded', function () {
       openModal(
-      //   null,
         {{ old('id') ?: 'null' }},
         '{{ old("code") }}',
         '{{ addslashes(old("name")) }}',

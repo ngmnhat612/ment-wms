@@ -270,7 +270,7 @@
           <input type="text" class="form-control text-uppercase"
                 id="pCode" name="code"
                 placeholder="Tự động"
-                oninput="sanitizeCodeInput(this)"
+                oninput="sanitizeCodeInput(this); this.classList.remove('is-invalid')"
                 onblur="checkProductCodeUnique(this, 'pCodeError')">
           <div class="invalid-feedback" id="pCodeError"></div>
         </div>
@@ -298,7 +298,7 @@
               <input type="text" class="form-control text-uppercase"
                     id="pVariantCode" name="code"
                     placeholder="TỰ ĐỘNG"
-                    oninput="sanitizeCodeInput(this)"
+                    oninput="sanitizeCodeInput(this); this.classList.remove('is-invalid')"
                     onblur="checkProductCodeUnique(this, 'pVariantCodeError')">
               <div class="invalid-feedback" id="pVariantCodeError"></div>
             </div>
@@ -309,7 +309,8 @@
         <div class="mb-3 d-block" id="nameNormalWrap">
           <label class="form-label">Tên <span class="text-danger">*</span></label>
           <input type="text" class="form-control" id="pName" name="name"
-                placeholder="Nhập tên" maxlength="200">
+                placeholder="Nhập tên" maxlength="200"
+                oninput="this.classList.remove('is-invalid')">
           <div class="invalid-feedback" id="pNameError"></div>
         </div>
 
@@ -317,14 +318,16 @@
         <div class="mb-3 d-none" id="nameVariantWrap">
           <label class="form-label">Tên <span class="text-danger">*</span></label>
           <input type="text" class="form-control" id="pNameVariant" name="name"
-                placeholder="Nhập tên" maxlength="200">
+                placeholder="Nhập tên" maxlength="200"
+                oninput="this.classList.remove('is-invalid')">
           <div class="invalid-feedback" id="pNameVariantError"></div>
         </div>
 
         {{-- Danh mục + ĐVT (khoá khi là biến thể) --}}
         <div class="mb-3">
           <label class="form-label">Danh mục <span class="text-danger" id="categoryRequired">*</span></label>
-          <select class="form-select" id="pCategory" name="category_id">
+          <select class="form-select" id="pCategory" name="category_id"
+                  onchange="this.classList.remove('is-invalid')">
             <option value="">- Chọn danh mục -</option>
             @foreach ($categories as $cat)
               <option value="{{ $cat->id }}">{{ $cat->name }}</option>
@@ -335,7 +338,8 @@
         </div>
         <div class="mb-3">
           <label class="form-label">ĐVT <span class="text-danger" id="uomRequired">*</span></label>
-          <select class="form-select" id="pUom" name="uom_id">
+          <select class="form-select" id="pUom" name="uom_id"
+                  onchange="this.classList.remove('is-invalid')">
             <option value="">- Chọn ĐVT -</option>
             @foreach ($uoms as $uom)
               <option value="{{ $uom->id }}">{{ $uom->name }}</option>
@@ -420,7 +424,8 @@
               Cảnh báo trước hết hạn (ngày) <span class="text-danger">*</span>
             </label>
             <input type="number" class="form-control" id="pAlertExpiry"
-                  name="alert_before_expiry" min="1" placeholder="Ví dụ: 30">
+                  name="alert_before_expiry" min="1" placeholder="Ví dụ: 30"
+                  oninput="this.classList.remove('is-invalid')">
             <div class="invalid-feedback" id="pAlertExpiryError"></div>
           </div>
 
@@ -431,7 +436,7 @@
                     value="0"
                     onkeydown="blockInvalidNumberKeys(event)"
                     onpaste="blockInvalidNumberPaste(event)"
-                    oninput="sanitizeNumberInput(this)"
+                    oninput="sanitizeNumberInput(this); validateMinMaxQty()"
                     onblur="validateMinMaxQty()"
                     data-max="99999999">
             <div class="invalid-feedback" id="pMinQtyError"></div>
@@ -443,7 +448,7 @@
                     value="0"
                     onkeydown="blockInvalidNumberKeys(event)"
                     onpaste="blockInvalidNumberPaste(event)"
-                    oninput="sanitizeNumberInput(this)"
+                    oninput="sanitizeNumberInput(this); validateMinMaxQty()"
                     onblur="validateMinMaxQty()"
                     data-max="99999999">
             <div class="invalid-feedback" id="pMaxQtyError"></div>

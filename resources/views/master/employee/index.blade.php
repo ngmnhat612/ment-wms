@@ -292,7 +292,8 @@
                        class="form-control {{ $errors->has('name') ? 'is-invalid' : '' }}"
                        name="name" id="empName"
                        value="{{ old('name') }}"
-                       placeholder="Nhập họ và tên" maxlength="200" required>
+                       placeholder="Nhập họ và tên" maxlength="200" required
+                       oninput="this.classList.remove('is-invalid')">
                 @error('name')
                   <div class="invalid-feedback">{{ $message }}</div>
                 @enderror
@@ -300,7 +301,8 @@
               <div class="col-12">
                 <label class="form-label fw-medium">Bộ phận <span class="text-danger">*</span></label>
                 <select class="form-select {{ $errors->has('department_id') ? 'is-invalid' : '' }}"
-                        name="department_id" id="empDepartment" required>
+                        name="department_id" id="empDepartment" required
+                        onchange="this.classList.remove('is-invalid')">
                   <option value="">- Chọn bộ phận -</option>
                   @foreach ($departments as $dept)
                     <option value="{{ $dept->id }}" {{ (string) old('department_id') === (string) $dept->id ? 'selected' : '' }}>
@@ -389,7 +391,8 @@
               <div class="col-12">
                 <label class="form-label fw-medium">Tên đăng nhập <span class="text-danger" id="accUsernameRequired">*</span></label>
                   <input type="text" class="form-control @error('username') is-invalid @enderror" name="username" id="accUsername"
-                        placeholder="Chỉ dùng chữ thường, số và dấu chấm/gạch dưới" maxlength="100" value="{{ old('username') }}">
+                        placeholder="Chỉ dùng chữ thường, số và dấu chấm/gạch dưới" maxlength="100" value="{{ old('username') }}"
+                        oninput="this.classList.remove('is-invalid')">
                   @error('username')
                     <div class="invalid-feedback">{{ $message }}</div>
                   @enderror
@@ -399,7 +402,8 @@
                 <label class="form-label fw-medium" id="accPasswordLabel">Mật khẩu <span class="text-danger">*</span></label>
                 <input type="password"
                       class="form-control @error('password') is-invalid @enderror @error('new_password') is-invalid @enderror"
-                      name="password" id="accPassword" placeholder="Tối thiểu 8 ký tự">
+                      name="password" id="accPassword" placeholder="Tối thiểu 8 ký tự"
+                      oninput="this.classList.remove('is-invalid'); document.getElementById('accPasswordConfirm').classList.remove('is-invalid')">
                 @error('password')
                   <div class="invalid-feedback">{{ $message }}</div>
                 @enderror
@@ -412,7 +416,8 @@
                 <label class="form-label fw-medium">Xác nhận mật khẩu <span class="text-danger" id="accPasswordConfirmRequired">*</span></label>
                 <input type="password"
                       class="form-control @error('password_confirmation') is-invalid @enderror @error('new_password_confirmation') is-invalid @enderror"
-                      name="password_confirmation" id="accPasswordConfirm" placeholder="Nhập lại mật khẩu">
+                      name="password_confirmation" id="accPasswordConfirm" placeholder="Nhập lại mật khẩu"
+                      oninput="this.classList.remove('is-invalid'); document.getElementById('accPassword').classList.remove('is-invalid')">
                 @error('password_confirmation')
                   <div class="invalid-feedback">{{ $message }}</div>
                 @enderror
@@ -423,7 +428,8 @@
 
               <div class="col-12">
                 <label class="form-label fw-medium">Vai trò <span class="text-danger">*</span></label>
-                <select class="form-select @error('role') is-invalid @enderror" name="role" id="accRole" required>
+                <select class="form-select @error('role') is-invalid @enderror" name="role" id="accRole" required
+                        onchange="this.classList.remove('is-invalid')">
                   <option value="">- Chọn vai trò -</option>
                   @foreach ($roles as $role)
                     <option value="{{ $role }}" {{ old('role') == $role ? 'selected' : '' }}>{{ $role }}</option>

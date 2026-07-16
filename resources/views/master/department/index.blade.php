@@ -204,7 +204,8 @@
                     class="form-control {{ $errors->has('name') ? 'is-invalid' : '' }}"
                     id="dName" name="name"
                     value="{{ old('name') }}"
-                    placeholder="Tên bộ phận" required maxlength="200">
+                    placeholder="Tên bộ phận" required maxlength="200"
+                    oninput="this.classList.remove('is-invalid')">
               <div class="invalid-feedback" id="dNameError">@error('name'){{ $message }}@enderror</div>
             </div>
 
@@ -331,7 +332,6 @@
     // trước khi openModal() gọi setModalFormId().
     document.addEventListener('DOMContentLoaded', function () {
       openModal(
-      //   null,
         {{ old('id') ?: 'null' }},
         '{{ old("code") }}',
         '{{ addslashes(old("name")) }}',
