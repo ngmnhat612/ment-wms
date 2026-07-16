@@ -18,7 +18,7 @@ class StoreAccountRequest extends FormRequest
     {
         return [
             'employee_id'    => 'required|exists:employees,id|unique:accounts,employee_id',
-            'username'       => 'required|string|max:50|unique:accounts,username',
+            'username'       => ['required', 'string', 'max:50', 'unique:accounts,username', 'regex:/^[a-z0-9@_.]+$/'],
             'password'       => ['required', 'confirmed', Password::min(8)],
             'role'           => 'required|string|exists:roles,name',
             'account_status' => 'required|in:0,1',
@@ -32,6 +32,7 @@ class StoreAccountRequest extends FormRequest
             'employee_id.unique'   => 'Nhân viên này đã có tài khoản.',
             'username.required'    => 'Vui lòng nhập tên đăng nhập.',
             'username.unique'      => 'Tên đăng nhập đã tồn tại.',
+            'username.regex'       => 'Tên đăng nhập chỉ được chứa chữ thường, số và các ký tự @ _ .',
             'password.required'    => 'Vui lòng nhập mật khẩu.',
             'password.confirmed'   => 'Xác nhận mật khẩu không khớp.',
             'password.min'         => 'Mật khẩu phải có ít nhất 8 ký tự.',

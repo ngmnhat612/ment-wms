@@ -391,8 +391,8 @@
               <div class="col-12">
                 <label class="form-label fw-medium">Tên đăng nhập <span class="text-danger" id="accUsernameRequired">*</span></label>
                   <input type="text" class="form-control @error('username') is-invalid @enderror" name="username" id="accUsername"
-                        placeholder="Chỉ dùng chữ thường, số và dấu chấm/gạch dưới" maxlength="100" value="{{ old('username') }}"
-                        oninput="this.classList.remove('is-invalid')">
+                        placeholder="Chỉ dùng chữ thường, số và @ _ ." maxlength="100" value="{{ old('username') }}"
+                        oninput="sanitizeUsernameInput(this); this.classList.remove('is-invalid')">
                   @error('username')
                     <div class="invalid-feedback">{{ $message }}</div>
                   @enderror
@@ -747,6 +747,11 @@
     // Tên đăng nhập: chỉ bắt buộc khi Thêm mới (khi Sửa, field bị disable/đổi tên)
     if (isCreate && !userEl.value.trim()) {
       markInvalid(userEl, 'Vui lòng nhập tên đăng nhập.');
+    } else if (isCreate && !/^[a-z0-9@_.]+$/.test(userEl.value.trim())) {
+      // Phòng vệ thêm: bình thường sanitizeUsernameInput() đã lọc ký tự ngay
+      // lúc gõ nên trường hợp này hiếm khi xảy ra (vd: giá trị bị set bằng
+      // JS khác, autofill trình duyệt...). Khớp rule 'regex' trong StoreAccountRequest.
+      markInvalid(userEl, 'Tên đăng nhập chỉ được chứa chữ thường, số và các ký tự @ _ .');
     }
 
     // Mật khẩu: bắt buộc khi Thêm mới; khi Sửa được phép để trống (không đổi mật khẩu)

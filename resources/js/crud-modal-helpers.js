@@ -9,6 +9,18 @@ function sanitizeCodeInput(el) {
     }
 }
 
+// Dùng cho ô "Tên đăng nhập" (tài khoản đăng nhập của nhân viên).
+// Chuyển thường, chỉ giữ a-z, 0-9 và 3 ký tự @ _ . (khớp rule
+// 'regex:/^[a-z0-9@_.]+$/' trong StoreAccountRequest), giữ nguyên vị trí con trỏ.
+function sanitizeUsernameInput(el) {
+    const pos = el.selectionStart;
+    const cleaned = el.value.toLowerCase().replace(/[^a-z0-9@_.]/g, '');
+    if (cleaned !== el.value) {
+        el.value = cleaned;
+        el.setSelectionRange(pos, pos);
+    }
+}
+
 // Ghi id bản ghi đang sửa vào hidden input của form CRUD (modal).
 // Dùng trong openModal() của các module category/department/sn/brand/location/
 // supplier/uom/warehouse, để khi validate lỗi lúc Sửa, script reopen (dựa vào
@@ -32,5 +44,6 @@ function clearValidationErrors(formId) {
 // oninput="clearValidationErrors('categoryForm')"). Gán ra window để giữ tương thích
 // ngược, tránh phải sửa lại toàn bộ các view đang dùng inline handler.
 window.sanitizeCodeInput = sanitizeCodeInput;
+window.sanitizeUsernameInput = sanitizeUsernameInput;
 window.setModalFormId = setModalFormId;
 window.clearValidationErrors = clearValidationErrors;
