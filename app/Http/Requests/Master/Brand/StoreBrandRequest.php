@@ -14,7 +14,7 @@ class StoreBrandRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name'   => 'required|string|max:100',
+            'name'   => 'required|string|max:200',
             'code'   => 'nullable|string|max:20|regex:/^[A-Za-z0-9]+$/|unique:brands,code', //UPDATE
             'note'   => 'nullable|string|max:500',
             'status' => 'required|in:0,1',
@@ -24,9 +24,12 @@ class StoreBrandRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'name.required' => 'Vui lòng nhập tên thương hiệu.',
-            'code.unique'   => 'Mã thương hiệu đã tồn tại.',
-            'code.regex'    => 'Mã  thương hiệu chỉ được phép chứa chữ cái và số, không chứa ký tự đặc biệt.', // UPDATE
+            'name.required'    => 'Vui lòng nhập tên thương hiệu.',
+            'name.max'         => 'Tên thương hiệu không quá 200 ký tự.',
+            'code.max'         => 'Mã thương hiệu không quá 20 ký tự.',
+            'code.unique'      => 'Mã thương hiệu đã tồn tại.',
+            'code.regex'       => 'Mã  thương hiệu chỉ được phép chứa chữ cái và số, không chứa ký tự đặc biệt.',
+            'status.required'  => 'Vui lòng chọn trạng thái.',
         ];
     }
 }

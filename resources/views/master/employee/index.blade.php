@@ -402,7 +402,7 @@
                 <label class="form-label fw-medium" id="accPasswordLabel">Mật khẩu <span class="text-danger">*</span></label>
                 <input type="password"
                       class="form-control @error('password') is-invalid @enderror @error('new_password') is-invalid @enderror"
-                      name="password" id="accPassword" placeholder="Tối thiểu 8 ký tự"
+                      name="password" id="accPassword" placeholder="Tối thiểu 8 ký tự" maxlength="500"
                       oninput="this.classList.remove('is-invalid'); document.getElementById('accPasswordConfirm').classList.remove('is-invalid')">
                 @error('password')
                   <div class="invalid-feedback">{{ $message }}</div>
@@ -416,7 +416,7 @@
                 <label class="form-label fw-medium">Xác nhận mật khẩu <span class="text-danger" id="accPasswordConfirmRequired">*</span></label>
                 <input type="password"
                       class="form-control @error('password_confirmation') is-invalid @enderror @error('new_password_confirmation') is-invalid @enderror"
-                      name="password_confirmation" id="accPasswordConfirm" placeholder="Nhập lại mật khẩu"
+                      name="password_confirmation" id="accPasswordConfirm" placeholder="Nhập lại mật khẩu" maxlength="500"
                       oninput="this.classList.remove('is-invalid'); document.getElementById('accPassword').classList.remove('is-invalid')">
                 @error('password_confirmation')
                   <div class="invalid-feedback">{{ $message }}</div>

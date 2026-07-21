@@ -15,7 +15,7 @@ class UpdateEmployeeRequest extends FormRequest
     {
         return [
             'name'          => 'required|string|max:200',
-            'phone_number'  => 'nullable|string|max:20|regex:/^[A-Za-z0-9]+$/', 
+            'phone_number'  => 'nullable|string|max:20|regex:/^[A-Za-z0-9]+$/',
             'department_id' => 'required|integer|exists:departments,id',
             'note'          => 'nullable|string|max:500',
             'status'        => 'required|in:0,1',
@@ -26,9 +26,11 @@ class UpdateEmployeeRequest extends FormRequest
     {
         return [
             'name.required'           => 'Vui lòng nhập họ tên.',
-            'phone_number.regex'      => 'Số điện thoại không hợp lệ.', 
+            'name.max'                => 'Họ tên không quá 200 ký tự.',
+            'phone_number.regex'      => 'Số điện thoại không hợp lệ.',
             'department_id.required'  => 'Vui lòng chọn bộ phận.',
             'department_id.exists'    => 'Bộ phận không hợp lệ.',
+            'status.required'         => 'Vui lòng chọn trạng thái.',
         ];
     }
 }

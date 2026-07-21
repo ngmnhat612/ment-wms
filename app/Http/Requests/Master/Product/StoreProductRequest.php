@@ -19,7 +19,7 @@ class StoreProductRequest extends FormRequest
     {
         return [
             'code' => [
-                'nullable', 'string', 'max:50',
+                'nullable', 'string', 'max:20',
                 'regex:/^[A-Za-z0-9]+$/',
                 Rule::unique('products', 'code'),
             ],
@@ -45,7 +45,7 @@ class StoreProductRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'code.max'                        => 'Mã MenT không được vượt quá 50 ký tự.',
+            'code.max'                        => 'Mã MenT không được vượt quá 20 ký tự.',
             'code.regex'                      => 'Mã MenT chỉ được phép chứa chữ cái và số, không chứa ký tự đặc biệt.',
             'code.unique'                     => 'Mã MenT đã tồn tại.',
             'name.required'                   => 'Vui lòng nhập tên vật tư.',
@@ -57,7 +57,7 @@ class StoreProductRequest extends FormRequest
             'specification.max'               => 'Thông số kỹ thuật không được vượt quá 500 ký tự.',
             'alert_before_expiry.required'    => 'Vui lòng nhập số ngày cảnh báo trước hết hạn khi dùng FEFO.',
             'alert_before_expiry.integer'     => 'Số ngày cảnh báo phải là số nguyên.',
-            'alert_before_expiry.min'         => 'Số ngày cảnh báo phải >= 1.',
+            'alert_before_expiry.min'         => 'Số ngày cảnh báo phải lớn hơn hoặc bằng 1.',
             'tracking_type.required'          => 'Vui lòng chọn kiểu theo dõi lô/serial.',
             'tracking_type.in'                => 'Kiểu theo dõi không hợp lệ.',
             'stock_rotation.required'         => 'Vui lòng chọn phương thức xoay vòng tồn kho.',
@@ -71,6 +71,7 @@ class StoreProductRequest extends FormRequest
             'min_qty.max'                     => 'Ngưỡng tối thiểu phải bé hơn 99999999.',
             'max_qty.max'                     => 'Ngưỡng tối đa phải bé hơn 99999999.',
             'location_id'                     => 'nullable|exists:locations,id',
+            'status.required'                 => 'Vui lòng chọn trạng thái.',
         ];
     }
 

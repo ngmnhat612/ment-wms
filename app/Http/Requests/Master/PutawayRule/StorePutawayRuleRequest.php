@@ -50,6 +50,7 @@ class StorePutawayRuleRequest extends FormRequest
             'warehouse_id.required'      => 'Vui lòng chọn kho.',
             'location_id.required'       => 'Vui lòng chọn vị trí gợi ý.',
             'location_id.exists'         => 'Vị trí không tồn tại.',
+            'status.required'            => 'Vui lòng chọn trạng thái.',
         ];
     }
 

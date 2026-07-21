@@ -43,15 +43,10 @@ class UpdatePutawayRuleRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'product_id.required_if'     => 'Vui lòng chọn vật tư.',
-            'product_id.exists'          => 'Vật tư không tồn tại trong hệ thống.',
-            'product_id.unique'          => 'Vật tư này đã được gán quy tắc.',
-            'category_id.required_if'    => 'Vui lòng chọn danh mục.',
-            'category_id.exists'         => 'Danh mục không tồn tại trong hệ thống.',
-            'category_id.unique'         => 'Danh mục này đã được gán quy tắc.',
             'warehouse_id.required'      => 'Vui lòng chọn kho.',
             'location_id.required'       => 'Vui lòng chọn vị trí gợi ý.',
             'location_id.exists'         => 'Vị trí không tồn tại.',
+            'status.required'            => 'Vui lòng chọn trạng thái.',
         ];
     }
 

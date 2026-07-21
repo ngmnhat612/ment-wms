@@ -16,7 +16,7 @@ class UpdateAccountRequest extends FormRequest
     {
         return [
             'role'           => 'required|string|exists:roles,name',
-            'new_password'   => ['nullable', 'confirmed', Password::min(8)],
+            'new_password'   => ['nullable', 'confirmed', 'max:500', Password::min(8)],
             'account_status' => 'required|in:0,1',
         ];
     }
@@ -28,6 +28,7 @@ class UpdateAccountRequest extends FormRequest
             'role.exists'             => 'Vai trò không hợp lệ.',
             'new_password.confirmed'  => 'Xác nhận mật khẩu không khớp.',
             'new_password.min'        => 'Mật khẩu mới phải có ít nhất 8 ký tự.'
+            'account_status.required' => 'Vui lòng chọn trạng thái.',
         ];
     }
 }

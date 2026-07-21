@@ -29,7 +29,7 @@ class UpdateProductRequest extends FormRequest
             : $this->route('product');
 
         return [
-            'code'                => "nullable|string|max:50|unique:products,code,{$productId}", // ignore current;
+            'code'                => "nullable|string|max:20|unique:products,code,{$productId}", // ignore current;
             'name'                => 'required|string|max:200',
             'category_id'         => 'required|exists:categories,id',
             'uom_id'              => 'required|exists:uoms,id',
@@ -52,19 +52,14 @@ class UpdateProductRequest extends FormRequest
     public function messages(): array
     {
         return [
-            // 'code.required'                   => 'Vui lòng nhập mã MenT.',
-            'code.max'                        => 'Mã MenT không được vượt quá 50 ký tự.',
-            'code.unique'                     => 'Mã MenT đã tồn tại.',
             'name.required'                   => 'Vui lòng nhập tên vật tư.',
             'name.max'                        => 'Tên vật tư không được vượt quá 200 ký tự.',
-            'category_id.required'            => 'Vui lòng chọn danh mục vật tư.',
-            'category_id.exists'              => 'Danh mục vật tư không hợp lệ.',
             'uom_id.required'                 => 'Vui lòng chọn đơn vị tính.',
             'uom_id.exists'                   => 'Đơn vị tính không hợp lệ.',
             'specification.max'               => 'Thông số kỹ thuật không được vượt quá 500 ký tự.',
             'alert_before_expiry.required'    => 'Vui lòng nhập số ngày cảnh báo trước hết hạn khi dùng FEFO.',
             'alert_before_expiry.integer'     => 'Số ngày cảnh báo phải là số nguyên.',
-            'alert_before_expiry.min'         => 'Số ngày cảnh báo phải >= 1.',
+            'alert_before_expiry.min'         => 'Số ngày cảnh báo phải lớn hơn hoặc bằng 1.',
             'tracking_type.required'          => 'Vui lòng chọn kiểu theo dõi lô/serial.',
             'tracking_type.in'                => 'Kiểu theo dõi không hợp lệ.',
             'stock_rotation.required'         => 'Vui lòng chọn phương thức xoay vòng tồn kho.',
@@ -78,6 +73,7 @@ class UpdateProductRequest extends FormRequest
             'min_qty.max'                     => 'Ngưỡng tối thiểu phải bé hơn 99999999.',
             'max_qty.max'                     => 'Ngưỡng tối đa phải bé hơn 99999999.',
             'location_id'                     => 'nullable|exists:locations,id',
+            'status.required'                 => 'Vui lòng chọn trạng thái.',
         ];
     }
 

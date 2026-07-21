@@ -28,9 +28,6 @@ class UpdateUomRequest extends FormRequest
         return [
             'name.required'   => 'Vui lòng nhập tên đơn vị tính.',
             'name.max'        => 'Tên đơn vị tính không quá 50 ký tự.',
-            'code.required'   => 'Vui lòng nhập mã đơn vị tính.',
-            'code.unique'     => 'Mã đơn vị tính đã tồn tại.',
-            'code.regex'      => 'Mã đơn vị tính chỉ được phép chứa chữ cái và số, không chứa ký tự đặc biệt.', 
             'status.required' => 'Vui lòng chọn trạng thái.',
         ];
     }

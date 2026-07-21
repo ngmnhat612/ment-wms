@@ -24,7 +24,7 @@ class StoreProductVariantRequest extends FormRequest
                 Rule::exists('products', 'code'),
             ],
             'code' => [
-                'nullable', 'string', 'max:50',
+                'nullable', 'string', 'max:20',
                 // Cho phép thêm dấu chấm '.' vì mã biến thể thường đặt theo quy ước
                 // <mã gốc>.<số thứ tự>, ví dụ CH0003.1 — khác với mã vật tư thường
                 // (StoreProductRequest) không cho dấu chấm.
@@ -48,7 +48,7 @@ class StoreProductVariantRequest extends FormRequest
         return [
             'parent_code.required' => 'Vui lòng nhập mã MenT gốc.',
             'parent_code.exists'   => 'Mã MenT gốc không tồn tại trong hệ thống.',
-            'code.max'             => 'Mã biến thể không được vượt quá 50 ký tự.',
+            'code.max'             => 'Mã biến thể không được vượt quá 20 ký tự.',
             'code.regex'           => 'Mã biến thể chỉ được phép chứa chữ cái, số và dấu chấm (.), không chứa ký tự đặc biệt khác hoặc icon.',
             'code.unique'          => 'Mã biến thể đã tồn tại.',
             'name.required'        => 'Vui lòng nhập tên biến thể.',
@@ -63,6 +63,7 @@ class StoreProductVariantRequest extends FormRequest
             'min_qty.max'          => 'Ngưỡng tối thiểu phải bé hơn 99999999.',
             'max_qty.max'          => 'Ngưỡng tối đa phải bé hơn 99999999.',
             'location_id'          => 'nullable|exists:locations,id',
+            'status.required'      => 'Vui lòng chọn trạng thái.',
         ];
     }
 

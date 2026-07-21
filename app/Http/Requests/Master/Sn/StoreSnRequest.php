@@ -15,7 +15,7 @@ class StoreSnRequest extends FormRequest
     {
         return [
             'name'   => 'required|string|max:200',
-            'code'   => 'nullable|string|max:50|regex:/^[A-Za-z0-9]+$/|unique:sns,code',
+            'code'   => 'nullable|string|max:20|regex:/^[A-Za-z0-9]+$/|unique:sns,code',
             'note'   => 'nullable|string|max:500',
             'status' => 'required|in:0,1',
         ];
@@ -24,9 +24,12 @@ class StoreSnRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'name.required' => 'Vui lòng nhập tên dự án.',
-            'code.unique'   => 'Mã dự án đã tồn tại.',
-            'code.regex'    => 'Mã dự án chỉ được phép chứa chữ cái và số, không chứa ký tự đặc biệt.',
+            'name.required'   => 'Vui lòng nhập tên dự án.',
+            'name.max'        => 'Tên dự án không được vượt quá 200 ký tự.',
+            'code.max'        => 'Mã dự án không được vượt quá 20 ký tự.',
+            'code.unique'     => 'Mã dự án đã tồn tại.',
+            'code.regex'      => 'Mã dự án chỉ được phép chứa chữ cái và số, không chứa ký tự đặc biệt.',
+            'status.required' => 'Vui lòng chọn trạng thái.',
         ];
     }
 }

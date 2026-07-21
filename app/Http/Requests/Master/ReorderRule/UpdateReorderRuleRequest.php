@@ -36,9 +36,6 @@ class UpdateReorderRuleRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'product_id.required'   => 'Vui lòng chọn vật tư.',
-            'product_id.unique'     => 'Vật tư này đã được gán quy tắc.',
-            'product_id.exists'     => 'Vật tư không tồn tại trong hệ thống.',
             'warehouse_id.required' => 'Vui lòng chọn kho.',
             'employee_id.required'  => 'Vui lòng chọn người phụ trách.',
             'employee_id.exists'    => 'Người phụ trách không hợp lệ.',
@@ -47,6 +44,7 @@ class UpdateReorderRuleRequest extends FormRequest
             'max_qty.required'      => 'Vui lòng nhập ngưỡng tồn tối đa.',
             'max_qty.gte'           => 'Ngưỡng tối thiểu không được vượt quá ngưỡng tối đa.',
             'max_qty.max'           => 'Ngưỡng tối đa phải bé hơn 99999999.',
+            'status.required'       => 'Vui lòng chọn trạng thái.',
         ];
     }
 }

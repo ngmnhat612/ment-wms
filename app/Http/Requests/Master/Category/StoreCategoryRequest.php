@@ -14,7 +14,7 @@ class StoreCategoryRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'code'      => 'nullable|string|max:50|regex:/^[A-Za-z0-9]+$/|unique:categories,code',
+            'code'      => 'nullable|string|max:20|regex:/^[A-Za-z0-9]+$/|unique:categories,code',
             'name'      => 'required|string|max:200',
             'parent_id' => 'nullable|exists:categories,id',
             'note'      => 'nullable|string|max:500',
@@ -26,11 +26,12 @@ class StoreCategoryRequest extends FormRequest
     {
         return [
             'code.unique'      => 'Mã danh mục đã tồn tại.',
-            'code.max'         => 'Mã danh mục không quá 50 ký tự.',
-            'code.regex'       => 'Mã danh mục chỉ được phép chứa chữ cái và số, không chứa ký tự đặc biệt.', 
+            'code.max'         => 'Mã danh mục không quá 20 ký tự.',
+            'code.regex'       => 'Mã danh mục chỉ được phép chứa chữ cái và số, không chứa ký tự đặc biệt.',
             'name.required'    => 'Vui lòng nhập tên danh mục.',
             'name.max'         => 'Tên danh mục không quá 200 ký tự.',
             'parent_id.exists' => 'Danh mục cha không hợp lệ.',
+            'status.required'  => 'Vui lòng chọn trạng thái.',
         ];
     }
 }
