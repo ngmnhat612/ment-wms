@@ -5,6 +5,7 @@ namespace App\Models\Master;
 use App\Enums\ActiveStatus;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Category extends Model
 {
@@ -50,6 +51,15 @@ class Category extends Model
     public function products()
     {
         return $this->hasMany(Product::class, 'category_id');
+    }
+
+    /**
+     * Quy tắc gán vị trí (PutawayRule) theo Danh mục — tự động tạo/cập nhật
+     * khi Thêm/Sửa danh mục ở form Danh mục vật tư (đồng bộ với PutawayRuleService).
+     */
+    public function putawayRule(): HasOne
+    {
+        return $this->hasOne(PutawayRule::class, 'category_id');
     }
 
     // ===== SCOPES =====

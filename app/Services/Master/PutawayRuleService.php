@@ -106,4 +106,40 @@ class PutawayRuleService
             $this->delete($rule);
         }
     }
+
+    /**
+     * Tạo/cập nhật PutawayRule (theo category) tự động khi Thêm/Sửa danh mục
+     * ở form Danh mục vật tư. Cùng cơ chế với syncForProduct(), chỉ khác cột
+     * mục tiêu là category_id thay vì product_id (2 cột này loại trừ lẫn nhau
+     * theo ràng buộc CHECK ở bảng putaway_rules).
+     */
+    public function syncForCategory(int $categoryId, int $warehouseId, ?int $locationId): void
+    {
+        $existing = $this->putawayRuleRepository->findByCategoryAndWarehouse($categoryId, $warehouseId);
+
+        if ($existing) {
+            $this->update($existing, ['location_id' => $locationId]);
+            return;
+        }
+
+        $this->create([
+            'warehouse_id' => $warehouseId,
+            'product_id'   => null,
+            'category_id'  => $categoryId,
+            'location_id'  => $locationId,
+            'note'         => null,
+            'status'       => \App\Enums\ActiveStatus::Active,
+        ]);
+    }
+
+    /**
+     * Xóa PutawayRule khi danh mục bị xóa.
+     */
+    public function deleteForCategory(int $categoryId): void
+    {
+        $rule = PutawayRule::where('category_id', $categoryId)->first();
+        if ($rule) {
+            $this->delete($rule);
+        }
+    }
 }

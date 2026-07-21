@@ -20,4 +20,6 @@ interface PutawayRuleRepositoryInterface
     public function delete(PutawayRule $rule): bool;
 
     public function findByProductAndWarehouse(int $productId, int $warehouseId): ?PutawayRule;
+
+    public function findByCategoryAndWarehouse(int $categoryId, int $warehouseId): ?PutawayRule;
 }

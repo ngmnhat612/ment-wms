@@ -12,7 +12,7 @@ class CategoryRepository implements CategoryRepositoryInterface
 {
     public function search(array $filters, int $perPage = 15): LengthAwarePaginator
     {
-        $query = Category::with('parent');
+        $query = Category::with(['parent', 'putawayRule.destinationLocation']);
 
         if (!empty($filters['search'])) {
             $search = $filters['search'];

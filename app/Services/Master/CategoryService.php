@@ -3,6 +3,7 @@
 namespace App\Services\Master;
 
 use App\Models\Master\Category;
+use App\Models\Master\Warehouse;
 use App\Repositories\Contracts\Master\CategoryRepositoryInterface;
 use App\Services\Concerns\ChecksForeignKeyUsage;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
@@ -16,6 +17,7 @@ class CategoryService
     public function __construct(
         private readonly CategoryRepositoryInterface $categoryRepository,
         private readonly CodeGeneratorService        $codeGeneratorService,
+        private readonly PutawayRuleService          $putawayRuleService,
     ) {}
 
     // ===== READ =====
@@ -51,10 +53,22 @@ class CategoryService
         return $this->categoryRepository->getParentOptions();
     }
 
+    /**
+     * Vị trí Internal đang active — dùng cho dropdown "Gợi ý vị trí" ở form
+     * Danh mục (đồng bộ với PutawayRule khi tạo/sửa danh mục). Tái sử dụng
+     * PutawayRuleService vì đã có sẵn dependency và cùng nguồn dữ liệu.
+     */
+    public function activeInternalLocations(): Collection
+    {
+        return $this->putawayRuleService->activeInternalLocations();
+    }
+
     // ===== WRITE =====
 
     /**
      * Tạo mới danh mục.
+     * Tự động tạo/cập nhật kèm PutawayRule (vị trí gợi ý gán theo danh mục)
+     * nếu có gửi location_id.
      */
     public function create(array $data): Category
     {
@@ -62,16 +76,26 @@ class CategoryService
             ? strtoupper(trim($data['code']))
             : $this->codeGeneratorService->generateCode('categories', 'code', 'DM', 4);
 
-        return $this->categoryRepository->create([
+        $category = $this->categoryRepository->create([
             'code'      => $code,
             'name'      => $data['name'],
             'note'      => $data['note'] ?? null,
             'status'    => $data['status'],
         ]);
+
+        $this->putawayRuleService->syncForCategory(
+            $category->id,
+            $this->defaultWarehouseId(),
+            isset($data['location_id']) ? (int) $data['location_id'] : null,
+        );
+
+        return $category;
     }
 
     /**
      * Cập nhật danh mục.
+     * Đồng bộ PutawayRule theo location_id gửi lên (kể cả khi về null,
+     * không xóa rule — chỉ gỡ vị trí gán, giống ProductService::update()).
      *
      * @throws \RuntimeException khi chọn danh mục con làm cha (vòng tròn).
      */
@@ -84,17 +108,27 @@ class CategoryService
             'status'    => $data['status'],
         ]);
 
+        $this->putawayRuleService->syncForCategory(
+            $category->id,
+            $this->defaultWarehouseId(),
+            isset($data['location_id']) ? (int) $data['location_id'] : null,
+        );
+
         return $category->fresh();
     }
 
     /**
      * Xóa cứng danh mục.
+     * Xóa PutawayRule tương ứng trước khi xóa danh mục (giống ProductService::delete()),
+     * để guardNotInUse() không chặn nhầm do putaway_rules.category_id đang tham chiếu.
      *
      * @throws \RuntimeException khi có danh mục con, hoặc đang được tham chiếu
      *         bởi bất kỳ bảng nào khác (tự động phát hiện qua ràng buộc khóa ngoại).
      */
     public function delete(Category $category): void
     {
+        $this->putawayRuleService->deleteForCategory($category->id);
+
         $this->guardNotInUse('categories', 'id', $category->id, 'Danh mục', $category->name);
 
         $this->categoryRepository->delete($category);
@@ -122,5 +156,22 @@ class CategoryService
                 'Không thể chọn danh mục con làm danh mục cha.'
             );
         }
+    }
+
+    /**
+     * Kho mặc định — hiện dự án chỉ có 1 kho. Cache trong 1 request để
+     * tránh query lặp lại khi gọi syncForCategory nhiều lần (giống
+     * ReorderRuleService::defaultWarehouseId()).
+     */
+    private function defaultWarehouseId(): int
+    {
+        static $id = null;
+
+        if ($id === null) {
+            $id = Warehouse::query()->value('id')
+                ?? throw new \RuntimeException('Chưa có kho nào trong hệ thống.');
+        }
+
+        return $id;
     }
 }

@@ -98,7 +98,8 @@
                   Tên {!! $sortIcon('name') !!}
                 </a>
               </th>
-              <th style="width:32%">Ghi chú</th>
+              <th style="width:16%">Vị trí gợi ý</th>
+              <th style="width:24%">Ghi chú</th>
               <th class="text-center" style="width:8%">Trạng thái</th>
               <th class="text-center" style="width:8%">Thao tác</th>
             </tr>
@@ -120,6 +121,14 @@
                   @endif
                   {{ $cat->name ?? '-' }}
                 </td>
+                <td class="small">
+                  @if ($cat->putawayRule && $cat->putawayRule->destinationLocation)
+                    <code class="text-body-secondary">[{{ $cat->putawayRule->destinationLocation->code }}]</code>
+                    {{ $cat->putawayRule->destinationLocation->name }}
+                  @else
+                    <span class="text-body-secondary">-</span>
+                  @endif
+                </td>
                 <td class="small" title="{{ $cat->note }}">
                  {{ truncate_text($cat->note) }}
                 </td>
@@ -137,7 +146,9 @@
                       '{{ addslashes($cat->code) }}',
                       '{{ addslashes($cat->name) }}',
                       '{{ addslashes($cat->note ?? '') }}',
-                      {{ $cat->status->value }}
+                      {{ $cat->status->value }},
+                      {{ $cat->putawayRule->location_id ?? 'null' }},
+                      '{{ $cat->putawayRule && $cat->putawayRule->destinationLocation ? "[" . addslashes($cat->putawayRule->destinationLocation->code) . "] " . addslashes($cat->putawayRule->destinationLocation->name) : "" }}'
                     )"
                           title="Chỉnh sửa">
                     <svg class="icon"><use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-pencil') }}"></use></svg>
@@ -151,7 +162,7 @@
               </tr>
             @empty
               <tr>
-                <td colspan="6" class="text-center text-body-secondary py-5">
+                <td colspan="7" class="text-center text-body-secondary py-5">
                   <svg class="icon icon-3xl d-block mx-auto mb-2 opacity-25">
                     <use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-storage') }}"></use>
                   </svg>
@@ -214,6 +225,25 @@
                     placeholder="Nhập tên" required maxlength="200"
                     oninput="this.classList.remove('is-invalid')">
               <div class="invalid-feedback" id="catNameError">@error('name'){{ $message }}@enderror</div>
+            </div>
+
+            {{-- ===== Gợi ý vị trí (PutawayRule theo Danh mục) ===== --}}
+            <div class="mb-3">
+              <label class="form-label fw-medium">Gợi ý vị trí</label>
+              <input type="text"
+                    class="form-control {{ $errors->has('location_id') ? 'is-invalid' : '' }}"
+                    id="catLocationText"
+                    placeholder="Nhập hoặc chọn"
+                    list="catLocationDatalist" autocomplete="off"
+                    oninput="resolveCategoryLocation()" onblur="resolveCategoryLocation()">
+              <datalist id="catLocationDatalist">
+                @foreach ($locations as $loc)
+                  <option value="[{{ $loc->code }}] {{ $loc->name }}"></option>
+                @endforeach
+              </datalist>
+              <input type="hidden" id="catLocation" name="location_id" value="{{ old('location_id') }}">
+              <div class="invalid-feedback" id="catLocationError">@error('location_id'){{ $message }}@enderror</div>
+              <div class="form-text">Vị trí đích gợi ý áp dụng cho toàn bộ vật tư thuộc danh mục này (nếu vật tư chưa gán riêng).</div>
             </div>
 
             <div class="mb-3 mt-3">
@@ -289,7 +319,10 @@
   const routeStore = '{{ route('master.category.store') }}';
   const routeBase  = '{{ url('master/category') }}';
 
-  function openModal(id = null, code = '', name = '', desc = '', status = 1) {
+  // Danh sách vị trí Internal active — dùng để đối chiếu text nhập ở ô "Gợi ý vị trí"
+  const catLocations = @json($locations->map(fn($l) => ['id' => $l->id, 'code' => $l->code, 'name' => $l->name]));
+
+  function openModal(id = null, code = '', name = '', desc = '', status = 1, locationId = null, locationText = '') {
       const modal   = new coreui.Modal(document.getElementById('categoryModal'));
       const form    = document.getElementById('categoryForm');
       const title   = document.getElementById('categoryModalLabel');
@@ -301,6 +334,10 @@
       document.getElementById('catName').value = name;
       document.getElementById('catDesc').value = desc;
       document.getElementById(status == 1 ? 'catStatusActive' : 'catStatusInactive').checked = true;
+
+      // Gợi ý vị trí (PutawayRule theo danh mục)
+      document.getElementById('catLocationText').value = locationText ?? '';
+      document.getElementById('catLocation').value      = locationId ?? '';
 
       if (id) {
           title.textContent    = 'Chỉnh sửa danh mục';
@@ -318,6 +355,9 @@
           codeEl.readOnly      = false;
           codeEl.classList.remove('bg-body-secondary');
           document.getElementById('catStatusActive').checked = true;
+          // form.reset() xoá luôn 2 ô vị trí — set lại rõ ràng để tránh sót giá trị cũ
+          document.getElementById('catLocationText').value = '';
+          document.getElementById('catLocation').value      = '';
       }
 
       modal.show();
@@ -328,6 +368,32 @@
     document.getElementById('deleteCatName').textContent = name;
     document.getElementById('deleteForm').action = `${routeBase}/${id}`;
     new coreui.Modal(document.getElementById('deleteModal')).show();
+  }
+
+  // Đối chiếu text nhập ở ô "Gợi ý vị trí" với danh sách vị trí Internal active,
+  // set catLocation (hidden) = id nếu khớp, báo lỗi is-invalid nếu gõ text không khớp
+  // option nào trong datalist (giống hệt resolveLocation() ở form Sản phẩm).
+  function resolveCategoryLocation() {
+    const text  = document.getElementById('catLocationText').value.trim();
+    const el    = document.getElementById('catLocationText');
+    const hid   = document.getElementById('catLocation');
+    const err   = document.getElementById('catLocationError');
+    const match = catLocations.find(l => `[${l.code}] ${l.name}` === text);
+
+    if (match) {
+      hid.value = match.id;
+      el.classList.remove('is-invalid');
+      err.textContent = '';
+    } else {
+      hid.value = '';
+      if (text) {
+        el.classList.add('is-invalid');
+        err.textContent = 'Vị trí không tồn tại trong hệ thống.';
+      } else {
+        el.classList.remove('is-invalid');
+        err.textContent = '';
+      }
+    }
   }
 
   document.getElementById('catCode').addEventListener('input', function () {
@@ -342,12 +408,16 @@
     // thường, chạy đồng bộ ngay khi parse tới), window.setModalFormId có thể CHƯA tồn
     // tại → "setModalFormId is not defined". DOMContentLoaded đảm bảo module đã chạy xong.
     document.addEventListener('DOMContentLoaded', function () {
+      const oldLocationId = @json(old('location_id', null));
+      const oldLocationMatch = catLocations.find(l => l.id == oldLocationId);
       openModal(
         {{ old('id') ?: 'null' }},
         '{{ old("code") }}',
         '{{ addslashes(old("name")) }}',
         '{{ addslashes(old("note")) }}',
-        {{ old("status", 1) }}
+        {{ old("status", 1) }},
+        oldLocationId,
+        oldLocationMatch ? `[${oldLocationMatch.code}] ${oldLocationMatch.name}` : ''
       );
     });
   @endif
@@ -363,6 +433,18 @@
       document.getElementById('catNameError').textContent = 'Vui lòng nhập tên danh mục.';
       e.preventDefault();
       nameEl.focus();
+      return;
+    }
+
+    // Nếu người dùng gõ text vào ô vị trí nhưng không khớp option nào (hidden id rỗng),
+    // chặn submit — giống validate resolveLocation() ở form Sản phẩm.
+    const locationText = document.getElementById('catLocationText').value.trim();
+    const locationId    = document.getElementById('catLocation').value;
+    if (locationText && !locationId) {
+      document.getElementById('catLocationText').classList.add('is-invalid');
+      document.getElementById('catLocationError').textContent = 'Vị trí không tồn tại trong hệ thống.';
+      e.preventDefault();
+      document.getElementById('catLocationText').focus();
       return;
     }
 

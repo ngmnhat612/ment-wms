@@ -28,8 +28,9 @@ class CategoryController extends Controller
 
         $categories    = $this->categoryService->search($filters);
         $parentOptions = $this->categoryService->getParentOptions();
+        $locations     = $this->categoryService->activeInternalLocations();
 
-        return view('master.category.index', compact('categories', 'parentOptions'));
+        return view('master.category.index', compact('categories', 'parentOptions', 'locations'));
     }
 
     // ===== STORE =====

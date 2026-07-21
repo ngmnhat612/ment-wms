@@ -14,24 +14,26 @@ class StoreCategoryRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'code'      => 'nullable|string|max:20|regex:/^[A-Za-z0-9]+$/|unique:categories,code',
-            'name'      => 'required|string|max:200',
-            'parent_id' => 'nullable|exists:categories,id',
-            'note'      => 'nullable|string|max:500',
-            'status'    => 'required|in:0,1',
+            'code'        => 'nullable|string|max:20|regex:/^[A-Za-z0-9]+$/|unique:categories,code',
+            'name'        => 'required|string|max:200',
+            'parent_id'   => 'nullable|exists:categories,id',
+            'note'        => 'nullable|string|max:500',
+            'status'      => 'required|in:0,1',
+            'location_id' => 'nullable|exists:locations,id',
         ];
     }
 
     public function messages(): array
     {
         return [
-            'code.unique'      => 'Mã danh mục đã tồn tại.',
-            'code.max'         => 'Mã danh mục không quá 20 ký tự.',
-            'code.regex'       => 'Mã danh mục chỉ được phép chứa chữ cái và số, không chứa ký tự đặc biệt.',
-            'name.required'    => 'Vui lòng nhập tên danh mục.',
-            'name.max'         => 'Tên danh mục không quá 200 ký tự.',
-            'parent_id.exists' => 'Danh mục cha không hợp lệ.',
-            'status.required'  => 'Vui lòng chọn trạng thái.',
+            'code.unique'        => 'Mã danh mục đã tồn tại.',
+            'code.max'           => 'Mã danh mục không quá 20 ký tự.',
+            'code.regex'         => 'Mã danh mục chỉ được phép chứa chữ cái và số, không chứa ký tự đặc biệt.',
+            'name.required'      => 'Vui lòng nhập tên danh mục.',
+            'name.max'           => 'Tên danh mục không quá 200 ký tự.',
+            'parent_id.exists'   => 'Danh mục cha không hợp lệ.',
+            'status.required'    => 'Vui lòng chọn trạng thái.',
+            'location_id.exists' => 'Vị trí không tồn tại trong hệ thống.',
         ];
     }
 }

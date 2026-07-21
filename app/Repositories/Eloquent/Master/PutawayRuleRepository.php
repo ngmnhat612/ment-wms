@@ -83,4 +83,11 @@ class PutawayRuleRepository implements PutawayRuleRepositoryInterface
             ->where('warehouse_id', $warehouseId)
             ->first();
     }
+
+    public function findByCategoryAndWarehouse(int $categoryId, int $warehouseId): ?PutawayRule
+    {
+        return PutawayRule::where('category_id', $categoryId)
+            ->where('warehouse_id', $warehouseId)
+            ->first();
+    }
 }
