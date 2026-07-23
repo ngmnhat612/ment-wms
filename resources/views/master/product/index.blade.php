@@ -471,6 +471,9 @@
             </datalist>
             <input type="hidden" id="pLocation" name="location_id" value="">
             <div class="invalid-feedback" id="pLocationError"></div>
+            <div class="form-text d-none" id="pLocationInheritedHint">
+              Đang theo vị trí gợi ý của danh mục. Chỉnh sửa sẽ gán vị trí riêng cho vật tư này.
+            </div>
           </div>
         </div>
 
@@ -565,6 +568,15 @@
   const locations = @json($locations->map(fn($l) => ['id' => $l->id, 'code' => $l->code, 'name' => $l->name]));
 
   @foreach ($products as $p)
+    @php
+      // Ưu tiên PutawayRule riêng của product; nếu chưa có, kế thừa ngầm
+      // vị trí từ PutawayRule của category (giống logic backend
+      // PutawayRuleService::syncForNewProduct()).
+      $ownRule           = $p->putawayRule;
+      $catRule           = $p->category?->putawayRule;
+      $effectiveLocation = $ownRule?->destinationLocation ?? $catRule?->destinationLocation;
+      $isInherited       = !$ownRule && $catRule && $catRule->location_id;
+    @endphp
     productsMap[{{ $p->id }}] = {
       id:                  {{ $p->id }},
       code:                '{{ addslashes($p->code) }}',
@@ -578,10 +590,11 @@
       image_path:          '{{ $p->image_path ?? '' }}',
       image_url:           '{{ $p->image_path ? Storage::url($p->image_path) : '' }}',
       image_name:          '{{ $p->image_path ? addslashes(basename($p->image_path)) : '' }}',
-      min_qty: {{ $p->reorderRule->min_qty ?? 0 }},
-      max_qty: {{ $p->reorderRule->max_qty ?? 0 }},
-      location_id:   {{ $p->putawayRule->location_id ?? 'null' }},
-      location_text: '{{ $p->putawayRule && $p->putawayRule->destinationLocation ? "[" . addslashes($p->putawayRule->destinationLocation->code) . "] " . addslashes($p->putawayRule->destinationLocation->name) : "" }}',
+      min_qty:             {{ $p->reorderRule->min_qty ?? 0 }},
+      max_qty:             {{ $p->reorderRule->max_qty ?? 0 }},
+      location_id:         {{ $effectiveLocation->id ?? 'null' }},
+      location_text:       '{{ $effectiveLocation ? "[" . addslashes($effectiveLocation->code) . "] " . addslashes($effectiveLocation->name) : "" }}',
+      location_inherited:  {{ $isInherited ? 'true' : 'false' }},
     };
   @endforeach
 
@@ -613,6 +626,14 @@
     const select = document.getElementById(selectId);
     const exists = value !== '' && select.querySelector(`option[value="${value}"]`);
     select.value = exists ? value : '';
+  }
+
+  // Hiện ghi chú nhỏ khi ô "Gợi ý vị trí" đang hiển thị giá trị KẾ THỪA từ
+  // danh mục (product chưa có PutawayRule riêng) — sửa và Lưu sẽ tạo rule
+  // riêng theo product, ghi đè giá trị kế thừa này.
+  function toggleLocationInheritedHint(isInherited) {
+    const hint = document.getElementById('pLocationInheritedHint');
+    if (hint) hint.classList.toggle('d-none', !isInherited);
   }
 
   // ===== MỞ FORM =====
@@ -661,6 +682,7 @@
       document.getElementById('pMaxQty').value = p.max_qty ?? 0;
       document.getElementById('pLocationText').value = p.location_text ?? '';
       document.getElementById('pLocation').value     = p.location_id ?? '';
+      toggleLocationInheritedHint(p.location_inherited);
 
       if (p.image_url) {
         showImagePreview(p.image_url, p.image_name);
@@ -683,6 +705,7 @@
       document.getElementById('pMaxQty').value = 0;
       document.getElementById('pLocationText').value = '';
       document.getElementById('pLocation').value     = '';
+      toggleLocationInheritedHint(false);
     }
 
     offcanvas.show();

@@ -13,6 +13,14 @@ class ProductRepository implements ProductRepositoryInterface
 {
     public function search(array $filters, int $perPage = 20): LengthAwarePaginator
     {
+        $query = Product::with([
+            'category',
+            'uom',
+            'reorderRule',
+            'putawayRule.destinationLocation',
+            'category.putawayRule.destinationLocation',
+        ]);
+
         $query = Product::with(['category', 'uom']);
 
         if (!empty($filters['search'])) {

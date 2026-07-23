@@ -97,6 +97,34 @@ class PutawayRuleService
     }
 
     /**
+     * Đồng bộ PutawayRule (theo product) khi TẠO MỚI vật tư (create/createVariant).
+     *
+     * Khác với syncForProduct(): nếu người dùng KHÔNG gán vị trí ($locationId
+     * === null) VÀ danh mục của vật tư ĐÃ có vị trí gán sẵn (qua PutawayRule
+     * theo category_id), thì KHÔNG tạo rule riêng cho product — vật tư này sẽ
+     * kế thừa ngầm vị trí của danh mục (đọc lại qua PutawayRule.category tại
+     * thời điểm hiển thị), tránh sinh thêm 1 dòng "Theo vật tư" vô nghĩa
+     * (location_id = null) trong danh sách master/putaway-rule.
+     *
+     * Mọi trường hợp khác (có gán vị trí riêng, hoặc danh mục chưa có vị trí)
+     * vẫn tạo rule theo product như syncForProduct() bình thường.
+     */
+    public function syncForNewProduct(int $productId, int $categoryId, int $warehouseId, ?int $locationId): void
+    {
+        if ($locationId === null) {
+            $categoryRule = $this->putawayRuleRepository->findByCategoryAndWarehouse($categoryId, $warehouseId);
+
+            if ($categoryRule && $categoryRule->location_id !== null) {
+                // Danh mục đã có vị trí -> không tạo rule riêng cho product,
+                // để product kế thừa ngầm vị trí của danh mục.
+                return;
+            }
+        }
+
+        $this->syncForProduct($productId, $warehouseId, $locationId);
+    }
+
+    /**
      * Xóa PutawayRule khi vật tư bị xóa.
      */
     public function deleteForProduct(int $productId): void

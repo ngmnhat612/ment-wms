@@ -82,8 +82,9 @@ class ProductService
             (int) ($data['max_qty'] ?? 0),
         );
 
-        $this->putawayRuleService->syncForProduct(
+        $this->putawayRuleService->syncForNewProduct(
             $product->id,
+            (int) $data['category_id'],
             $this->reorderRuleService->defaultWarehouseId(),
             isset($data['location_id']) ? (int) $data['location_id'] : null,
         );
@@ -132,8 +133,9 @@ class ProductService
             (int) ($data['max_qty'] ?? 0),
         );
 
-        $this->putawayRuleService->syncForProduct(
+        $this->putawayRuleService->syncForNewProduct(
             $variant->id,
+            (int) $data['category_id'],
             $this->reorderRuleService->defaultWarehouseId(),
             isset($data['location_id']) ? (int) $data['location_id'] : null,
         );
