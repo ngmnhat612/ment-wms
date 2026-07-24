@@ -21,4 +21,9 @@ class AccountRepository implements AccountRepositoryInterface
     {
         return $account->delete();
     }
+
+    public function usernameExists(string $username): bool
+    {
+        return Account::where('username', $username)->exists();
+    }
 }

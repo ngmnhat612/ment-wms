@@ -81,6 +81,8 @@ Route::middleware('auth')->group(function () {
         Route::resource('employee', EmployeeController::class)
             ->only(['index', 'store', 'update', 'destroy']);
         // Tài khoản đăng nhập của nhân viên
+        Route::get('employee/account/check-username', [AccountController::class, 'checkUsername'])
+            ->name('employee.account.checkUsername');
         Route::post('employee/{employee}/account', [AccountController::class, 'store'])
             ->name('employee.account.store');
         Route::put('employee/{employee}/account', [AccountController::class, 'update'])

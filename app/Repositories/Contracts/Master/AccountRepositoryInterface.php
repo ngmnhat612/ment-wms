@@ -20,4 +20,9 @@ interface AccountRepositoryInterface
      * Xóa tài khoản (giữ lại hồ sơ nhân viên).
      */
     public function delete(Account $account): bool;
+
+    /**
+     * Kiểm tra tên đăng nhập đã tồn tại chưa.
+     */
+    public function usernameExists(string $username): bool;
 }

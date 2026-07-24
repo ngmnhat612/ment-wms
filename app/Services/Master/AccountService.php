@@ -74,6 +74,16 @@ class AccountService
         $this->accountRepository->delete($account);
     }
 
+    /**
+     * Kiểm tra tên đăng nhập đã tồn tại chưa — dùng cho validate AJAX (blur) ở
+     * form Thêm tài khoản. Không cần exclude_id: username chỉ được kiểm tra
+     * lúc Tạo mới (lúc Sửa, field bị disable/đổi tên nên không gửi username).
+     */
+    public function usernameExists(string $username): bool
+    {
+        return $this->accountRepository->usernameExists($username);
+    }
+
     public function deactivate(Account $account): void
     {
         if ($account->is_protected) {

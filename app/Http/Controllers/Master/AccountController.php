@@ -8,7 +8,9 @@ use App\Http\Requests\Master\Account\UpdateAccountRequest;
 use App\Models\Master\Account;
 use App\Models\Master\Employee;
 use App\Services\Master\AccountService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 
 class AccountController extends Controller
@@ -16,6 +18,23 @@ class AccountController extends Controller
     public function __construct(
         private readonly AccountService $accountService,
     ) {}
+
+    // ===== CHECK USERNAME (AJAX, dùng lúc blur ở form Thêm tài khoản) =====
+
+    public function checkUsername(Request $request): JsonResponse
+    {
+        Gate::authorize('create', Account::class);
+
+        $request->validate([
+            'username' => 'required|string|max:100',
+        ]);
+
+        $exists = $this->accountService->usernameExists(
+            $request->string('username')->toString()
+        );
+
+        return response()->json(['exists' => $exists]);
+    }
 
     // ===== STORE =====
 

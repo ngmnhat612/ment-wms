@@ -389,12 +389,11 @@
             <div class="row g-3">
               <div class="col-12">
                 <label class="form-label fw-medium">Tên đăng nhập <span class="text-danger" id="accUsernameRequired">*</span></label>
-                  <input type="text" class="form-control @error('username') is-invalid @enderror" name="username" id="accUsername"
+                    <input type="text" class="form-control @error('username') is-invalid @enderror" name="username" id="accUsername"
                         placeholder="Chỉ dùng chữ thường, số và @ _ ." maxlength="100" value="{{ old('username') }}"
-                        oninput="sanitizeUsernameInput(this); this.classList.remove('is-invalid')">
-                  @error('username')
-                    <div class="invalid-feedback">{{ $message }}</div>
-                  @enderror
+                        oninput="sanitizeUsernameInput(this); this.classList.remove('is-invalid')"
+                        onblur="checkAccountUsernameUnique(this, 'accUsernameError')">
+                    <div class="invalid-feedback" id="accUsernameError">@error('username'){{ $message }}@enderror</div>
               </div>
 
               <div class="col-12">
@@ -794,6 +793,43 @@
 
     modal.show();
     setTimeout(() => userEl.focus(), 300);
+  }
+
+  // ===== username.unique (AJAX, dùng lúc blur ở ô Tên đăng nhập) =====
+  // Không check khi field đang disabled (đang Sửa tài khoản -> username bị khoá)
+  // hoặc khi để trống.
+  async function checkAccountUsernameUnique(inputEl, errorId) {
+    const username = inputEl.value.trim();
+
+    inputEl.classList.remove('is-invalid');
+    clearFieldErrorEl(inputEl, errorId);
+    if (!username || inputEl.disabled) return;
+
+    try {
+      const res = await fetch(
+        `{{ route('master.employee.account.checkUsername') }}?username=${encodeURIComponent(username)}`,
+        { headers: { 'X-Requested-With': 'XMLHttpRequest' } }
+      );
+
+      if (!res.ok) {
+        console.error(
+          `[checkAccountUsernameUnique] AJAX thất bại: HTTP ${res.status} ${res.statusText}. ` +
+          `Việc kiểm tra trùng tên đăng nhập lúc blur bị bỏ qua, backend sẽ chặn thật lúc Lưu.`
+        );
+        return;
+      }
+
+      const data = await res.json();
+
+      if (!document.body.contains(inputEl)) return;
+
+      if (data.exists) {
+        inputEl.classList.add('is-invalid');
+        showFieldErrorEl(inputEl, errorId, 'Tên đăng nhập đã tồn tại.');
+      }
+    } catch (err) {
+      console.error('[checkAccountUsernameUnique] Lỗi khi gọi AJAX kiểm tra tên đăng nhập:', err);
+    }
   }
 
   document.getElementById('accountForm').addEventListener('submit', function (e) {
