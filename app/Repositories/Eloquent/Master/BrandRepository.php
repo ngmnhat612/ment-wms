@@ -53,4 +53,11 @@ class BrandRepository implements BrandRepositoryInterface
         return $brand->delete();
     }
 
+
+    public function codeExists(string $code, ?int $excludeId = null): bool
+    {
+        return Brand::where('code', $code)
+            ->when($excludeId, fn($q) => $q->where('id', '!=', $excludeId))
+            ->exists();
+    }
 }

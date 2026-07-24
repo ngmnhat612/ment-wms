@@ -189,10 +189,9 @@
                     class="form-control {{ $errors->has('code') ? 'is-invalid' : '' }}"
                     id="sCode" name="code"
                     value="{{ old('code') }}"
-                    placeholder="TỰ ĐỘNG" maxlength="20">
-              @error('code')
-                <div class="invalid-feedback">{{ $message }}</div>
-              @enderror
+                    placeholder="TỰ ĐỘNG" maxlength="20"
+                    onblur="checkSnCodeUnique(this, 'sCodeError')">
+              <div class="invalid-feedback" id="sCodeError">@error('code'){{ $message }}@enderror</div>
             </div>
 
             <div class="mb-3">
@@ -323,7 +322,32 @@
 
   document.getElementById('sCode').addEventListener('input', function () {
     sanitizeCodeInput(this);
+    this.classList.remove('is-invalid');
+    document.getElementById('sCodeError').textContent = '';
   });
+
+  // ===== code.unique (AJAX, dùng lúc blur ở ô Mã) =====
+  async function checkSnCodeUnique(inputEl, errorId) {
+    const code = inputEl.value.trim();
+
+    inputEl.classList.remove('is-invalid');
+    document.getElementById(errorId).textContent = '';
+    if (!code || inputEl.readOnly) return;
+
+    try {
+      const res = await fetch(
+        `{{ route('master.sn.checkCode') }}?code=${encodeURIComponent(code)}`,
+        { headers: { 'X-Requested-With': 'XMLHttpRequest' } }
+      );
+      if (!res.ok) return; // lỗi mạng/server: để backend chặn thật lúc submit
+      const data = await res.json();
+
+      if (data.exists) {
+        inputEl.classList.add('is-invalid');
+        document.getElementById(errorId).textContent = 'Mã dự án đã tồn tại.';
+      }
+    } catch {}
+  }
 
   @if ($errors->any())
     // Bọc trong DOMContentLoaded để đảm bảo resources/js/crud-modal-helpers.js
@@ -341,6 +365,13 @@
   @endif
 
   document.getElementById('snForm').addEventListener('submit', function (e) {
+    const sCodeEl = document.getElementById('sCode');
+    if (sCodeEl.classList.contains('is-invalid')) {
+      e.preventDefault();
+      sCodeEl.focus();
+      return;
+    }
+
     const nameEl = document.getElementById('sName');
     const name   = nameEl.value.trim();
 

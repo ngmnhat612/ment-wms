@@ -163,4 +163,11 @@ class LocationRepository implements LocationRepositoryInterface
 
         return $ids;
     }
+
+    public function codeExists(string $code, ?int $excludeId = null): bool
+    {
+        return Location::where('code', $code)
+            ->when($excludeId, fn($q) => $q->where('id', '!=', $excludeId))
+            ->exists();
+    }
 }

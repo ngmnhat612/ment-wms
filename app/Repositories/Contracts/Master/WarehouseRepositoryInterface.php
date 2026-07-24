@@ -42,4 +42,9 @@ interface WarehouseRepositoryInterface
      * Xóa kho.
      */
     public function delete(Warehouse $warehouse): bool;
+
+    /**
+     * Kiểm tra mã đã tồn tại chưa — dùng cho validate AJAX (blur) ở form Thêm/Sửa.
+     */
+    public function codeExists(string $code, ?int $excludeId = null): bool;
 }

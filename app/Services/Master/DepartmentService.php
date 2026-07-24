@@ -79,4 +79,17 @@ class DepartmentService
 
         $this->departmentRepository->delete($department);
     }
+
+    /**
+     * Kiểm tra mã bộ phận đã tồn tại chưa — dùng cho validate AJAX (blur) ở
+     * form Thêm bộ phận. Chuẩn hoá code giống lúc lưu (create()) để so
+     * sánh nhất quán (uppercase, trim).
+     */
+    public function codeExists(string $code, ?int $excludeId = null): bool
+    {
+        return $this->departmentRepository->codeExists(
+            strtoupper(trim($code)),
+            $excludeId
+        );
+    }
 }

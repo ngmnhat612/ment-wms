@@ -48,4 +48,8 @@ interface EmployeeRepositoryInterface
      */
     public function delete(Employee $employee): bool;
 
+    /**
+     * Kiểm tra mã đã tồn tại chưa — dùng cho validate AJAX (blur) ở form Thêm/Sửa.
+     */
+    public function codeExists(string $code, ?int $excludeId = null): bool;
 }

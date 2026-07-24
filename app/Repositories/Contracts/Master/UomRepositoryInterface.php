@@ -47,4 +47,9 @@ interface UomRepositoryInterface
      * Kiểm tra đơn vị tính đang được dùng trong quy đổi.
      */
     public function hasConversions(Uom $uom): bool;
+
+    /**
+     * Kiểm tra mã đã tồn tại chưa — dùng cho validate AJAX (blur) ở form Thêm.
+     */
+    public function codeExists(string $code, ?int $excludeId = null): bool;
 }

@@ -188,10 +188,9 @@
                     class="form-control text-uppercase {{ $errors->has('code') ? 'is-invalid' : '' }}"
                     id="bCode" name="code"
                     value="{{ old('code') }}"
-                    placeholder="Tự động" maxlength=20" style="letter-spacing:1px">
-              @error('code')
-                <div class="invalid-feedback">{{ $message }}</div>
-              @enderror
+                    placeholder="Tự động" maxlength=20" style="letter-spacing:1px"
+                    onblur="checkBrandCodeUnique(this, 'bCodeError')">
+              <div class="invalid-feedback" id="bCodeError">@error('code'){{ $message }}@enderror</div>
             </div>
 
             <div class="mb-3">
@@ -322,7 +321,35 @@
 
   document.getElementById('bCode').addEventListener('input', function () {
     sanitizeCodeInput(this);
+    this.classList.remove('is-invalid');
+    document.getElementById('bCodeError').textContent = '';
   });
+
+  // ===== code.unique (AJAX, dùng lúc blur ở ô Mã) =====
+  // Không check khi field đang readonly (đang Sửa -> mã bị khoá, luôn là mã
+  // hiện tại của chính nó nên không thể trùng) hoặc khi để trống (hệ thống sẽ
+  // tự sinh mã, không cần kiểm tra).
+  async function checkBrandCodeUnique(inputEl, errorId) {
+    const code = inputEl.value.trim();
+
+    inputEl.classList.remove('is-invalid');
+    document.getElementById(errorId).textContent = '';
+    if (!code || inputEl.readOnly) return;
+
+    try {
+      const res = await fetch(
+        `{{ route('master.brand.checkCode') }}?code=${encodeURIComponent(code)}`,
+        { headers: { 'X-Requested-With': 'XMLHttpRequest' } }
+      );
+      if (!res.ok) return; // lỗi mạng/server: để backend chặn thật lúc submit
+      const data = await res.json();
+
+      if (data.exists) {
+        inputEl.classList.add('is-invalid');
+        document.getElementById(errorId).textContent = 'Mã thương hiệu đã tồn tại.';
+      }
+    } catch {}
+  }
 
   @if ($errors->any())
     // Bọc trong DOMContentLoaded để đảm bảo resources/js/crud-modal-helpers.js
@@ -340,6 +367,13 @@
   @endif
 
   document.getElementById('brandForm').addEventListener('submit', function (e) {
+    const bCodeEl = document.getElementById('bCode');
+    if (bCodeEl.classList.contains('is-invalid')) {
+      e.preventDefault();
+      bCodeEl.focus();
+      return;
+    }
+
     const nameEl = document.getElementById('bName');
     const name   = nameEl.value.trim();
 

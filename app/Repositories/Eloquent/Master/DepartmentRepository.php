@@ -53,4 +53,10 @@ class DepartmentRepository implements DepartmentRepositoryInterface
         return $department->delete();
     }
 
+    public function codeExists(string $code, ?int $excludeId = null): bool
+    {
+        return Department::where('code', $code)
+            ->when($excludeId, fn($q) => $q->where('id', '!=', $excludeId))
+            ->exists();
+    }
 }

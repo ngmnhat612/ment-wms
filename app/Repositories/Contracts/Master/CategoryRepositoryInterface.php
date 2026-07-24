@@ -66,4 +66,10 @@ interface CategoryRepositoryInterface
      * @return int[]
      */
     public function getDescendantIds(Category $category): array;
+
+    /**
+     * Kiểm tra mã danh mục đã tồn tại chưa — dùng cho validate AJAX (blur)
+     * ở form Thêm/Sửa danh mục.
+     */
+    public function codeExists(string $code, ?int $excludeId = null): bool;
 }

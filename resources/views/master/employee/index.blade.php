@@ -1,4 +1,4 @@
-@extends('layouts.app')
+    @extends('layouts.app')
 
 @section('title', 'Nhân viên')
 
@@ -281,10 +281,9 @@
                        class="form-control text-uppercase {{ $errors->has('code') ? 'is-invalid' : '' }}"
                        name="code" id="empCode"
                        value="{{ old('code') }}"
-                       placeholder="Tự động" maxlength="20">
-                @error('code')
-                  <div class="invalid-feedback">{{ $message }}</div>
-                @enderror
+                       placeholder="Tự động" maxlength="20"
+                    onblur="checkEmployeeCodeUnique(this, 'empCodeError')">
+              <div class="invalid-feedback" id="empCodeError">@error('code'){{ $message }}@enderror</div>
               </div>
               <div class="col-sm-8">
                 <label class="form-label fw-medium">Tên <span class="text-danger">*</span></label>
@@ -577,7 +576,68 @@
   // Auto viết hoa mã NV
   document.getElementById('empCode').addEventListener('input', function () {
     sanitizeCodeInput(this);
+    this.classList.remove('is-invalid');
+    const errEl = document.getElementById('empCodeError');
+    if (errEl) errEl.textContent = '';
   });
+
+  // ===== code.unique (AJAX, dùng lúc blur ở ô Mã) =====
+  // Không check khi field đang readonly (đang Sửa -> mã bị khoá, luôn là mã
+  // hiện tại của chính nó nên không thể trùng) hoặc khi để trống (hệ thống sẽ
+  // tự sinh mã, không cần kiểm tra).
+  async function checkEmployeeCodeUnique(inputEl, errorId) {
+  const code = inputEl.value.trim();
+
+  inputEl.classList.remove('is-invalid');
+  clearFieldErrorEl(inputEl, errorId);
+  if (!code || inputEl.readOnly) return;
+
+  try {
+    const res = await fetch(
+      `{{ route('master.employee.checkCode') }}?code=${encodeURIComponent(code)}`,
+      { headers: { 'X-Requested-With': 'XMLHttpRequest' } }
+    );
+
+    if (!res.ok) {
+      console.error(
+        `[checkEmployeeCodeUnique] AJAX thất bại: HTTP ${res.status} ${res.statusText}. ` +
+        `Việc kiểm tra trùng mã lúc blur bị bỏ qua, backend sẽ chặn thật lúc Lưu.`
+      );
+      return;
+    }
+
+    const data = await res.json();
+
+    if (!document.body.contains(inputEl)) return;
+
+    if (data.exists) {
+      inputEl.classList.add('is-invalid');
+      showFieldErrorEl(inputEl, errorId, 'Mã nhân viên đã tồn tại.');
+    }
+  } catch (err) {
+    console.error('[checkEmployeeCodeUnique] Lỗi khi gọi AJAX kiểm tra mã:', err);
+  }
+}
+
+    // Giống showFieldError/clearFieldError nhưng nhắm theo id cố định (errorId)
+    // thay vì nextElementSibling, vì #empCodeError nằm trong div .col-sm-4 bọc
+    // ngoài input chứ không phải sibling trực tiếp -> insertAdjacentElement
+    // afterend vẫn đặt đúng chỗ vì cấu trúc HTML hiện tại đặt nó ngay sau input.
+    function showFieldErrorEl(inputEl, errorId, msg) {
+    let el = document.getElementById(errorId);
+    if (!el) {
+        el = document.createElement('div');
+        el.className = 'invalid-feedback';
+        el.id = errorId;
+        inputEl.insertAdjacentElement('afterend', el);
+    }
+    el.textContent = msg;
+    }
+
+    function clearFieldErrorEl(inputEl, errorId) {
+    const el = document.getElementById(errorId);
+    if (el) el.textContent = '';
+    }
 
   @if ($errors->hasAny(['code', 'name', 'phone_number', 'department_id', 'note', 'status']))
     // Bọc trong DOMContentLoaded để đảm bảo resources/js/crud-modal-helpers.js
@@ -627,6 +687,13 @@
   @endif
 
   document.getElementById('employeeForm').addEventListener('submit', function (e) {
+    const empCodeEl = document.getElementById('empCode');
+    if (empCodeEl.classList.contains('is-invalid')) {
+      e.preventDefault();
+      empCodeEl.focus();
+      return;
+    }
+
     const nameEl = document.getElementById('empName');
     const deptEl = document.getElementById('empDepartment');
 

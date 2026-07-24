@@ -83,11 +83,24 @@ class UomService
      *
      * @throws \RuntimeException khi đã được gán cho vật tư, hoặc đang được
      *         tham chiếu bởi bất kỳ bảng nào khác (tự động phát hiện qua khóa ngoại).
-     */
+    */
     public function delete(Uom $uom): void
     {
         $this->guardNotInUse('uoms', 'id', $uom->id, 'Đơn vị tính', $uom->name);
 
         $this->uomRepository->delete($uom);
+    }
+
+    /**
+     * Kiểm tra mã DVT đã tồn tại chưa — dùng cho validate AJAX (blur) ở
+     * form Thêm DVT. Chuẩn hoá code giống lúc lưu (create()) để so
+     * sánh nhất quán (uppercase, trim).
+    */
+    public function codeExists(string $code, ?int $excludeId = null): bool
+    {
+        return $this->uomRepository->codeExists(
+            strtoupper(trim($code)),
+            $excludeId
+        );
     }
 }

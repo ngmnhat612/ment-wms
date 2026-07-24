@@ -208,10 +208,9 @@
                     class="form-control text-uppercase {{ $errors->has('code') ? 'is-invalid' : '' }}"
                     id="catCode" name="code"
                     value="{{ old('code') }}"
-                    placeholder="Tự động" maxlength="20" style="letter-spacing:1px">
-              @error('code')
-                <div class="invalid-feedback">{{ $message }}</div>
-              @enderror
+                    placeholder="Tự động" maxlength="20" style="letter-spacing:1px"
+                    onblur="checkCategoryCodeUnique(this, 'catCodeError')">
+              <div class="invalid-feedback" id="catCodeError">@error('code'){{ $message }}@enderror</div>
             </div>
 
             <div class="mb-3">
@@ -398,7 +397,35 @@
 
   document.getElementById('catCode').addEventListener('input', function () {
     sanitizeCodeInput(this);
+    this.classList.remove('is-invalid');
+    document.getElementById('catCodeError').textContent = '';
   });
+
+  // ===== code.unique (AJAX, dùng lúc blur ở ô Mã) =====
+  // Không check khi field đang readonly (đang Sửa danh mục -> mã bị khoá, luôn
+  // là mã hiện tại của chính nó nên không thể trùng) hoặc khi để trống (hệ
+  // thống sẽ tự sinh mã, không cần kiểm tra).
+  async function checkCategoryCodeUnique(inputEl, errorId) {
+    const code = inputEl.value.trim();
+
+    inputEl.classList.remove('is-invalid');
+    document.getElementById(errorId).textContent = '';
+    if (!code || inputEl.readOnly) return;
+
+    try {
+      const res = await fetch(
+        `{{ route('master.category.checkCode') }}?code=${encodeURIComponent(code)}`,
+        { headers: { 'X-Requested-With': 'XMLHttpRequest' } }
+      );
+      if (!res.ok) return; // lỗi mạng/server: để backend chặn thật lúc submit
+      const data = await res.json();
+
+      if (data.exists) {
+        inputEl.classList.add('is-invalid');
+        document.getElementById(errorId).textContent = 'Mã danh mục đã tồn tại.';
+      }
+    } catch {}
+  }
 
   @if ($errors->any())
     // Bọc trong DOMContentLoaded vì openModal() gọi setModalFormId(), hàm này được
@@ -423,9 +450,20 @@
   @endif
 
   document.getElementById('categoryForm').addEventListener('submit', function (e) {
+    const codeEl = document.getElementById('catCode');
+
+    // Nếu ô Mã đang báo lỗi trùng (từ lần check AJAX lúc blur) mà người dùng
+    // chưa sửa lại, chặn submit ngay tại đây thay vì để lọt xuống server rồi
+    // phải reload trang mới thấy lỗi.
+    if (codeEl.classList.contains('is-invalid')) {
+        e.preventDefault();
+        codeEl.focus();
+        return;
+    }
+
     const nameEl = document.getElementById('catName');
     const name   = nameEl.value.trim();
-
+    
     nameEl.classList.remove('is-invalid');
 
     if (!name) {

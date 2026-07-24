@@ -80,4 +80,16 @@ class SnService
 
         $this->snRepository->delete($sn);
     }
+
+    /**
+     * Kiểm tra mã đã tồn tại chưa — dùng cho validate AJAX (blur) ở form Thêm/Sửa.
+     * Chuẩn hoá code giống lúc lưu (uppercase, trim) để so sánh nhất quán.
+     */
+    public function codeExists(string $code, ?int $excludeId = null): bool
+    {
+        return $this->snRepository->codeExists(
+            strtoupper(trim($code)),
+            $excludeId
+        );
+    }
 }

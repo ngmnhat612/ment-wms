@@ -8,6 +8,7 @@ use App\Http\Requests\Master\Employee\UpdateEmployeeRequest;
 use App\Models\Master\Employee;
 use App\Services\Master\DepartmentService;
 use App\Services\Master\EmployeeService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -102,5 +103,24 @@ class EmployeeController extends Controller
         return redirect()
             ->route('master.employee.index')
             ->with('success', $message);
+    }
+
+    // ===== CHECK CODE (AJAX, dùng lúc blur ở form Thêm/Sửa) =====
+
+    public function checkCode(Request $request): JsonResponse
+    {
+        Gate::authorize('viewAny', Employee::class);
+
+        $request->validate([
+            'code'       => 'required|string|max:20',
+            'exclude_id' => 'nullable|integer',
+        ]);
+
+        $exists = $this->employeeService->codeExists(
+            $request->string('code')->toString(),
+            $request->integer('exclude_id') ?: null
+        );
+
+        return response()->json(['exists' => $exists]);
     }
 }

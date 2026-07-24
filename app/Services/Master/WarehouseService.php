@@ -133,4 +133,16 @@ class WarehouseService
 
         $this->warehouseRepository->delete($warehouse);
     }
+
+    /**
+     * Kiểm tra mã đã tồn tại chưa — dùng cho validate AJAX (blur) ở form Thêm/Sửa.
+     * Chuẩn hoá code giống lúc lưu (uppercase, trim) để so sánh nhất quán.
+     */
+    public function codeExists(string $code, ?int $excludeId = null): bool
+    {
+        return $this->warehouseRepository->codeExists(
+            strtoupper(trim($code)),
+            $excludeId
+        );
+    }
 }

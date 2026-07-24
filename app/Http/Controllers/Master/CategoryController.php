@@ -7,6 +7,7 @@ use App\Http\Requests\Master\Category\StoreCategoryRequest;
 use App\Http\Requests\Master\Category\UpdateCategoryRequest;
 use App\Models\Master\Category;
 use App\Services\Master\CategoryService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -90,5 +91,24 @@ class CategoryController extends Controller
         return redirect()
             ->route('master.category.index')
             ->with('success', "Đã xóa danh mục \"{$name}\" thành công.");
+    }
+
+    // ===== CHECK CODE (AJAX, dùng lúc blur ở form Thêm/Sửa danh mục) =====
+
+    public function checkCode(Request $request): JsonResponse
+    {
+        Gate::authorize('viewAny', Category::class);
+
+        $request->validate([
+            'code'       => 'required|string|max:20',
+            'exclude_id' => 'nullable|integer',
+        ]);
+
+        $exists = $this->categoryService->codeExists(
+            $request->string('code')->toString(),
+            $request->integer('exclude_id') ?: null
+        );
+
+        return response()->json(['exists' => $exists]);
     }
 }

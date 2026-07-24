@@ -7,6 +7,7 @@ use App\Http\Requests\Master\Location\StoreLocationRequest;
 use App\Http\Requests\Master\Location\UpdateLocationRequest;
 use App\Models\Master\Location;
 use App\Services\Master\LocationService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -98,5 +99,24 @@ class LocationController extends Controller
         return redirect()
             ->route('master.location.index')
             ->with('success', "Đã xóa vị trí \"{$name}\" thành công.");
+    }
+
+    // ===== CHECK CODE (AJAX, dùng lúc blur ở form Thêm/Sửa) =====
+
+    public function checkCode(Request $request): JsonResponse
+    {
+        Gate::authorize('viewAny', Location::class);
+
+        $request->validate([
+            'code'       => 'required|string|max:20',
+            'exclude_id' => 'nullable|integer',
+        ]);
+
+        $exists = $this->locationService->codeExists(
+            $request->string('code')->toString(),
+            $request->integer('exclude_id') ?: null
+        );
+
+        return response()->json(['exists' => $exists]);
     }
 }

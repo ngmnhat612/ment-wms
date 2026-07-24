@@ -7,6 +7,7 @@ use App\Http\Requests\Master\Brand\StoreBrandRequest;
 use App\Http\Requests\Master\Brand\UpdateBrandRequest;
 use App\Models\Master\Brand;
 use App\Services\Master\BrandService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -88,5 +89,24 @@ class BrandController extends Controller
         return redirect()
             ->route('master.brand.index')
             ->with('success', "Đã xóa thương hiệu \"{$name}\" thành công.");
+    }
+
+    // ===== CHECK CODE (AJAX, dùng lúc blur ở form Thêm/Sửa) =====
+
+    public function checkCode(Request $request): JsonResponse
+    {
+        Gate::authorize('viewAny', Brand::class);
+
+        $request->validate([
+            'code'       => 'required|string|max:20',
+            'exclude_id' => 'nullable|integer',
+        ]);
+
+        $exists = $this->brandService->codeExists(
+            $request->string('code')->toString(),
+            $request->integer('exclude_id') ?: null
+        );
+
+        return response()->json(['exists' => $exists]);
     }
 }

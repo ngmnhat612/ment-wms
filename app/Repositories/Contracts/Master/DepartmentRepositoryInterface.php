@@ -33,4 +33,8 @@ interface DepartmentRepositoryInterface
      */
     public function delete(Department $department): bool;
 
+    /**
+     * Kiểm tra mã đã tồn tại chưa — dùng cho validate AJAX (blur) ở form Thêm.
+     */
+    public function codeExists(string $code, ?int $excludeId = null): bool;
 }

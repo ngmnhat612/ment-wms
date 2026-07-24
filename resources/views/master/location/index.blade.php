@@ -215,10 +215,9 @@
                     class="form-control text-uppercase {{ $errors->has('code') ? 'is-invalid' : '' }}"
                     id="lCode" name="code"
                     value="{{ old('code') }}"
-                    placeholder="Tự động" maxlength="20" style="letter-spacing:1px">
-              @error('code')
-                <div class="invalid-feedback">{{ $message }}</div>
-              @enderror
+                    placeholder="Tự động" maxlength="20" style="letter-spacing:1px"
+                    onblur="checkLocationCodeUnique(this, 'lCodeError')">
+              <div class="invalid-feedback" id="lCodeError">@error('code'){{ $message }}@enderror</div>
             </div>
 
             <div class="mb-3">
@@ -359,9 +358,41 @@
   // Auto viết hoa mã
   document.getElementById('lCode').addEventListener('input', function () {
     sanitizeCodeInput(this);
+    this.classList.remove('is-invalid');
+    document.getElementById('lCodeError').textContent = '';
   });
 
+  // ===== code.unique (AJAX, dùng lúc blur ở ô Mã) =====
+  async function checkLocationCodeUnique(inputEl, errorId) {
+    const code = inputEl.value.trim();
+
+    inputEl.classList.remove('is-invalid');
+    document.getElementById(errorId).textContent = '';
+    if (!code || inputEl.readOnly) return;
+
+    try {
+      const res = await fetch(
+        `{{ route('master.location.checkCode') }}?code=${encodeURIComponent(code)}`,
+        { headers: { 'X-Requested-With': 'XMLHttpRequest' } }
+      );
+      if (!res.ok) return; // lỗi mạng/server: để backend chặn thật lúc submit
+      const data = await res.json();
+
+      if (data.exists) {
+        inputEl.classList.add('is-invalid');
+        document.getElementById(errorId).textContent = 'Mã vị trí đã tồn tại.';
+      }
+    } catch {}
+  }
+
   document.getElementById('locationForm').addEventListener('submit', function (e) {
+    const lCodeEl = document.getElementById('lCode');
+    if (lCodeEl.classList.contains('is-invalid')) {
+      e.preventDefault();
+      lCodeEl.focus();
+      return;
+    }
+    
     const nameEl = document.getElementById('lName');
     const name   = nameEl.value.trim();
 

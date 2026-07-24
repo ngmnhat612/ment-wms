@@ -58,18 +58,26 @@ Route::middleware('auth')->group(function () {
     Route::prefix('master')->name('master.')->group(function () {
 
         // Đơn vị tính
+        Route::get('uom/check-code', [UomController::class, 'checkCode'])
+            ->name('uom.checkCode');
         Route::resource('uom', UomController::class)
             ->only(['index', 'store', 'update', 'destroy']);
 
         // Danh mục vật tư
+        Route::get('category/check-code', [CategoryController::class, 'checkCode'])
+            ->name('category.checkCode');
         Route::resource('category', CategoryController::class)
             ->only(['index', 'store', 'update', 'destroy']);
 
         // Nhà cung cấp
+        Route::get('supplier/check-code', [SupplierController::class, 'checkCode'])
+            ->name('supplier.checkCode');
         Route::resource('supplier', SupplierController::class)
             ->only(['index', 'store', 'update', 'destroy']);
 
         // Nhân viên
+        Route::get('employee/check-code', [EmployeeController::class, 'checkCode'])
+            ->name('employee.checkCode');
         Route::resource('employee', EmployeeController::class)
             ->only(['index', 'store', 'update', 'destroy']);
         // Tài khoản đăng nhập của nhân viên
@@ -81,6 +89,8 @@ Route::middleware('auth')->group(function () {
             ->name('employee.account.destroy');
 
         // Vị trí
+        Route::get('location/check-code', [LocationController::class, 'checkCode'])
+            ->name('location.checkCode');
         Route::resource('location', LocationController::class)
             ->only(['index', 'store', 'update', 'destroy']);
 
@@ -103,18 +113,26 @@ Route::middleware('auth')->group(function () {
             ->only(['index', 'store', 'update', 'destroy']);
 
         // Thương hiệu
+        Route::get('brand/check-code', [BrandController::class, 'checkCode'])
+            ->name('brand.checkCode');
         Route::resource('brand', BrandController::class)
             ->only(['index', 'store', 'update', 'destroy']);
 
         // Kho
+        Route::get('warehouse/check-code', [WarehouseController::class, 'checkCode'])
+            ->name('warehouse.checkCode');
         Route::resource('warehouse', WarehouseController::class)
             ->only(['index', 'store', 'update', 'destroy']);
 
         // Bộ phận
+        Route::get('department/check-code', [DepartmentController::class, 'checkCode'])
+            ->name('department.checkCode');
         Route::resource('department', DepartmentController::class)
             ->only(['index', 'store', 'update', 'destroy']);
 
         // Dự án
+        Route::get('sn/check-code', [SnController::class, 'checkCode'])
+            ->name('sn.checkCode');
         Route::resource('sn', SnController::class)
             ->only(['index', 'store', 'update', 'destroy']);
 

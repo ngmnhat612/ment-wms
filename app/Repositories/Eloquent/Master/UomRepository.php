@@ -68,4 +68,11 @@ class UomRepository implements UomRepositoryInterface
         return $uom->conversionsFrom()->exists()
             || $uom->conversionsTo()->exists();
     }
+
+    public function codeExists(string $code, ?int $excludeId = null): bool
+    {
+        return Uom::where('code', $code)
+            ->when($excludeId, fn($q) => $q->where('id', '!=', $excludeId))
+            ->exists();
+    }
 }

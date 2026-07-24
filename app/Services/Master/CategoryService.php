@@ -134,6 +134,19 @@ class CategoryService
         $this->categoryRepository->delete($category);
     }
 
+    /**
+     * Kiểm tra mã danh mục đã tồn tại chưa — dùng cho validate AJAX (blur) ở
+     * form Thêm/Sửa danh mục. Chuẩn hoá code giống lúc lưu (create()) để so
+     * sánh nhất quán (uppercase, trim).
+     */
+    public function codeExists(string $code, ?int $excludeId = null): bool
+    {
+        return $this->categoryRepository->codeExists(
+            strtoupper(trim($code)),
+            $excludeId
+        );
+    }
+
     // ===== PRIVATE HELPERS =====
 
     /**

@@ -65,4 +65,11 @@ class SupplierRepository implements SupplierRepositoryInterface
     {
         return $supplier->delete();
     }
+
+    public function codeExists(string $code, ?int $excludeId = null): bool
+    {
+        return Supplier::where('code', $code)
+            ->when($excludeId, fn($q) => $q->where('id', '!=', $excludeId))
+            ->exists();
+    }
 }

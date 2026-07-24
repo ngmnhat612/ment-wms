@@ -7,6 +7,7 @@ use App\Http\Requests\Master\Warehouse\StoreWarehouseRequest;
 use App\Http\Requests\Master\Warehouse\UpdateWarehouseRequest;
 use App\Models\Master\Warehouse;
 use App\Services\Master\WarehouseService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -93,5 +94,24 @@ class WarehouseController extends Controller
         return redirect()
             ->route('master.warehouse.index')
             ->with('success', "Đã xóa kho \"{$name}\" thành công.");
+    }
+
+    // ===== CHECK CODE (AJAX, dùng lúc blur ở form Thêm/Sửa) =====
+
+    public function checkCode(Request $request): JsonResponse
+    {
+        Gate::authorize('viewAny', Warehouse::class);
+
+        $request->validate([
+            'code'       => 'required|string|max:20',
+            'exclude_id' => 'nullable|integer',
+        ]);
+
+        $exists = $this->warehouseService->codeExists(
+            $request->string('code')->toString(),
+            $request->integer('exclude_id') ?: null
+        );
+
+        return response()->json(['exists' => $exists]);
     }
 }

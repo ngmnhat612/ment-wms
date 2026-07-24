@@ -81,4 +81,9 @@ interface LocationRepositoryInterface
      * @return int[]
      */
     public function getDescendantIds(Location $location): array;
+
+    /**
+     * Kiểm tra mã đã tồn tại chưa — dùng cho validate AJAX (blur) ở form Thêm/Sửa.
+     */
+    public function codeExists(string $code, ?int $excludeId = null): bool;
 }

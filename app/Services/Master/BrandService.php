@@ -82,4 +82,16 @@ class BrandService
 
         $this->brandRepository->delete($brand);
     }
+
+    /**
+     * Kiểm tra mã đã tồn tại chưa — dùng cho validate AJAX (blur) ở form Thêm/Sửa.
+     * Chuẩn hoá code giống lúc lưu (uppercase, trim) để so sánh nhất quán.
+     */
+    public function codeExists(string $code, ?int $excludeId = null): bool
+    {
+        return $this->brandRepository->codeExists(
+            strtoupper(trim($code)),
+            $excludeId
+        );
+    }
 }

@@ -190,10 +190,9 @@
                     class="form-control text-uppercase {{ $errors->has('code') ? 'is-invalid' : '' }}"
                     id="dCode" name="code"
                     value="{{ old('code') }}"
-                    placeholder="Tự động" maxlength="20" style="letter-spacing:1px">
-              @error('code')
-                <div class="invalid-feedback">{{ $message }}</div>
-              @enderror
+                    placeholder="Tự động" maxlength="20" style="letter-spacing:1px"
+                    onblur="checkDepartmentCodeUnique(this, 'dCodeError')">
+              <div class="invalid-feedback" id="dCodeError">@error('code'){{ $message }}@enderror</div>
             </div>
 
             <div class="mb-3">
@@ -324,7 +323,32 @@
 
   document.getElementById('dCode').addEventListener('input', function () {
     sanitizeCodeInput(this);
+    this.classList.remove('is-invalid');
+    document.getElementById('dCodeError').textContent = '';
   });
+
+  // ===== code.unique (AJAX, dùng lúc blur ở ô Mã) =====
+  async function checkDepartmentCodeUnique(inputEl, errorId) {
+    const code = inputEl.value.trim();
+
+    inputEl.classList.remove('is-invalid');
+    document.getElementById(errorId).textContent = '';
+    if (!code || inputEl.readOnly) return;
+
+    try {
+      const res = await fetch(
+        `{{ route('master.department.checkCode') }}?code=${encodeURIComponent(code)}`,
+        { headers: { 'X-Requested-With': 'XMLHttpRequest' } }
+      );
+      if (!res.ok) return; // lỗi mạng/server: để backend chặn thật lúc submit
+      const data = await res.json();
+
+      if (data.exists) {
+        inputEl.classList.add('is-invalid');
+        document.getElementById(errorId).textContent = 'Mã bộ phận đã tồn tại.';
+      }
+    } catch {}
+  }
 
   @if ($errors->any())
     // Bọc trong DOMContentLoaded để đảm bảo resources/js/crud-modal-helpers.js
@@ -342,6 +366,13 @@
   @endif
 
   document.getElementById('departmentForm').addEventListener('submit', function (e) {
+    const dCodeEl = document.getElementById('dCode');
+    if (dCodeEl.classList.contains('is-invalid')) {
+        e.preventDefault();
+        dCodeEl.focus();
+        return;
+    }
+
     const nameEl = document.getElementById('dName');
     const name   = nameEl.value.trim();
 

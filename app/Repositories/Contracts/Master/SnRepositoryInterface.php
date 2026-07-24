@@ -33,4 +33,8 @@ interface SnRepositoryInterface
      */
     public function delete(Sn $sn): bool;
 
+    /**
+     * Kiểm tra mã đã tồn tại chưa — dùng cho validate AJAX (blur) ở form Thêm/Sửa.
+     */
+    public function codeExists(string $code, ?int $excludeId = null): bool;
 }
