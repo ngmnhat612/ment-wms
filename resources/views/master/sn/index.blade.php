@@ -321,7 +321,7 @@
   }
 
   document.getElementById('sCode').addEventListener('input', function () {
-    sanitizeCodeInput(this);
+    sanitizeSnCodeInput(this);
     this.classList.remove('is-invalid');
     document.getElementById('sCodeError').textContent = '';
   });

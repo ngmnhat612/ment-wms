@@ -25,6 +25,21 @@ function sanitizeVariantCodeInput(el) {
     }
 }
 
+// Dùng riêng cho ô "Mã dự án" (sCode), mã dự án
+// (Sn) KHÔNG tự viết hoa như các mã khác và cho phép thêm dấu gạch dưới '_'.
+// Chỉ giữ a-z, A-Z, 0-9 và '_', không ép lowercase/uppercase (giữ nguyên chữ
+// hoa/thường người dùng gõ). Khớp rule 'regex:/^[A-Za-z0-9_]+$/' ở
+// StoreSnRequest. Chỉ dùng lúc Tạo mới — lúc Sửa, ô Mã bị khoá readonly nên
+// không cần sanitize.
+function sanitizeSnCodeInput(el) {
+    const pos = el.selectionStart;
+    const cleaned = el.value.replace(/[^A-Za-z0-9_]/g, '');
+    if (cleaned !== el.value) {
+        el.value = cleaned;
+        el.setSelectionRange(pos, pos);
+    }
+}
+
 // Dùng cho ô "Tên đăng nhập" (tài khoản đăng nhập của nhân viên).
 // Chuyển thường, chỉ giữ a-z, 0-9 và 3 ký tự @ _ . (khớp rule
 // 'regex:/^[a-z0-9@_.]+$/' trong StoreAccountRequest), giữ nguyên vị trí con trỏ.
@@ -61,6 +76,7 @@ function clearValidationErrors(formId) {
 // ngược, tránh phải sửa lại toàn bộ các view đang dùng inline handler.
 window.sanitizeCodeInput = sanitizeCodeInput;
 window.sanitizeVariantCodeInput = sanitizeVariantCodeInput;
+window.sanitizeSnCodeInput = sanitizeSnCodeInput;
 window.sanitizeUsernameInput = sanitizeUsernameInput;
 window.setModalFormId = setModalFormId;
 window.clearValidationErrors = clearValidationErrors;

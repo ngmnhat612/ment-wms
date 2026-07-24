@@ -41,7 +41,7 @@ class SnService
     public function create(array $data): Sn
     {
         $code = !empty($data['code'])
-            ? strtoupper(trim($data['code']))
+            ? trim($data['code'])
             : $this->codeGeneratorService->generateCode('sns', 'code', 'DA', 4);
 
         return $this->snRepository->create([
@@ -83,12 +83,15 @@ class SnService
 
     /**
      * Kiểm tra mã đã tồn tại chưa — dùng cho validate AJAX (blur) ở form Thêm/Sửa.
-     * Chuẩn hoá code giống lúc lưu (uppercase, trim) để so sánh nhất quán.
+     * Chuẩn hoá code giống lúc lưu (chỉ trim, KHÔNG uppercase) để so sánh nhất
+     * quán. Khác các module khác (employee, category...): mã dự án cho phép
+     * chữ thường và có ý nghĩa riêng nên "abc_01" và "ABC_01" được coi là
+     * 2 mã khác nhau (theo yêu cầu công ty).
      */
     public function codeExists(string $code, ?int $excludeId = null): bool
     {
         return $this->snRepository->codeExists(
-            strtoupper(trim($code)),
+            trim($code),
             $excludeId
         );
     }
