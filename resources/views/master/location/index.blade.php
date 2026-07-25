@@ -53,7 +53,7 @@
               <span class="input-group-text">
                 <svg class="icon"><use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-search') }}"></use></svg>
               </span>
-              <input type="text" class="form-control" name="search"
+              <input type="text" class="form-control" name="search" maxlength="200"
                      value="{{ request('search') }}" placeholder="Tìm theo mã hoặc tên vị trí kho">
             </div>
             <select class="form-select" name="status" style="min-width:130px;flex:1" onchange="this.form.submit()">
@@ -392,7 +392,7 @@
       lCodeEl.focus();
       return;
     }
-    
+
     const nameEl = document.getElementById('lName');
     const name   = nameEl.value.trim();
 

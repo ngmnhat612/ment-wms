@@ -55,7 +55,7 @@
           <span class="input-group-text">
             <svg class="icon"><use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-search') }}"></use></svg>
           </span>
-          <input type="text" class="form-control" name="search"
+          <input type="text" class="form-control" name="search" maxlength="200"
                  value="{{ request('search') }}" placeholder="Tìm theo vật tư hoặc danh mục">
         </div>
 
@@ -302,7 +302,7 @@
                 <div class="form-check">
                   <input class="form-check-input" type="radio" name="status"
                          id="rStatusInactive" value="0">
-                  <label class="form-check-label text-secondary" for="rStatusInactive">Ngưng hoạt động</label> 
+                  <label class="form-check-label text-secondary" for="rStatusInactive">Ngưng hoạt động</label>
                 </div>
               </div>
             </div>

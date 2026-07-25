@@ -27,6 +27,14 @@ class CategoryController extends Controller
 
         $filters = $request->only(['search', 'status', 'sort', 'dir']);
 
+        // Chặn input tìm kiếm quá dài (phòng trường hợp gọi trực tiếp qua URL,
+        // bỏ qua giới hạn maxlength phía frontend)
+        foreach (['search'] as $key) {
+            if (isset($filters[$key])) {
+                $filters[$key] = mb_substr($filters[$key], 0, 200);
+            }
+        }
+
         $categories    = $this->categoryService->search($filters);
         $parentOptions = $this->categoryService->getParentOptions();
         $locations     = $this->categoryService->activeInternalLocations();

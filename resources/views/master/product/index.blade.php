@@ -64,8 +64,8 @@
                 <span class="input-group-text">
                   <svg class="icon"><use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-search') }}"></use></svg>
                 </span>
-                <input type="text" class="form-control" name="search"
-                      value="{{ request('search') }}" placeholder="Tìm theo mã hoặc tên vật tư">
+                <input type="text" class="form-control" name="search" maxlength="500"
+                    value="{{ request('search') }}" placeholder="Tìm theo mã hoặc tên vật tư">
               </div>
             </div>
             <div class="col-6">
@@ -73,7 +73,7 @@
                 <span class="input-group-text">
                   <svg class="icon"><use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-search') }}"></use></svg>
                 </span>
-                <input type="text" class="form-control" name="search_spec"
+                <input type="text" class="form-control" name="search_spec" maxlength="500"
                       value="{{ request('search_spec') }}" placeholder="Tìm theo thông số kỹ thuật">
               </div>
             </div>

@@ -35,6 +35,14 @@ class ProductController extends Controller
 
         $filters = $request->only(['search', 'search_spec', 'category_id', 'tracking_type', 'status', 'sort', 'dir']);
 
+        // Chặn input tìm kiếm quá dài (phòng trường hợp gọi trực tiếp qua URL,
+        // bỏ qua giới hạn maxlength phía frontend)
+        foreach (['search', 'search_spec'] as $key) {
+            if (isset($filters[$key])) {
+                $filters[$key] = mb_substr($filters[$key], 0, 500);
+            }
+        }
+
         $products    = $this->productService->search($filters);
         $totalCount  = $this->productService->totalCount();
         $activeCount = $this->productService->activeCount();

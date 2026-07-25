@@ -54,7 +54,7 @@
           <span class="input-group-text">
             <svg class="icon"><use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-search') }}"></use></svg>
           </span>
-          <input type="text" class="form-control" name="search"
+          <input type="text" class="form-control" name="search" maxlength="200"
                  value="{{ request('search') }}" placeholder="Tìm theo mã hoặc tên đơn vị tính">
         </div>
 

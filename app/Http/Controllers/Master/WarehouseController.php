@@ -27,6 +27,14 @@ class WarehouseController extends Controller
 
         $filters = $request->only(['search', 'status', 'sort', 'dir']);
 
+        // Chặn input tìm kiếm quá dài (phòng trường hợp gọi trực tiếp qua URL,
+        // bỏ qua giới hạn maxlength phía frontend)
+        foreach (['search'] as $key) {
+            if (isset($filters[$key])) {
+                $filters[$key] = mb_substr($filters[$key], 0, 200);
+            }
+        }
+
         $warehouses  = $this->warehouseService->search($filters);
         $totalCount  = $this->warehouseService->totalCount();
         $activeCount = $this->warehouseService->activeCount();
