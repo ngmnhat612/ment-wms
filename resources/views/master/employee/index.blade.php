@@ -398,10 +398,16 @@
 
               <div class="col-12">
                 <label class="form-label fw-medium" id="accPasswordLabel">Mật khẩu <span class="text-danger">*</span></label>
-                <input type="password"
-                      class="form-control @error('password') is-invalid @enderror @error('new_password') is-invalid @enderror"
-                      name="password" id="accPassword" placeholder="Tối thiểu 8 ký tự" maxlength="500"
-                      oninput="this.classList.remove('is-invalid'); document.getElementById('accPasswordConfirm').classList.remove('is-invalid')">
+                <div class="input-group">
+                  <input type="password"
+                        class="form-control @error('password') is-invalid @enderror @error('new_password') is-invalid @enderror"
+                        name="password" id="accPassword" placeholder="Tối thiểu 8 ký tự" maxlength="500"
+                        oninput="this.classList.remove('is-invalid'); document.getElementById('accPasswordConfirm').classList.remove('is-invalid')">
+                  <button type="button" class="btn btn-outline-secondary" tabindex="-1"
+                          onclick="togglePasswordVisibility('accPassword', this)" aria-label="Hiện/ẩn mật khẩu">
+                    <svg class="icon"><use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-low-vision') }}"></use></svg>
+                  </button>
+                </div>
                 @error('password')
                   <div class="invalid-feedback">{{ $message }}</div>
                 @enderror
@@ -794,6 +800,13 @@
     modal.show();
     setTimeout(() => userEl.focus(), 300);
   }
+
+  function togglePasswordVisibility(inputId, btnEl) {
+    const input = document.getElementById(inputId);
+    const isPassword = input.type === 'password';
+    input.type = isPassword ? 'text' : 'password';
+    btnEl.classList.toggle('opacity-50', isPassword ? false : true);
+    }
 
   // ===== username.unique (AJAX, dùng lúc blur ở ô Tên đăng nhập) =====
   // Không check khi field đang disabled (đang Sửa tài khoản -> username bị khoá)
