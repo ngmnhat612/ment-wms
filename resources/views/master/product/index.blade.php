@@ -322,7 +322,7 @@
           <label class="form-label">Tên <span class="text-danger">*</span></label>
           <input type="text" class="form-control" id="pNameVariant" name="name"
                 placeholder="Nhập tên" maxlength="200"
-                oninput="this.classList.remove('is-invalid')">
+                oninput="this.classList.remove('is-invalid'); document.getElementById('pNameVariantError').textContent = ''">
           <div class="invalid-feedback" id="pNameVariantError"></div>
         </div>
 
@@ -958,7 +958,16 @@
       setSelectValueSafe('pUom', data.uom_id ?? '');
       document.getElementById('pTracking').value      = data.tracking_type;
       document.getElementById('pRotation').value      = data.stock_rotation;
-      document.getElementById('pNameVariant').value    = document.getElementById('pNameVariant').value || data.name;
+
+      const nameVariantEl = document.getElementById('pNameVariant');
+      nameVariantEl.value = nameVariantEl.value || data.name;
+      // Fetch cha thành công -> nếu ô Tên vừa được điền (hoặc đã có sẵn giá trị hợp lệ),
+      // xoá luôn viền đỏ/cảnh báo còn sót lại từ lần submit rỗng trước đó.
+      if (nameVariantEl.value.trim()) {
+        nameVariantEl.classList.remove('is-invalid');
+        document.getElementById('pNameVariantError').textContent = '';
+      }
+
       document.getElementById('pSpec').value           = data.specification;
 
       // Preview ảnh từ cha nếu có
