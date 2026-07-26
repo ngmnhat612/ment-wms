@@ -43,16 +43,18 @@ class ProductController extends Controller
             }
         }
 
-        $products    = $this->productService->search($filters);
-        $totalCount  = $this->productService->totalCount();
-        $activeCount = $this->productService->activeCount();
-        $allProducts = $this->productService->allRootActive();
-        $categories  = $this->categoryService->getActive();
-        $uoms        = $this->uomService->getActive();
-        $locations   = $this->productService->activeInternalLocations();
+        $products         = $this->productService->search($filters);
+        $totalCount       = $this->productService->totalCount();
+        $activeCount      = $this->productService->activeCount();
+        $allProducts      = $this->productService->allRootActive();
+        $categories       = $this->categoryService->getActive();
+        $categoriesAllIds = $this->categoryService->getAllIncludingInactive();
+        $uoms             = $this->uomService->getActive();
+        $uomsAllIds       = $this->uomService->getAllIncludingInactive();
+        $locations        = $this->productService->activeInternalLocations();
 
         return view('master.product.index', compact(
-            'products', 'totalCount', 'activeCount', 'categories', 'uoms', 'allProducts', 'locations'
+            'products', 'totalCount', 'activeCount', 'allProducts', 'categories', 'categoriesAllIds', 'uoms', 'uoms', 'uomsAllIds', 'locations'
         ));
     }
 

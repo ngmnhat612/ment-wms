@@ -48,6 +48,11 @@ class UomRepository implements UomRepositoryInterface
         return Uom::active()->orderBy('name')->get();
     }
 
+    public function allOrdered(): Collection
+    {
+        return Uom::orderBy('name')->get();
+    }
+
     public function create(array $data): Uom
     {
         return Uom::create($data);

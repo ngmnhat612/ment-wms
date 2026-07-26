@@ -38,15 +38,16 @@ class EmployeeController extends Controller
             }
         }
 
-        $employees    = $this->employeeService->search($filters);
-        $totalCount   = $this->employeeService->totalCount();
-        $activeCount  = $this->employeeService->activeCount();
-        $accountCount = $this->employeeService->accountCount();
-        $departments  = $this->departmentService->getActive();
-        $roles        = Role::pluck('name');
+        $employees          = $this->employeeService->search($filters);
+        $totalCount         = $this->employeeService->totalCount();
+        $activeCount        = $this->employeeService->activeCount();
+        $accountCount       = $this->employeeService->accountCount();
+        $departments        = $this->departmentService->getActive();
+        $departmentsAllIds  = $this->departmentService->getAllIncludingInactive();
+        $roles              = Role::pluck('name');
 
         return view('master.employee.index', compact(
-            'employees', 'totalCount', 'activeCount', 'accountCount', 'departments', 'roles'
+            'employees', 'totalCount', 'activeCount', 'accountCount', 'departments', 'departmentsAllIds', 'roles'
         ));
     }
 

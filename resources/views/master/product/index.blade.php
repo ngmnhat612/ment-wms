@@ -335,6 +335,17 @@
             @foreach ($categories as $cat)
               <option value="{{ $cat->id }}">{{ $cat->name }}</option>
             @endforeach
+            {{-- Các danh mục KHÔNG active: ẩn mặc định (d-none), chỉ hiện khi
+                 JS cần gán cho product đang chỉnh sửa có category đã ngừng
+                 hoạt động (tránh mất lựa chọn khi mở form edit). Không hiện
+                 khi tạo mới. --}}
+            @foreach ($categoriesAllIds as $cat)
+              @if ($cat->status?->value !== \App\Enums\ActiveStatus::Active->value)
+                <option value="{{ $cat->id }}" class="d-none" data-inactive="1">
+                  {{ $cat->name }} (Ngừng hoạt động)
+                </option>
+              @endif
+            @endforeach
           </select>
           <div class="invalid-feedback" id="pCategoryError"></div>
           <input type="hidden" id="pCategoryHidden">
@@ -346,6 +357,15 @@
             <option value="">- Chọn ĐVT -</option>
             @foreach ($uoms as $uom)
               <option value="{{ $uom->id }}">{{ $uom->name }}</option>
+            @endforeach
+            {{-- Các ĐVT KHÔNG active: ẩn mặc định, chỉ hiện khi JS cần gán
+                 cho product đang chỉnh sửa có ĐVT đã ngừng hoạt động. --}}
+            @foreach ($uomsAllIds as $uom)
+              @if ($uom->status?->value !== \App\Enums\ActiveStatus::Active->value)
+                <option value="{{ $uom->id }}" class="d-none" data-inactive="1">
+                  {{ $uom->name }} (Ngừng hoạt động)
+                </option>
+              @endif
             @endforeach
           </select>
           <div class="invalid-feedback" id="pUomError"></div>
@@ -609,6 +629,15 @@
   function lockCategoryForEdit(categoryId) {
     const catSelect = document.getElementById('pCategory');
     const catHidden = document.getElementById('pCategoryHidden');
+
+    // Nếu category_id không khớp option nào đang hiện (vì đã bị Ngừng hoạt
+    // động và bị ẩn mặc định), hiện tạm option đó lên để select vẫn hiển thị
+    // đúng tên thay vì bị mất/hiển thị rỗng.
+    const matched = catSelect.querySelector(`option[value="${categoryId}"]`);
+    if (matched && matched.dataset.inactive === '1') {
+      matched.classList.remove('d-none');
+    }
+
     catSelect.value    = categoryId ?? '';
     catSelect.disabled = true;
     catSelect.classList.add('bg-body-secondary');
@@ -619,6 +648,13 @@
   function unlockCategoryForCreate() {
     const catSelect = document.getElementById('pCategory');
     const catHidden = document.getElementById('pCategoryHidden');
+
+    // Ẩn lại toàn bộ option Ngừng hoạt động khi chuyển sang chế độ Tạo mới,
+    // đảm bảo Tạo mới chỉ có thể chọn category active.
+    catSelect.querySelectorAll('option[data-inactive="1"]').forEach(opt => {
+      opt.classList.add('d-none');
+    });
+
     catSelect.disabled = false;
     catSelect.classList.remove('bg-body-secondary');
     catHidden.name  = '';
@@ -627,10 +663,18 @@
 
   // Set giá trị cho <select>, fallback về '' (option mặc định "- Chọn ... -")
   // nếu giá trị không khớp option nào tồn tại — tránh hiển thị rỗng "lạ".
+  // Nếu option khớp nhưng đang bị ẩn (data-inactive="1", tức option của một
+  // bản ghi đã Ngừng hoạt động), hiện tạm option đó lên để vẫn hiển thị đúng
+  // giá trị đang chọn thay vì rơi về rỗng.
   function setSelectValueSafe(selectId, value) {
-    const select = document.getElementById(selectId);
-    const exists = value !== '' && select.querySelector(`option[value="${value}"]`);
-    select.value = exists ? value : '';
+    const select  = document.getElementById(selectId);
+    const matched = value !== '' ? select.querySelector(`option[value="${value}"]`) : null;
+
+    if (matched && matched.dataset.inactive === '1') {
+      matched.classList.remove('d-none');
+    }
+
+    select.value = matched ? value : '';
   }
 
   // Hiện ghi chú nhỏ khi ô "Gợi ý vị trí" đang hiển thị giá trị KẾ THỪA từ

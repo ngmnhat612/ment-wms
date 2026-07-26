@@ -38,6 +38,11 @@ class DepartmentRepository implements DepartmentRepositoryInterface
         return Department::active()->orderBy('name')->get();
     }
 
+    public function allOrdered(): Collection
+    {
+        return Department::orderBy('name')->get();
+    }
+
     public function create(array $data): Department
     {
         return Department::create($data);

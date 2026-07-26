@@ -33,6 +33,15 @@ class DepartmentService
         return $this->departmentRepository->allActive();
     }
 
+    /**
+     * Lấy TẤT CẢ bộ phận (kể cả Ngừng hoạt động) — dùng cho dropdown chỉnh sửa
+     * Employee.
+     */
+    public function getAllIncludingInactive(): Collection
+    {
+        return $this->departmentRepository->allOrdered();
+    }
+
     // ===== WRITE =====
 
     /**

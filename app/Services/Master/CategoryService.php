@@ -46,6 +46,16 @@ class CategoryService
     }
 
     /**
+     * Lấy TẤT CẢ danh mục (kể cả Ngừng hoạt động) — dùng cho dropdown ở chế độ
+     * chỉnh sửa Product, để category đã inactive nhưng đang được product tham
+     * chiếu vẫn hiển thị đúng tên thay vì bị mất do không có trong option active.
+     */
+    public function getAllIncludingInactive(): Collection
+    {
+        return $this->categoryRepository->allOrdered();
+    }
+
+    /**
      * Lấy danh sách danh mục cha cho select trong modal.
      */
     public function getParentOptions(): Collection

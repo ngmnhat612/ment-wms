@@ -29,6 +29,13 @@ interface UomRepositoryInterface
     public function allActive(): Collection;
 
     /**
+     * Lấy TẤT CẢ đơn vị tính (kể cả Ngừng hoạt động) — dùng cho dropdown ở chế
+     * độ chỉnh sửa Product, để ĐVT đã inactive nhưng đang được product tham
+     * chiếu vẫn hiển thị đúng tên.
+     */
+    public function allOrdered(): Collection;
+
+    /**
      * Tạo mới đơn vị tính.
      */
     public function create(array $data): Uom;

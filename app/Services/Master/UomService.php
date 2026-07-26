@@ -43,6 +43,15 @@ class UomService
         return $this->uomRepository->allActive();
     }
 
+    /**
+     * Lấy TẤT CẢ đơn vị tính (kể cả Ngừng hoạt động) — dùng cho dropdown chỉnh
+     * sửa Product.
+     */
+    public function getAllIncludingInactive(): Collection
+    {
+        return $this->uomRepository->allOrdered();
+    }
+
     // ===== WRITE =====
 
     /**

@@ -308,6 +308,17 @@
                       {{ $dept->name }}
                     </option>
                   @endforeach
+                  {{-- Các bộ phận KHÔNG active: ẩn mặc định, chỉ hiện khi JS
+                       cần gán cho nhân viên đang chỉnh sửa có bộ phận đã
+                       ngừng hoạt động. --}}
+                  @foreach ($departmentsAllIds as $dept)
+                    @if ($dept->status?->value !== \App\Enums\ActiveStatus::Active->value)
+                      <option value="{{ $dept->id }}" class="d-none" data-inactive="1"
+                              {{ (string) old('department_id') === (string) $dept->id ? 'selected' : '' }}>
+                        {{ $dept->name }} (Ngừng hoạt động)
+                      </option>
+                    @endif
+                  @endforeach
                 </select>
                 @error('department_id')
                   <div class="invalid-feedback">{{ $message }}</div>
@@ -552,7 +563,16 @@
 
     document.getElementById('empName').value       = name;
     document.getElementById('empPhone').value      = phone;
-    document.getElementById('empDepartment').value = departmentId ?? '';
+    
+    // Nếu department_id khớp option đang ẩn (Bộ phận đã Ngừng hoạt động),
+    // hiện tạm option đó để vẫn hiển thị đúng tên thay vì rơi về rỗng.
+    const deptSelect = document.getElementById('empDepartment');
+    const deptMatched = departmentId ? deptSelect.querySelector(`option[value="${departmentId}"]`) : null;
+    if (deptMatched && deptMatched.dataset.inactive === '1') {
+      deptMatched.classList.remove('d-none');
+    }
+    deptSelect.value = departmentId ?? '';
+
     document.getElementById('empNote').value       = note;
     document.getElementById(status == 1 ? 'empStatusActive' : 'empStatusInactive').checked = true;
 
