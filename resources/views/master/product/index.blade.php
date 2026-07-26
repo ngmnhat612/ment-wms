@@ -563,40 +563,45 @@
   const routeStoreVariant = '{{ route('master.product.storeVariant') }}';
   const routeBase         = '{{ url('master/product') }}';
 
-  // Map product data for edit mode
-  const productsMap = {};
-  const locations = @json($locations->map(fn($l) => ['id' => $l->id, 'code' => $l->code, 'name' => $l->name]));
-
-  @foreach ($products as $p)
-    @php
+  @php
+      // Map product data cho chế độ chỉnh sửa.
       // Ưu tiên PutawayRule riêng của product; nếu chưa có, kế thừa ngầm
       // vị trí từ PutawayRule của category (giống logic backend
-      // PutawayRuleService::syncForNewProduct()).
-      $ownRule           = $p->putawayRule;
-      $catRule           = $p->category?->putawayRule;
-      $effectiveLocation = $ownRule?->destinationLocation ?? $catRule?->destinationLocation;
-      $isInherited       = !$ownRule && $catRule && $catRule->location_id;
-    @endphp
-    productsMap[{{ $p->id }}] = {
-      id:                  {{ $p->id }},
-      code:                '{{ addslashes($p->code) }}',
-      name:                '{{ addslashes($p->name) }}',
-      category_id:         {{ $p->category_id ?? 'null' }},
-      uom_id:              {{ $p->uom_id ?? 'null' }},
-      specification:       '{{ addslashes($p->specification ?? '') }}',
-      tracking_type:       {{ $p->tracking_type?->value ?? 1 }},
-      stock_rotation:      {{ $p->stock_rotation?->value ?? 1 }},
-      status:              {{ $p->status?->value ?? 1 }},
-      image_path:          '{{ $p->image_path ?? '' }}',
-      image_url:           '{{ $p->image_path ? Storage::url($p->image_path) : '' }}',
-      image_name:          '{{ $p->image_path ? addslashes(basename($p->image_path)) : '' }}',
-      min_qty:             {{ $p->reorderRule->min_qty ?? 0 }},
-      max_qty:             {{ $p->reorderRule->max_qty ?? 0 }},
-      location_id:         {{ $effectiveLocation->id ?? 'null' }},
-      location_text:       '{{ $effectiveLocation ? "[" . addslashes($effectiveLocation->code) . "] " . addslashes($effectiveLocation->name) : "" }}',
-      location_inherited:  {{ $isInherited ? 'true' : 'false' }},
-    };
-  @endforeach
+      // PutawayRuleService syncForNewProduct).
+      $productsMapData = $products->mapWithKeys(function ($p) {
+          $ownRule           = $p->putawayRule;
+          $catRule           = $p->category?->putawayRule;
+          $effectiveLocation = $ownRule?->destinationLocation ?? $catRule?->destinationLocation;
+          $isInherited       = !$ownRule && $catRule && $catRule->location_id;
+
+          return [$p->id => [
+              'id'                 => $p->id,
+              'code'               => $p->code,
+              'name'               => $p->name,
+              'category_id'        => $p->category_id,
+              'uom_id'             => $p->uom_id,
+              'specification'      => $p->specification ?? '',
+              'tracking_type'      => $p->tracking_type?->value ?? 1,
+              'stock_rotation'     => $p->stock_rotation?->value ?? 1,
+              'status'             => $p->status?->value ?? 1,
+              'image_path'         => $p->image_path ?? '',
+              'image_url'          => $p->image_path ? Storage::url($p->image_path) : '',
+              'image_name'         => $p->image_path ? basename($p->image_path) : '',
+              'min_qty'            => (int) ($p->reorderRule->min_qty ?? 0),
+              'max_qty'            => (int) ($p->reorderRule->max_qty ?? 0),
+              'location_id'        => $effectiveLocation->id ?? null,
+              'location_text'      => $effectiveLocation
+                                          ? '[' . $effectiveLocation->code . '] ' . $effectiveLocation->name
+                                          : '',
+              'location_inherited' => $isInherited,
+          ]];
+      });
+  @endphp
+
+  // Map product data for edit mode
+  const productsMap = @json($productsMapData);
+
+  const locations = @json($locations->map(fn($l) => ['id' => $l->id, 'code' => $l->code, 'name' => $l->name]));
 
   // ===== HELPER: KHOÁ / MỞ DANH MỤC =====
   // Dùng chung cho cả openForm() và nhánh khôi phục lỗi validate (update:)
