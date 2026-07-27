@@ -232,8 +232,7 @@
               <label class="form-label fw-medium">Vật tư <span class="text-danger">*</span></label>
               <input type="text" class="form-control" id="rProductText"
                      placeholder="Nhập hoặc chọn"
-                     list="productDatalist" autocomplete="off"
-                     oninput="resolveProduct()" onblur="resolveProduct()">
+                     list="productDatalist" autocomplete="off" onblur="resolveProduct(true)">
               <datalist id="productDatalist">
                 @foreach ($products as $p)
                   <option value="{{ $p->code }} - {{ $p->name }}"></option>
@@ -413,6 +412,7 @@
     this.classList.remove('is-invalid');
     document.getElementById('rProductError').textContent = '';
     document.querySelectorAll('#productField .invalid-feedback.d-block').forEach(el => el.remove());
+    resolveProduct(false);
   });
 
   document.getElementById('rCategory').addEventListener('change', function () {
@@ -478,9 +478,6 @@
     document.getElementById(status == 1 ? 'rStatusActive' : 'rStatusInactive').checked = true;
 
     modal.show();
-    setTimeout(() => {
-      if (type === 'product') document.getElementById('rProductText').focus();
-    }, 300);
   }
 
   // ─── Xóa ──────────────────────────────────────────────────────────────────
@@ -495,13 +492,11 @@
     const type = document.getElementById('rApplyOn').value;
 
     if (type === 'product') {
-      resolveProduct();
-      if (!document.getElementById('rProduct').value) {
-        document.getElementById('rProductText').classList.add('is-invalid');
-        document.getElementById('rProductError').textContent = 'Vui lòng chọn vật tư.';
-        e.preventDefault();
-        return;
-      }
+        resolveProduct(true);
+        if (!document.getElementById('rProduct').value) {
+            e.preventDefault();
+            return;
+        }
     }
 
     if (type === 'category' && !document.getElementById('rCategory').value) {
@@ -526,6 +521,10 @@
     icon.classList.add('d-none');
     label.textContent = 'Đang lưu...';
 });
+
+  document.getElementById('ruleModal').addEventListener('shown.coreui.modal', function () {
+    document.getElementById('rProductText').focus();
+  });
 
   // ─── Mở lại modal nếu có lỗi server ──────────────────────────────────────
   @if ($errors->any())

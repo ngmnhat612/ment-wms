@@ -213,8 +213,7 @@
               <label class="form-label fw-medium">Vật tư <span class="text-danger">*</span></label>
                 <input type="text" class="form-control" id="rProductText"
                       placeholder="Nhập hoặc chọn"
-                      list="productDatalist" autocomplete="off"
-                      oninput="resolveProduct()" onblur="resolveProduct()">
+                      list="productDatalist" autocomplete="off" onblur="resolveProduct(true)">
                 <datalist id="productDatalist">
                   @foreach ($products as $p)
                     <option value="{{ $p->code }} - {{ $p->name }}"></option>
@@ -263,8 +262,7 @@
               <label class="form-label fw-medium">Người phụ trách <span class="text-danger">*</span></label>
                 <input type="text" class="form-control" id="rEmployeeText"
                       placeholder="Nhập hoặc chọn"
-                      list="employeeDatalist" autocomplete="off"
-                      oninput="resolveEmployee()" onblur="resolveEmployee()">
+                      list="employeeDatalist" autocomplete="off" onblur="resolveEmployee(true)">
                 <datalist id="employeeDatalist">
                   @foreach ($employees as $emp)
                     <option value="{{ $emp->name }} ({{ $emp->code }})"></option>
@@ -413,6 +411,19 @@
     document.getElementById('rEmployeeError').textContent = '';
   }
 
+  // ─── Xóa lỗi tương ứng khi người dùng tương tác ──────────────────────────
+  document.getElementById('rProductText').addEventListener('input', function () {
+    this.classList.remove('is-invalid');
+    document.getElementById('rProductError').textContent = '';
+    resolveProduct(false);
+  });
+
+    document.getElementById('rEmployeeText').addEventListener('input', function () {
+    this.classList.remove('is-invalid');
+    document.getElementById('rEmployeeError').textContent = '';
+    resolveEmployee(false);
+  });
+
   function openModal(id = null, productId = null, employeeId = null,
                     minQty = 0, maxQty = 0, note = '', status = 1) {
     const modal  = new coreui.Modal(document.getElementById('ruleModal'));
@@ -451,7 +462,6 @@
     document.getElementById(status == 1 ? 'rStatusActive' : 'rStatusInactive').checked = true;
 
     modal.show();
-    setTimeout(() => document.getElementById('rProductText').focus(), 300);
   }
 
   function confirmDelete(id, name) {
@@ -485,21 +495,17 @@
   @endif
 
   document.getElementById('ruleForm').addEventListener('submit', function (e) {
-    resolveProduct();
-    resolveEmployee();
+    resolveProduct(true);
+    resolveEmployee(true);
 
     if (!document.getElementById('rProduct').value) {
-      document.getElementById('rProductText').classList.add('is-invalid');
-      document.getElementById('rProductError').textContent = 'Vui lòng chọn vật tư.';
-      e.preventDefault();
-      return;
+        e.preventDefault();
+        return;
     }
 
     if (!document.getElementById('rEmployee').value) {
-      document.getElementById('rEmployeeText').classList.add('is-invalid');
-      document.getElementById('rEmployeeError').textContent = 'Vui lòng chọn người phụ trách.';
-      e.preventDefault();
-      return;
+        e.preventDefault();
+        return;
     }
 
     const btn     = document.getElementById('rSubmitBtn');
@@ -511,6 +517,10 @@
     spinner.classList.remove('d-none');
     icon.classList.add('d-none');
     label.textContent = 'Đang lưu...';
+  });
+
+  document.getElementById('ruleModal').addEventListener('shown.coreui.modal', function () {
+    document.getElementById('rProductText').focus();
   });
 
   document.getElementById('ruleModal').addEventListener('hidden.coreui.modal', function () {
