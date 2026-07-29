@@ -115,20 +115,6 @@ class StockReceiptController extends Controller
             ->with('success', "Đã cập nhật phiếu {$receipt->code} thành công.");
     }
 
-    public function destroy(StockReceipt $receipt)
-    {
-        Gate::authorize('delete', $receipt);
-
-        try {
-            $code = $receipt->code;
-            $this->receiptService->delete($receipt);
-        } catch (\DomainException $e) {
-            return redirect()->route('stock-movements.index')->with('error', $e->getMessage());
-        }
-
-        return redirect()->route('stock-movements.index')->with('success', "Đã xóa phiếu {$code} thành công.");
-    }
-
     public function approve(StockReceipt $receipt)
     {
         Gate::authorize('approve', $receipt);

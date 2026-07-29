@@ -189,6 +189,7 @@ $action = $isEdit ? route('receipts.update', $receipt->id) : route('receipts.sto
                             $serialNumbers = $lineRow['serial_numbers'] ?? '';
                             $subWarehouse = $lineRow['sub_warehouse'] ?? '';
                             $note = $lineRow['note'] ?? '';
+                            $expiryDate = $lineRow['expiry_date'] ?? '';
                         } else {
                             // Dữ liệu từ phiếu đang sửa: $lineRow là 1 StockReceiptLine,
                             // đã eager-load 'details.location/lot/serial/receiver' ở Repository.
@@ -210,10 +211,13 @@ $action = $isEdit ? route('receipts.update', $receipt->id) : route('receipts.sto
                             $serialNumbers = $lineRow->details->pluck('serial.serial_number')->filter()->implode(' ');
                             $subWarehouse = $firstDetail->sub_warehouse ?? '';
                             $note = $lineRow->note ?? '';
+                            $expiryDate = $firstDetail->lot?->expiry_date?->format('Y-m-d') ?? '';
                         }
                         @endphp
                         <tr>
-                            <td class="text-center text-body-secondary small">{{ $i + 1 }}</td>
+                            {{-- <input type="hidden" name="lines[{{ $i }}][expiry_date]" class="expiry-date-hidden"
+                                value="{{ $expiryDate }}"> --}}
+                            <td class="row-number text-center text-body-secondary small">{{ $i + 1 }}</td>
                             <td>
                                 <input type="hidden" name="lines[{{ $i }}][product_id]"
                                     class="product-id-hidden" value="{{ $productId }}">
@@ -222,16 +226,16 @@ $action = $isEdit ? route('receipts.update', $receipt->id) : route('receipts.sto
                                     placeholder="Nhập hoặc chọn" autocomplete="off"
                                     oninput="onProductInput(this)" required>
                             </td>
-<td>
-    <input type="hidden" name="lines[{{ $i }}][tskt]" class="tskt-hidden"
-        value="{{ $product->specification ?? '' }}">
-    <span class="tskt-label text-body-secondary small">{{ $product->specification ?? '-' }}</span>
-</td>
-<td>
-    <input type="hidden" name="lines[{{ $i }}][uom_id]" class="uom-hidden"
-        value="{{ $uomId }}">
-    <span class="uom-label text-body-secondary small">{{ $uomName }}</span>
-</td>
+                            <td>
+                                <input type="hidden" name="lines[{{ $i }}][tskt]" class="tskt-hidden"
+                                    value="{{ $product->specification ?? '' }}">
+                                <span class="tskt-label text-body-secondary small">{{ $product->specification ?? '-' }}</span>
+                            </td>
+                            <td>
+                                <input type="hidden" name="lines[{{ $i }}][uom_id]" class="uom-hidden"
+                                    value="{{ $uomId }}">
+                                <span class="uom-label text-body-secondary small">{{ $uomName }}</span>
+                            </td>
                             <td>
                                 <input type="number" class="form-control form-control-sm text-end"
                                     name="lines[{{ $i }}][expected_qty]" value="{{ $expectedQty }}" min="0"
@@ -287,15 +291,24 @@ $action = $isEdit ? route('receipts.update', $receipt->id) : route('receipts.sto
                                     placeholder="Tự động" min="1" step="1"
                                     oninput="clearFieldError(this)">
                             </td>
-                            {{-- Serial field: chuỗi text, mỗi mã cách nhau <space> --}}
+                            {{-- Serial field: nhập tự do (Chip input) — mỗi mã cách nhau
+                                <space> sẽ tự tách thành 1 Chip. Giá trị thật vẫn là chuỗi
+                                "SN0001 SN0002 ..." lưu trong input ẩn do ChipInput tự sinh
+                                theo data-coreui-name, KHÔNG giới hạn theo danh sách có sẵn
+                                (khác issue/form — ở đây Sê-ri là mã MỚI người dùng tự đặt). --}}
                             <td>
-                                <input type="text"
-                                    class="form-control form-control-sm serial-input {{ $tracking === 1 ? 'bg-body-secondary' : '' }}"
-                                    name="lines[{{ $i }}][serial_numbers]" value="{{ $serialNumbers }}"
-                                    placeholder="{{ $tracking === 1 ? '-' : 'SN0001 SN0002 ...' }}"
-                                    maxlength="5000" autocomplete="off"
-                                    oninput="onSerialInput(this)"
-                                    {{ $tracking === 1 ? 'readonly' : '' }}>
+                                <div class="chip-input chip-input-sm {{ $tracking === 1 ? 'disabled' : '' }}"
+                                    id="serialChip-{{ $i }}"
+                                    data-coreui-chip-input
+                                    data-coreui-name="lines[{{ $i }}][serial_numbers]"
+                                    data-coreui-separator=" "
+                                    data-coreui-placeholder="{{ $tracking === 1 ? '-' : 'Nhập mã, nhấn <space> để tạo Sê-ri' }}"
+                                    data-coreui-disabled="{{ $tracking === 1 ? 'true' : 'false' }}">
+                                    @foreach(explode(' ', trim($serialNumbers)) as $sn)
+                                        @continue(!$sn)
+                                        <span class="chip">{{ $sn }}</span>
+                                    @endforeach
+                                </div>
                             </td>
                             <td>
                                 <input type="text" class="form-control form-control-sm"
@@ -378,15 +391,13 @@ function countSerials(str) {
 // ── Áp tracking lên một <tr> ──────────────────────────────────────
 function applyTracking(tr, tracking) {
     const lotInput = tr.querySelector('.lot-input');
-    const serialInput = tr.querySelector('.serial-input');
+    const chipEl = tr.querySelector('.chip-input');
     const actualInput = tr.querySelector('.actual-qty-input');
-    if (!lotInput || !serialInput) return;
+    if (!lotInput || !chipEl) return;
 
     // Reset
-    [lotInput, serialInput].forEach(el => {
-        el.readOnly = false;
-        el.classList.remove('bg-body-secondary', 'is-invalid');
-    });
+    lotInput.classList.remove('is-invalid');
+    chipEl.classList.remove('is-invalid');
 
     // Lô luôn mở, không bắt buộc — để trống sẽ tự sinh mã ở backend
     lotInput.placeholder = 'Tự động';
@@ -394,10 +405,7 @@ function applyTracking(tr, tracking) {
     switch (tracking) {
         case TRACKING_LOT:
             // Khóa serial; actual_qty nhập tay bình thường
-            serialInput.readOnly = true;
-            serialInput.value = '';
-            serialInput.placeholder = '-';
-            serialInput.classList.add('bg-body-secondary');
+            setupChipInput(tr, { disabled: true, placeholder: '-' })?.clear();
             if (actualInput) {
                 actualInput.readOnly = false;
                 actualInput.classList.remove('bg-body-secondary');
@@ -406,11 +414,12 @@ function applyTracking(tr, tracking) {
 
         case TRACKING_LOT_AND_SERIAL:
             // Mở serial; actual_qty giờ luôn = số serial đếm được, khóa không cho tự gõ
-            serialInput.placeholder = 'SN0001 SN0002 ...';
+            setupChipInput(tr, { disabled: false, placeholder: 'Nhập mã, nhấn <space> để tạo Sê-ri' });
+            bindChipInputEvents(tr);
             if (actualInput) {
                 actualInput.readOnly = true;
                 actualInput.classList.add('bg-body-secondary');
-                actualInput.value = countSerials(serialInput.value);
+                actualInput.value = getSerialValues(tr).length;
             }
             break;
     }
@@ -485,17 +494,88 @@ function onReceiverInput(input) {
     }
 }
 
-// ── Khi gõ chuỗi Sê-ri: tự cập nhật Thực nhập = số serial đếm được ──
-function onSerialInput(input) {
-    clearFieldError(input);
-    const tr = input.closest('tr');
+// ══════════════════════════════════════════════════════════════════
+// CHIP INPUT (Sê-ri) — nhập tự do, gõ mã rồi cách (space) để tạo Chip
+// ══════════════════════════════════════════════════════════════════
+
+// ── Lấy instance ChipInput đã khởi tạo trên 1 dòng ─────────────────
+function getChipInput(tr) {
+    const el = tr.querySelector('.chip-input');
+    return el ? coreui.ChipInput.getOrCreateInstance(el) : null;
+}
+
+// ── Lấy danh sách mã serial hiện có trong ChipInput ────────────────
+function getSerialValues(tr) {
+    const ci = getChipInput(tr);
+    return ci ? ci.getValues() : [];
+}
+
+// ── Khởi tạo / cấu hình lại ChipInput trên 1 dòng ──────────────────
+function setupChipInput(tr, { disabled, placeholder }) {
+    const chipEl = tr.querySelector('.chip-input');
+    if (!chipEl) return null;
+
+    const existing = coreui.ChipInput.getInstance(chipEl);
+    if (existing) existing.dispose();
+
+    chipEl.classList.toggle('disabled', disabled);
+
+    return new coreui.ChipInput(chipEl, {
+        name: chipEl.dataset.coreuiName,
+        separator: ' ',
+        disabled,
+        placeholder
+    });
+}
+
+// ── Đồng bộ Thực nhập = số serial hiện có trong ChipInput ──────────
+function syncActualQtyFromSerial(tr) {
     const actualInput = tr.querySelector('.actual-qty-input');
     const productInput = tr.querySelector('.product-input');
     const tracking = parseInt(productInput?.dataset?.tracking) || TRACKING_LOT;
-
     if (tracking === TRACKING_LOT_AND_SERIAL && actualInput) {
-        actualInput.value = countSerials(input.value);
+        actualInput.value = getSerialValues(tr).length;
     }
+}
+
+// ── Gắn validate + đồng bộ cho ChipInput của 1 dòng ────────────────
+// Khác issue/form: KHÔNG có whitelist availableSerials (Sê-ri ở đây là
+// mã MỚI người dùng tự đặt khi nhập kho, không phải chọn từ tồn có sẵn).
+// Chỉ chặn thêm mã trùng trong cùng dòng.
+function bindChipInputEvents(tr) {
+    const chipEl = tr.querySelector('.chip-input');
+    if (!chipEl) return;
+
+    chipEl.addEventListener('add.coreui.chip-input', event => {
+        const ci = getChipInput(tr);
+        if (ci && ci.getValues().includes(event.value)) {
+            event.preventDefault();
+            chipEl.classList.add('is-invalid');
+            return;
+        }
+        chipEl.classList.remove('is-invalid');
+    });
+
+    chipEl.addEventListener('change.coreui.chip-input', () => {
+        syncActualQtyFromSerial(tr);
+        clearFieldError(chipEl);
+    });
+}
+
+// ── Ép hidden input về dạng space-separated trước khi submit ──
+// Lý do: coreui.ChipInput._syncHiddenInput() LUÔN nối giá trị bằng
+// dấu phẩy "," cứng trong code (không đọc lại `separator` cấu hình),
+// nên phải tự ghi đè lại ngay trước khi submit.
+function fixChipInputSeparatorsBeforeSubmit() {
+    document.querySelectorAll('#detailBody .chip-input[data-coreui-chip-input]').forEach(chipEl => {
+        const ci = coreui.ChipInput.getInstance(chipEl);
+        if (!ci) return; // chưa init -> bỏ qua (cần sửa mục 2 bên dưới)
+
+        const values = ci.getValues(); // mảng đúng, ví dụ ['111','222','333']
+        const name = chipEl.dataset.coreuiName;
+        const hidden = chipEl.querySelector(`input[type="hidden"][name="${CSS.escape(name)}"]`);
+        if (hidden) hidden.value = values.join(' ');
+    });
 }
 
 // ── Thêm dòng mới ──────────────────────────────────────────────────
@@ -506,7 +586,8 @@ function rowTemplate(i) {
 
     return `
 <tr>
-  <td class="text-center text-body-secondary small">${i + 1}</td>
+  <input type="hidden" name="lines[${i}][expiry_date]" class="expiry-date-hidden" value="">
+  <td class="row-number text-center text-body-secondary small">${i + 1}</td>
   <td>
     <input type="hidden" name="lines[${i}][product_id]" class="product-id-hidden" value="">
     <input type="text" class="form-control form-control-sm product-input" list="productDatalist"
@@ -550,11 +631,15 @@ function rowTemplate(i) {
         name="lines[${i}][lot_number]" placeholder="Tự động" min="1" step="1"
         oninput="clearFieldError(this)">
   </td>
-  <td>
-    <input type="text" class="form-control form-control-sm serial-input bg-body-secondary"
-           name="lines[${i}][serial_numbers]" placeholder="-" maxlength="5000" readonly
-           oninput="onSerialInput(this)">
-  </td>
+<td>
+    <div class="chip-input chip-input-sm disabled" id="serialChip-${i}"
+        data-coreui-chip-input
+        data-coreui-name="lines[${i}][serial_numbers]"
+        data-coreui-separator=" "
+        data-coreui-placeholder="-"
+        data-coreui-disabled="true">
+    </div>
+</td>
   <td>
     <input type="text" class="form-control form-control-sm" name="lines[${i}][sub_warehouse]" maxlength="50" placeholder="Nhập">
   </td>
@@ -585,7 +670,7 @@ function removeRow(btn) {
 
 function syncRowNumbers() {
     document.querySelectorAll('#detailBody tr').forEach((tr, i) => {
-        tr.querySelector('td:first-child').textContent = i + 1;
+        tr.querySelector('.row-number').textContent = i + 1;
     });
 }
 
@@ -608,7 +693,7 @@ function updateTotals() {
 
 function clearFieldError(input) {
     input.classList.remove('is-invalid');
-    if (!document.querySelector('.lot-input.is-invalid, .serial-input.is-invalid')) {
+    if (!document.querySelector('.lot-input.is-invalid, .chip-input.is-invalid')) {
         document.getElementById('lotSerialAlertContainer').innerHTML = '';
     }
 }
@@ -619,8 +704,8 @@ function validateLotSerial() {
 
     document.querySelectorAll('#detailBody tr').forEach(tr => {
         const lotInput = tr.querySelector('.lot-input');
-        const serialInput = tr.querySelector('.serial-input');
-        [lotInput, serialInput].forEach(el => el?.classList.remove('is-invalid'));
+        const chipEl = tr.querySelector('.chip-input');
+        [lotInput, chipEl].forEach(el => el?.classList.remove('is-invalid'));
     });
 
     // ── Bước 1: Serial bắt buộc + actual_qty phải khớp số serial ────
@@ -629,11 +714,11 @@ function validateLotSerial() {
         const tracking = parseInt(productInput?.dataset?.tracking) || TRACKING_LOT;
         if (tracking !== TRACKING_LOT_AND_SERIAL) return;
 
-        const serialInput = tr.querySelector('.serial-input');
-        const serials = (serialInput.value || '').trim().split(/\s+/).filter(Boolean);
+        const chipEl = tr.querySelector('.chip-input');
+        const serials = getSerialValues(tr);
 
         if (serials.length === 0) {
-            serialInput.classList.add('is-invalid');
+            chipEl.classList.add('is-invalid');
             errors.push(`Dòng ${i+1}: Hàng theo <strong>Lô+Sê-ri</strong> — chưa nhập Mã Serial (cách nhau bằng dấu cách).`);
             return;
         }
@@ -642,7 +727,7 @@ function validateLotSerial() {
         const seenInRow = new Set();
         for (const s of serials) {
             if (seenInRow.has(s)) {
-                serialInput.classList.add('is-invalid');
+                chipEl.classList.add('is-invalid');
                 errors.push(`Dòng ${i+1}: Mã Serial <strong>"${s}"</strong> bị lặp lại trong cùng dòng.`);
                 break;
             }
@@ -654,14 +739,14 @@ function validateLotSerial() {
     const serialMap = {}; // { product_id: { serial_value: rowIndex } }
     document.querySelectorAll('#detailBody tr').forEach((tr, i) => {
         const productId = tr.querySelector('.product-id-hidden')?.value;
-        const serialInput = tr.querySelector('.serial-input');
-        const serials = (serialInput?.value || '').trim().split(/\s+/).filter(Boolean);
+        const chipEl = tr.querySelector('.chip-input');
+        const serials = getSerialValues(tr);
         if (!productId) return;
 
         serials.forEach(serialVal => {
             if (!serialMap[productId]) serialMap[productId] = {};
             if (serialMap[productId][serialVal] !== undefined) {
-                serialInput.classList.add('is-invalid');
+                chipEl.classList.add('is-invalid');
                 const firstRow = serialMap[productId][serialVal] + 1;
                 errors.push(
                     `Dòng ${i+1}: Số Serial <strong>"${serialVal}"</strong> đã nhập ở dòng ${firstRow} (cùng sản phẩm).`
@@ -695,6 +780,7 @@ function validateLotSerial() {
 }
 
 document.getElementById('receiptForm').addEventListener('submit', function(e) {
+    fixChipInputSeparatorsBeforeSubmit();
     const errors = validateLotSerial();
     if (errors.length) {
         e.preventDefault();
@@ -710,7 +796,7 @@ document.getElementById('receiptForm').addEventListener('submit', function(e) {
             behavior: 'smooth',
             block: 'nearest'
         });
-        document.querySelector('.lot-input.is-invalid, .serial-input.is-invalid')?.focus();
+        document.querySelector('.lot-input.is-invalid, .chip-input.is-invalid')?.focus();
         return; // Có lỗi → dừng, KHÔNG disable nút
     }
 
@@ -737,6 +823,17 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('#detailBody tr').forEach(tr => {
         const productInput = tr.querySelector('.product-input');
         if (productInput?.value) onProductInput(productInput);
+
+        // Khởi tạo lại ChipInput đúng cấu hình cho dòng render sẵn (chế độ Sửa)
+        const chipEl = tr.querySelector('.chip-input');
+        if (chipEl) {
+            const tracking = parseInt(productInput?.dataset?.tracking) || TRACKING_LOT;
+            setupChipInput(tr, {
+                disabled: tracking === TRACKING_LOT,
+                placeholder: tracking === TRACKING_LOT ? '-' : 'Nhập mã, dấu cách để tạo Chip'
+            });
+            bindChipInputEvents(tr);
+        }
     });
 
     toggleEmptyState();

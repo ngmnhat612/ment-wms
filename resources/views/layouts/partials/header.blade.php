@@ -28,8 +28,8 @@
           </svg>
         </a>
         <ul class="dropdown-menu dropdown-menu-end pt-0">
-          <li class="dropdown-header bg-body-tertiary fw-semibold py-2">Thông báo</li>
-          <li><a class="dropdown-item text-body-secondary py-2" href="#">Không có thông báo mới</a></li>
+          <li class="dropdown-header bg-body-tertiary text-body-secondary fw-semibold py-2">Thông báo</li>
+          <li><a class="dropdown-item py-2" href="#">Không có thông báo mới</a></li>
         </ul>
       </li>
 
@@ -59,7 +59,7 @@
               <hr class="dropdown-divider">
           </li>
           <li>
-              <button type="submit" form="logoutForm" class="dropdown-item text-danger">
+              <button type="submit" form="logoutForm" class="dropdown-item">
                   <svg class="icon me-2">
                       <use hx-boost="false" xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-account-logout') }}"></use>
                   </svg>

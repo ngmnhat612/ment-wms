@@ -47,9 +47,12 @@ trait ChecksForeignKeyUsage
      * bảng mới thêm sau migration (xem thảo luận đã chốt — không dùng cache
      * ở quy mô này).
      *
+     * @param  array<string>  $ignoreTables  Danh sách bảng SQL bỏ qua khi kiểm tra
+     *         (dùng cho các bảng phụ thuộc sẽ được tự động xóa/cascade cùng bản ghi
+     *         cha, nên không được tính là "đang sử dụng" để chặn xóa).
      * @return array<string> Danh sách tên hiển thị các nơi đang sử dụng (rỗng nếu không bị dùng ở đâu)
      */
-    protected function findUsages(string $table, string $column, int $id): array
+    protected function findUsages(string $table, string $column, int $id, array $ignoreTables = []): array
     {
         $foreignKeys = DB::select("
             SELECT 
@@ -66,6 +69,10 @@ trait ChecksForeignKeyUsage
         $usages = [];
 
         foreach ($foreignKeys as $fk) {
+            if (in_array($fk->referencing_table, $ignoreTables, true)) {
+                continue;
+            }
+
             $exists = DB::table($fk->referencing_table)
                 ->where($fk->referencing_column, $id)
                 ->exists();
@@ -85,10 +92,15 @@ trait ChecksForeignKeyUsage
      * Định dạng thông báo cố định:
      * Không thể xóa <Nhãn> "<Tên>" vì đang được sử dụng bởi: <A, B>.
      * Vui lòng chuyển sang trạng thái Ngưng hoạt động thay vì xóa.
+     *
+     * @param  array<string>  $ignoreTables  Bảng phụ thuộc sẽ tự xóa cùng bản ghi cha,
+     *         không tính là ràng buộc chặn xóa (ví dụ: reorder_rules, putaway_rules
+     *         khi xóa product — 2 bảng này được Service tự xóa trước, không phải
+     *         lý do hợp lệ để chặn).
      */
-    protected function guardNotInUse(string $table, string $column, int $id, string $label, string $name): void
+    protected function guardNotInUse(string $table, string $column, int $id, string $label, string $name, array $ignoreTables = []): void
     {
-        $usages = $this->findUsages($table, $column, $id);
+        $usages = $this->findUsages($table, $column, $id, $ignoreTables);
 
         if (!empty($usages)) {
             $places = implode(', ', $usages);

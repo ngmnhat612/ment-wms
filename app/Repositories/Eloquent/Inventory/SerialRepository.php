@@ -8,11 +8,11 @@ use Illuminate\Support\Collection;
 
 class SerialRepository implements SerialRepositoryInterface
 {
-    public function firstOrCreate(string $serialNumber, array $attributes): Serial
+    public function firstOrCreate(int $productId, string $serialNumber, array $attributes): Serial
     {
         return Serial::firstOrCreate(
-            ['serial_number' => $serialNumber],
-            $attributes
+            ['product_id' => $productId, 'serial_number' => $serialNumber],
+            array_merge($attributes, ['product_id' => $productId])
         );
     }
 
@@ -21,9 +21,10 @@ class SerialRepository implements SerialRepositoryInterface
         return Serial::find($id);
     }
 
-    public function findExistingSerialNumbers(array $serialNumbers, array $excludeLotIds = []): Collection
+    public function findExistingSerialNumbers(int $productId, array $serialNumbers, array $excludeLotIds = []): Collection
     {
-        return Serial::whereIn('serial_number', $serialNumbers)
+        return Serial::where('product_id', $productId)
+            ->whereIn('serial_number', $serialNumbers)
             ->whereNotIn('lot_id', $excludeLotIds)
             ->pluck('serial_number');
     }

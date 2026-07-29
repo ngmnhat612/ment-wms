@@ -7,16 +7,14 @@ use App\Models\Inventory\Serial;
 use App\Models\Master\Employee;
 use App\Models\Master\Location;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 
 class StockIssueDetail extends Model
 {
-    use SoftDeletes;
-
     protected $table = 'stock_issue_detail';
 
     protected $fillable = [
         'stock_issue_line_id', 'lot_id', 'serial_id', 'location_id',
+        'lot_number_snapshot', 'serial_number_snapshot',
         'actual_qty', 'sub_warehouse', 'receiver_id', 'note',
     ];
 

@@ -9,6 +9,7 @@ use App\Models\Inventory\Serial;
 use App\Repositories\Contracts\Inventory\LotRepositoryInterface;
 use App\Repositories\Contracts\Inventory\StockRepositoryInterface;
 use App\Repositories\Contracts\Master\ProductRepositoryInterface;
+use Illuminate\Support\Facades\Log;
 
 class StockIssueRequest extends FormRequest
 {
@@ -131,10 +132,7 @@ class StockIssueRequest extends FormRequest
             // để tránh 2 nơi có 2 "sự thật" khác nhau về tồn kho.
             $stockCache = [];
             $stocksFor = function (int $productId) use (&$stockCache) {
-                return $stockCache[$productId] ??= $this->stockRepository->availableForIssue(
-                    $productId,
-                    $this->route('issue')?->id
-                );
+                return $stockCache[$productId] ??= $this->stockRepository->availableForIssue($productId);
             };
 
             $serialSeen = []; // ['product_id|serial_value' => 'Dòng N']
@@ -227,7 +225,7 @@ class StockIssueRequest extends FormRequest
                                     "lines.{$i}.lot_number",
                                     "Dòng {$line}: Số Lô \"{$lotNumberInput}\" không có tồn kho tại Vị trí đã chọn."
                                 );
-                                $lotId = null; // Không dùng lô này để validate serial bên dưới nữa.
+                                $lotId = null;
                             }
                         }
                     }
@@ -258,9 +256,15 @@ class StockIssueRequest extends FormRequest
                             );
                         }
 
-                        // Serial phải ĐÃ TỒN TẠI trong hệ thống để xuất được.
+                        // Serial phải ĐÃ TỒN TẠI trong hệ thống để xuất được — LỌC THEO ĐÚNG
+                        // product_id, vì Serial chỉ unique theo (product_id, serial_number),
+                        // không unique toàn cục (2 sản phẩm khác nhau được phép trùng số
+                        // Serial). Nếu không lọc, whereIn('serial_number', ...) có thể trả về
+                        // luôn bản ghi Serial trùng số nhưng thuộc SẢN PHẨM KHÁC, khiến bước so
+                        // sánh lot_id bên dưới luôn lệch (vì so với Lô của sản phẩm khác) và
+                        // báo sai "Serial không thuộc Lô đã chọn" dù thực tế đúng Lô.
                         $existingSerials = Serial::whereIn('serial_number', $serialNumbers->all())
-                            ->get(['id', 'serial_number', 'lot_id']);
+                            ->get(['id', 'serial_number', 'lot_id', 'product_id']); // thêm product_id để log/so sánh
 
                         $missing = $serialNumbers->diff($existingSerials->pluck('serial_number'));
                         foreach ($missing as $missingSerial) {
@@ -286,29 +290,42 @@ class StockIssueRequest extends FormRequest
                                 "lines.{$i}.serial_numbers",
                                 "Dòng {$line}: Cần chọn Lô hợp lệ trước khi chọn Sê-ri."
                             );
-                        } else {
-                            $stocks = $stocksFor((int) $row['product_id']);
+} else {
+    $stocks = $stocksFor((int) $row['product_id']);
 
-                            foreach ($existingSerials as $serialModel) {
-                                if ((int) $serialModel->lot_id !== (int) $lotId) {
-                                    $validator->errors()->add(
-                                        "lines.{$i}.serial_numbers",
-                                        "Dòng {$line}: Số Serial \"{$serialModel->serial_number}\" không thuộc Lô \"{$lotNumberInput}\" đã chọn."
-                                    );
-                                    continue;
-                                }
+    // Nguồn sự thật cho "Serial X thuộc Lô nào HIỆN TẠI" là bảng
+    // `stocks` (stocks.lot_id), KHÔNG phải serials.lot_id — cột này chỉ
+    // là giá trị gán lúc TẠO Serial (StockReceiptService::firstOrCreate),
+    // không được cập nhật lại khi Serial được relocate sang Lô/Vị trí
+    // khác qua màn Tồn kho (InventoryService::updateLocation). Dùng
+    // serials.lot_id để validate có thể báo sai khi dữ liệu đã lệch.
+    foreach ($existingSerials as $serialModel) {
+        $matchedStock = $stocks->first(fn ($s) => (int) $s->serial_id === (int) $serialModel->id
+            && (int) $s->lot_id === (int) $lotId
+            && (int) $s->current_location_id === (int) $locationId);
 
-                                $serialAtLocation = $stocks->contains(fn ($s) => (int) $s->serial_id === (int) $serialModel->id
-                                    && (int) $s->current_location_id === (int) $locationId);
+        if (! $matchedStock) {
+            // Phân biệt 2 trường hợp lỗi để thông báo đúng nguyên nhân:
+            // (a) Serial có tồn nhưng ở Lô khác -> "không thuộc Lô".
+            // (b) Serial có ở đúng Lô nhưng khác Vị trí (hoặc không tồn
+            //     tại trong stocks) -> "không có tồn kho tại Vị trí".
+            $existsInOtherLot = $stocks->contains(fn ($s) => (int) $s->serial_id === (int) $serialModel->id
+                && (int) $s->current_location_id === (int) $locationId);
 
-                                if (! $serialAtLocation) {
-                                    $validator->errors()->add(
-                                        "lines.{$i}.serial_numbers",
-                                        "Dòng {$line}: Số Serial \"{$serialModel->serial_number}\" không có tồn kho tại Vị trí đã chọn."
-                                    );
-                                }
-                            }
-                        }
+            if ($existsInOtherLot) {
+                $validator->errors()->add(
+                    "lines.{$i}.serial_numbers",
+                    "Dòng {$line}: Số Serial \"{$serialModel->serial_number}\" không thuộc Lô \"{$lotNumberInput}\" đã chọn."
+                );
+            } else {
+                $validator->errors()->add(
+                    "lines.{$i}.serial_numbers",
+                    "Dòng {$line}: Số Serial \"{$serialModel->serial_number}\" không có tồn kho tại Vị trí đã chọn."
+                );
+            }
+        }
+    }
+}
                     }
                 }
 

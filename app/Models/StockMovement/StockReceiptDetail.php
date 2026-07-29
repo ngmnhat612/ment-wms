@@ -7,16 +7,14 @@ use App\Models\Master\Location;
 use App\Models\Inventory\Lot;
 use App\Models\Inventory\Serial;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 
 class StockReceiptDetail extends Model
 {
-    use SoftDeletes;
-
     protected $table = 'stock_receipt_detail';
 
     protected $fillable = [
-        'stock_receipt_line_id', 'lot_id', 'serial_id', 'location_id',
+        'stock_receipt_line_id', 'lot_id', 'lot_number_snapshot',
+        'serial_id', 'serial_number_snapshot', 'location_id',
         'actual_qty', 'expiry_date', 'sub_warehouse', 'receiver_id', 'note',
     ];
 
