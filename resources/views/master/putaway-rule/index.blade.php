@@ -266,8 +266,9 @@
                   @endforeach
                 </select>
                 <input type="hidden" id="rCategoryHidden" name="category_id" value="{{ old('category_id') }}">
+                <div class="invalid-feedback" id="rCategoryError"></div>
               @error('category_id')
-                <div class="invalid-feedback">{{ $message }}</div>
+                <div class="invalid-feedback d-block">{{ $message }}</div>
               @enderror
             </div>
 
@@ -469,6 +470,7 @@
       document.getElementById('rCategory').value = '';
       document.getElementById('rCategoryHidden').value = '';
       document.getElementById('rCategory').classList.remove('is-invalid');
+      document.getElementById('rCategoryError').textContent = '';
     } else {
       document.getElementById('rProductText').value = '';
       document.getElementById('rProduct').value = '';
@@ -505,6 +507,7 @@
   function clearValidation() {
     document.querySelectorAll('#ruleForm .is-invalid').forEach(el => el.classList.remove('is-invalid'));
     document.getElementById('rProductError').textContent  = '';
+    document.getElementById('rCategoryError').textContent = '';
     document.getElementById('rLocationError').textContent = '';
   }
 
@@ -519,6 +522,7 @@
   document.getElementById('rCategory').addEventListener('change', function () {
     this.classList.remove('is-invalid');
     document.getElementById('rCategoryHidden').value = this.value;
+    document.getElementById('rCategoryError').textContent = '';
     document.querySelectorAll('#categoryField .invalid-feedback.d-block').forEach(el => el.remove());
   });
 
@@ -613,13 +617,16 @@
         resolveProduct(true);
         if (!document.getElementById('rProduct').value) {
             e.preventDefault();
+            document.getElementById('rProductText').focus();
             return;
         }
     }
 
     if (type === 'category' && !document.getElementById('rCategory').value) {
       document.getElementById('rCategory').classList.add('is-invalid');
+      document.getElementById('rCategoryError').textContent = 'Vui lòng chọn danh mục.';
       e.preventDefault();
+      document.getElementById('rCategory').focus();
       return;
     }
 
@@ -627,6 +634,7 @@
       document.getElementById('rLocation').classList.add('is-invalid');
       document.getElementById('rLocationError').textContent = 'Vui lòng chọn vị trí gợi ý.';
       e.preventDefault();
+      document.getElementById('rLocation').focus();
       return;
     }
 
