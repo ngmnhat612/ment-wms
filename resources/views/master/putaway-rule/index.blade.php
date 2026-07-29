@@ -609,14 +609,47 @@
     new coreui.Modal(document.getElementById('deleteModal')).show();
   }
 
-  // ─── Submit validation ─────────────────────────────────────────────────────
-  document.getElementById('ruleForm').addEventListener('submit', function (e) {
+  // ─── Hiển thị lỗi server cho 1 field, không reload trang ──────────────────
+  // Dùng chung cho lỗi trả về từ AJAX (vd: "Vật tư này đã được gán quy tắc.").
+  // Lỗi sẽ tự mất khi người dùng nhập/chọn lại (đã có listener input/change
+  // ở trên xóa is-invalid + textContent của *Error).
+  function showFieldError(field, message) {
+    const elMap = {
+      product_id:  { input: 'rProductText', err: 'rProductError'  },
+      category_id: { input: 'rCategory',    err: 'rCategoryError' },
+      location_id: { input: 'rLocation',    err: 'rLocationError' },
+    };
+    const mapped = elMap[field];
+    if (!mapped) {
+      // Field không có ô lỗi riêng (vd: note, warehouse_id) — vẫn hiển thị
+      // để không mất thông tin, gắn tạm vào ô lỗi Vật tư (luôn hiển thị).
+      document.getElementById('rProductError').textContent = message;
+      return;
+    }
+    document.getElementById(mapped.input).classList.add('is-invalid');
+    document.getElementById(mapped.err).textContent = message;
+  }
+
+  function resetSubmitButton() {
+    const btn     = document.getElementById('rSubmitBtn');
+    const spinner = document.getElementById('rSubmitSpinner');
+    const icon    = document.getElementById('rSubmitIcon');
+    const label   = document.getElementById('rSubmitLabel');
+    btn.disabled = false;
+    spinner.classList.add('d-none');
+    icon.classList.remove('d-none');
+    label.textContent = 'Lưu';
+  }
+
+  // ─── Submit validation + gửi AJAX (không reload khi có lỗi) ───────────────
+  document.getElementById('ruleForm').addEventListener('submit', async function (e) {
+    e.preventDefault();
+
     const type = document.getElementById('rApplyOn').value;
 
     if (type === 'product') {
         resolveProduct(true);
         if (!document.getElementById('rProduct').value) {
-            e.preventDefault();
             document.getElementById('rProductText').focus();
             return;
         }
@@ -625,7 +658,6 @@
     if (type === 'category' && !document.getElementById('rCategory').value) {
       document.getElementById('rCategory').classList.add('is-invalid');
       document.getElementById('rCategoryError').textContent = 'Vui lòng chọn danh mục.';
-      e.preventDefault();
       document.getElementById('rCategory').focus();
       return;
     }
@@ -633,11 +665,11 @@
     if (!document.getElementById('rLocation').value) {
       document.getElementById('rLocation').classList.add('is-invalid');
       document.getElementById('rLocationError').textContent = 'Vui lòng chọn vị trí gợi ý.';
-      e.preventDefault();
       document.getElementById('rLocation').focus();
       return;
     }
 
+    const form    = document.getElementById('ruleForm');
     const btn     = document.getElementById('rSubmitBtn');
     const spinner = document.getElementById('rSubmitSpinner');
     const icon    = document.getElementById('rSubmitIcon');
@@ -646,35 +678,50 @@
     spinner.classList.remove('d-none');
     icon.classList.add('d-none');
     label.textContent = 'Đang lưu...';
-});
+
+    try {
+      const response = await fetch(form.action, {
+        method: 'POST', // luôn POST thật; _method=PUT được Laravel method-spoof qua body
+        headers: {
+          'Accept': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest',
+        },
+        body: new FormData(form),
+      });
+
+      if (response.ok) {
+        // Thành công: điều hướng lại trang index để lấy danh sách mới nhất
+        // và hiển thị thông báo flash "success" như bình thường.
+        window.location.href = routeBase;
+        return;
+      }
+
+      if (response.status === 422) {
+        const data = await response.json();
+        const errors = data.errors || {};
+        Object.keys(errors).forEach(field => {
+          showFieldError(field, errors[field][0]);
+        });
+        // Focus vào field lỗi đầu tiên đang hiển thị trong modal.
+        const firstField = Object.keys(errors)[0];
+        const focusMap = { product_id: 'rProductText', category_id: 'rCategory', location_id: 'rLocation' };
+        document.getElementById(focusMap[firstField] || '')?.focus();
+        resetSubmitButton();
+        return;
+      }
+
+      // Lỗi không mong đợi (500, mất phiên đăng nhập, v.v.) — vẫn tránh
+      // im lặng: báo qua field vật tư (luôn hiển thị) rồi khôi phục nút Lưu.
+      document.getElementById('rProductError').textContent = 'Đã có lỗi xảy ra, vui lòng thử lại.';
+      resetSubmitButton();
+    } catch (err) {
+      document.getElementById('rProductError').textContent = 'Không thể kết nối máy chủ, vui lòng thử lại.';
+      resetSubmitButton();
+    }
+  });
 
   document.getElementById('ruleModal').addEventListener('shown.coreui.modal', function () {
     document.getElementById('rProductText').focus();
   });
-
-  // ─── Mở lại modal nếu có lỗi server ──────────────────────────────────────
-  @if ($errors->any())
-    const applyOnOld = '{{ old('apply_on', 'product') }}';
-    const ruleIdOld  = {{ old('rule_id') ?? 'null' }};
-    openModal(
-      ruleIdOld,
-      applyOnOld,
-      {{ old('product_id') ?? 'null' }},
-      {{ old('category_id') ?? 'null' }},
-      {{ old('location_id') ?? 'null' }},
-      {{ old('status', 1) }},
-      '{{ addslashes(old('note', '')) }}'
-    );
-    @foreach ($errors->keys() as $field)
-      document.getElementById(
-        @switch($field)
-          @case('product_id')  'rProductText' @break
-          @case('category_id') 'rCategory'    @break
-          @case('location_id') 'rLocation'    @break
-          @default             ''
-        @endswitch
-      )?.classList.add('is-invalid');
-    @endforeach
-  @endif
 </script>
 @endpush
