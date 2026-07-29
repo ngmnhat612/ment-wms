@@ -232,7 +232,7 @@
               <label class="form-label fw-medium">Vật tư <span class="text-danger">*</span></label>
               <input type="text" class="form-control" id="rProductText"
                      placeholder="Nhập hoặc chọn"
-                     list="productDatalist" autocomplete="off" onblur="resolveProduct(true)">
+                     list="productDatalist" autocomplete="off">
               <datalist id="productDatalist">
                 @foreach ($products as $p)
                   <option value="{{ $p->code }} - {{ $p->name }}"></option>

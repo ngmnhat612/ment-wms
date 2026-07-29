@@ -213,7 +213,7 @@
                 <label class="form-label fw-medium">Vật tư <span class="text-danger">*</span></label>
                     <input type="text" class="form-control" id="rProductText"
                         placeholder="Nhập hoặc chọn"
-                        list="productDatalist" autocomplete="off" onblur="resolveProduct(true)">
+                        list="productDatalist" autocomplete="off">
                     {{-- Datalist render sẵn (chỉ active) — JS sẽ ghi đè nội dung
                         động qua refreshDatalists() mỗi khi mở modal, thêm đúng 1
                         option Ngưng hoạt động nếu đó là giá trị hiện tại của rule --}}
@@ -265,7 +265,7 @@
                 <label class="form-label fw-medium">Người phụ trách <span class="text-danger">*</span></label>
                     <input type="text" class="form-control" id="rEmployeeText"
                         placeholder="Nhập hoặc chọn"
-                        list="employeeDatalist" autocomplete="off" onblur="resolveEmployee(true)">
+                        list="employeeDatalist" autocomplete="off">
                     {{-- Datalist render sẵn (chỉ active) — JS sẽ ghi đè nội dung
                         động qua refreshDatalists() mỗi khi mở modal --}}
                     <datalist id="employeeDatalist">
