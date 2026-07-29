@@ -382,6 +382,7 @@
 
 @push('scripts')
 <script>
+  const routeIndex = '{{ route('master.reorder-rule.index') }}';
   const routeStore = '{{ route('master.reorder-rule.store') }}';
   const routeBase  = '{{ url('master/reorder-rule') }}';
 
@@ -619,17 +620,45 @@
     @endforeach
   @endif
 
+  // Map tên field trả về từ server -> {input, error} tương ứng trên form,
+  // để hiển thị lỗi server (vd: "Vật tư này đã được gán quy tắc.",
+  // "Ngưỡng tối thiểu không được vượt quá ngưỡng tối đa.") ngay tại chỗ,
+  // giống hệt cách hiển thị lỗi client, không cần reload/redirect trang.
+  const serverFieldMap = {
+    product_id:  { input: 'rProductText', error: 'rProductError' },
+    employee_id: { input: 'rEmployeeText', error: 'rEmployeeError' },
+    min_qty:     { input: 'rMinQty', error: 'rMinQtyError' },
+    max_qty:     { input: 'rMaxQty', error: 'rMaxQtyError' },
+  };
+
+  function showServerErrors(errors) {
+    Object.keys(errors).forEach(field => {
+      const map = serverFieldMap[field];
+      if (!map) return;
+      const input = document.getElementById(map.input);
+      const err   = document.getElementById(map.error);
+      if (input) input.classList.add('is-invalid');
+      if (err)   err.textContent = errors[field][0];
+    });
+
+    // min_qty/max_qty dùng chung 1 cặp ô — nếu lỗi chỉ trả về ở max_qty
+    // (vd. rule gte), vẫn tô đỏ luôn ô Min để người dùng thấy rõ cặp liên quan.
+    if (errors.max_qty && !errors.min_qty) {
+      document.getElementById('rMinQty').classList.add('is-invalid');
+    }
+  }
+
   document.getElementById('ruleForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+
     resolveProduct(true);
     resolveEmployee(true);
 
     if (!document.getElementById('rProduct').value) {
-        e.preventDefault();
         return;
     }
 
     if (!document.getElementById('rEmployee').value) {
-        e.preventDefault();
         return;
     }
 
@@ -647,12 +676,12 @@
         maxEl.classList.add('is-invalid');
         document.getElementById('rMinQtyError').textContent = 'Vui lòng nhập Min hoặc Max.';
         document.getElementById('rMaxQtyError').textContent = 'Vui lòng nhập Min hoặc Max.';
-        e.preventDefault();
         minEl.focus();
         return;
       }
     }
 
+    const form    = document.getElementById('ruleForm');
     const btn     = document.getElementById('rSubmitBtn');
     const spinner = document.getElementById('rSubmitSpinner');
     const icon    = document.getElementById('rSubmitIcon');
@@ -662,7 +691,43 @@
     spinner.classList.remove('d-none');
     icon.classList.add('d-none');
     label.textContent = 'Đang lưu...';
+
+    fetch(form.action, {
+      method: 'POST', // luôn POST thật; _method=PUT được Laravel spoof qua field ẩn
+      headers: {
+        'Accept': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest',
+      },
+      body: new FormData(form),
+      redirect: 'manual', // không để fetch tự follow + "tiêu thụ" flash message;
+                           // để chính trình duyệt điều hướng ở bước cuối
+    })
+      .then(async (res) => {
+        if (res.status === 422) {
+          const data = await res.json();
+          showServerErrors(data.errors || {});
+          return;
+        }
+        if (res.status === 0 || (res.status >= 300 && res.status < 400)) {
+          // Thành công: server yêu cầu redirect (kèm flash 'success' trong
+          // session). Để chính trình duyệt điều hướng tới đó, giữ nguyên
+          // vẹn flash message thay vì để fetch() tự follow và tiêu thụ nó.
+          window.location.href = routeIndex;
+          return;
+        }
+        throw new Error('Request failed');
+      })
+      .catch(() => {
+        alert('Có lỗi xảy ra, vui lòng thử lại.');
+      })
+      .finally(() => {
+        btn.disabled = false;
+        spinner.classList.add('d-none');
+        icon.classList.remove('d-none');
+        label.textContent = 'Lưu';
+      });
   });
+
 
   document.getElementById('ruleModal').addEventListener('shown.coreui.modal', function () {
     document.getElementById('rProductText').focus();
