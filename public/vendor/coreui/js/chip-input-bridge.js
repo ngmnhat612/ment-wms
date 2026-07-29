@@ -29,3 +29,25 @@
 
   delete window.coreuiChipOnly;
 })();
+
+// ── PATCH: ChipInput._syncHiddenInput/_createHiddenInput hard-code "," ──
+// coreui-chip-only (CoreUI 5.8.0) luôn nối giá trị hidden input bằng dấu
+// phẩy, bỏ qua config.separator. Patch lại 1 lần cho toàn app, áp dụng
+// đồng nhất cho MỌI ChipInput (kể cả tự động init qua Data API lúc
+// DOMContentLoaded), tránh phải tự fix tay ở từng form (receipt/issue...).
+(function () {
+  const proto = window.coreui.ChipInput.prototype;
+
+  proto._syncHiddenInput = function () {
+    if (this._hiddenInput) {
+      const sep = this._config?.separator || ' ';
+      this._hiddenInput.value = this.getValues().join(sep);
+    }
+  };
+
+  const originalCreateHiddenInput = proto._createHiddenInput;
+  proto._createHiddenInput = function () {
+    originalCreateHiddenInput.call(this);
+    this._syncHiddenInput(); // ghi đè lại value vừa bị join(",") sai
+  };
+})();

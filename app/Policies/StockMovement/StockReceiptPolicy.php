@@ -42,14 +42,6 @@ class StockReceiptPolicy
         return $this->allow($account);
     }
 
-    /**
-     * Chỉ Admin được xóa phiếu nhập.
-     */
-    public function delete(Account $account, StockReceipt $stockReceipt): bool
-    {
-        return $account->hasRole('Admin');
-    }
-
     public function update(Account $account, StockReceipt $stockReceipt): bool
     {
         return $this->allow($account);

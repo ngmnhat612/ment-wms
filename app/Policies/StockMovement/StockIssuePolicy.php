@@ -43,14 +43,6 @@ class StockIssuePolicy
         return $this->allow($account);
     }
 
-    /**
-     * Chỉ Admin được xóa phiếu xuất.
-     */
-    public function delete(Account $account, StockIssue $stockIssue): bool
-    {
-        return $account->hasRole('Admin');
-    }
-
     public function update(Account $account, StockIssue $stockIssue): bool
     {
         return $this->allow($account);

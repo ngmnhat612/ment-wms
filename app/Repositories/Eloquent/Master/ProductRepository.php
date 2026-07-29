@@ -7,7 +7,6 @@ use App\Enums\ActiveStatus;
 use App\Repositories\Contracts\Master\ProductRepositoryInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Support\Facades\Log;
 
 class ProductRepository implements ProductRepositoryInterface
 {

@@ -47,29 +47,14 @@ class StockIssueRepository implements StockIssueRepositoryInterface
     }
 
     /**
-     * Xóa MỀM phiếu (StockIssue dùng SoftDeletes từ migration 000098) —
-     * $issue->delete() giờ chỉ set deleted_at, không xóa cứng khỏi DB.
-     */
-    public function delete(StockIssue $issue): bool
-    {
-        return (bool) $issue->delete();
-    }
-
-    /**
-     * Xóa MỀM toàn bộ lines/details cũ rồi tạo lại mới, dùng khi sửa phiếu
-     * Draft (StockIssueService::update()). Trước migration 000098, bảng này
-     * chưa có deleted_at nên $issue->lines()->delete() là XÓA CỨNG; giờ
-     * StockIssueLine/StockIssueDetail đã dùng SoftDeletes nên delete() ở
-     * đây chỉ set deleted_at — nhưng Eloquent KHÔNG tự cascade soft delete
-     * xuống quan hệ con, nên phải soft-delete details TRƯỚC, rồi mới
-     * soft-delete lines (đối xứng với FK 'no action' ở migration 000098b —
-     * DB không còn tự cascade cứng nữa).
+     * Xóa cứng toàn bộ lines cũ rồi tạo lại mới, dùng khi sửa phiếu Draft
+     * (StockIssueService::update()). FK stock_issue_detail.stock_issue_line_id
+     * là cascade -> xóa lines là đủ, DB tự cascade xóa details con, không
+     * cần xóa details thủ công trước.
      */
     public function replaceDetails(StockIssue $issue, array $lineRows): void
     {
-        $lineIds = $issue->lines()->pluck('id');
-        StockIssueDetail::whereIn('stock_issue_line_id', $lineIds)->delete(); // soft delete
-        $issue->lines()->delete(); // soft delete
+        $issue->lines()->delete();
 
         foreach ($lineRows as $line) {
             $detailRows = $line['details'] ?? [];

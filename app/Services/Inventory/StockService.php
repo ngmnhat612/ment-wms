@@ -170,12 +170,53 @@ class StockService
 
     /**
      * Cộng tồn thật (quantity += quantity) — bước DUY NHẤT cộng tồn kho khi
-     * phiếu nhập chuyển Approved → Completed. Tự tạo dòng `stocks` mới nếu
+     * phiếu nhập chuyển Draft → Completed. Tự tạo dòng `stocks` mới nếu
      * chưa tồn tại tổ hợp product_id+lot_id+serial_id+current_location_id.
      */
     public function increase(array $params): void
     {
         DB::transaction(function () use ($params) {
+            // Mỗi Lô chỉ nằm ở đúng 1 Vị trí (theo lot_id, không phân biệt
+            // serial_id — sản phẩm theo Lô+Sê-ri có nhiều dòng serial nhưng
+            // cùng chung 1 vị trí của Lô). Tìm dòng Stock hiện tại của Lô
+            // (nếu có) để biết Lô đang ở đâu, BẤT KỂ vị trí đó có khớp với
+            // $params['location_id'] hay không.
+            $existingLotStock = Stock::query()
+                ->where('warehouse_id', $params['warehouse_id'])
+                ->where('product_id', $params['product_id'])
+                ->where('lot_id', $params['lot_id'])
+                ->lockForUpdate()
+                ->first();
+
+            // Chỉ thực sự "relocate" khi Lô ĐÃ có tồn kho từ trước VÀ vị trí
+            // đó KHÁC vị trí nhập lần này. Cờ này dùng để quyết định
+            // previous_location_id khi tạo dòng Stock mới bên dưới — tránh
+            // gán previous_location_id sai cho các serial MỚI được tạo liên
+            // tiếp trong CÙNG 1 lần approve (cùng lot, cùng location đích):
+            // serial đầu tạo dòng trước → serial sau nhìn thấy dòng đó như
+            // "đã tồn tại", dù vị trí chưa từng thay đổi thật sự.
+            $didRelocate = false;
+
+            if ($existingLotStock && (int) $existingLotStock->current_location_id !== (int) $params['location_id']) {
+                // Lô đã có tồn kho nhưng đang ở vị trí KHÁC vị trí nhập lần này
+                // -> chuyển toàn bộ dòng stock của Lô đó sang vị trí mới trước,
+                // giống hệt thao tác "Chỉnh sửa vị trí" (relocate) ở màn Tồn kho:
+                // previous_location_id = vị trí cũ, current_location_id = vị trí mới.
+                Stock::query()
+                    ->where('warehouse_id', $params['warehouse_id'])
+                    ->where('product_id', $params['product_id'])
+                    ->where('lot_id', $params['lot_id'])
+                    ->update([
+                        'previous_location_id' => $existingLotStock->current_location_id,
+                        'current_location_id'  => $params['location_id'],
+                        'updated_at'            => now(),
+                    ]);
+
+                $didRelocate = true;
+            }
+
+            // Sau khi (nếu cần) đã chuyển vị trí, khóa lại đúng dòng khớp
+            // product+location(mới)+lot+serial để cộng dồn số lượng.
             $stock = Stock::query()
                 ->where('warehouse_id', $params['warehouse_id'])
                 ->where('product_id', $params['product_id'])
@@ -202,7 +243,11 @@ class StockService
             Stock::create([
                 'warehouse_id'          => $params['warehouse_id'],
                 'product_id'            => $params['product_id'],
-                'previous_location_id'  => null,
+                // Chỉ ghi previous_location_id khi THỰC SỰ vừa relocate ở trên.
+                // Nếu không relocate (Lô mới hoàn toàn, hoặc vị trí không đổi),
+                // dòng mới không có "vị trí trước" — để null, đồng nhất với
+                // các dòng serial khác được tạo trong cùng lần nhập này.
+                'previous_location_id'  => $didRelocate ? $existingLotStock->current_location_id : null,
                 'current_location_id'   => $params['location_id'],
                 'lot_id'                => $params['lot_id'],
                 'serial_id'             => $params['serial_id'] ?? null,

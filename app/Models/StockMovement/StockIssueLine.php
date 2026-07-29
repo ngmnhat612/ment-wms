@@ -6,12 +6,9 @@ use App\Models\Master\Product;
 use App\Models\Master\Sn;
 use App\Models\Master\Uom;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 
 class StockIssueLine extends Model
 {
-    use SoftDeletes;
-
     protected $table = 'stock_issue_line';
 
     protected $fillable = [

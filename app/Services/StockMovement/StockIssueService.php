@@ -13,6 +13,7 @@ use App\Repositories\Contracts\StockMovement\StockIssueRepositoryInterface;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use App\Services\Inventory\StockService;
 
 class StockIssueService
@@ -94,21 +95,6 @@ class StockIssueService
     }
 
     /**
-     * Xóa phiếu Draft. Phải RELEASE giữ chỗ trước khi xóa dòng, vì phiếu Draft
-     * đã giữ chỗ (reserved_qty) ngay từ lúc create()/update().
-     */
-    public function delete(StockIssue $issue): void
-    {
-        $this->assertDraft($issue, 'xóa');
-
-        DB::transaction(function () use ($issue) {
-            $issue->load('lines.details');
-            $this->releaseIssue($issue);
-            $this->issueRepository->delete($issue);
-        });
-    }
-
-    /**
      * Draft → Completed. Bước DUY NHẤT trừ tồn kho (qua StockService).
      * Giờ phải loop 2 tầng: lines -> details, vì product_id/uom_id nằm ở
      * line (cha), còn actual_qty/lot_id/serial_id/location_id nằm ở detail (con).
@@ -137,61 +123,39 @@ class StockIssueService
                 $isSerialTracked = $details->count() > 1 || $details->first()?->serial_id;
 
                 foreach ($details as $detail) {
-                    // Số lượng THỰC XUẤT dùng để trừ tồn thật (decrease) — có
-                    // thể khác với số lượng đã GIỮ CHỖ lúc Draft (expected_qty).
-                    // LƯU Ý: actual_qty cast 'decimal:3' trả về STRING (vd "0.000"),
-                    // và chuỗi "0.000" là TRUTHY trong PHP (chỉ "" và "0" mới falsy) —
-                    // nên PHẢI ép kiểu (float) actual_qty TRƯỚC khi đánh giá ?:,
-                    // nếu không biểu thức không bao giờ fallback về expected_qty khi
-                    // actual_qty = "0.000" (mặc định lúc Draft chưa nhập Thực xuất),
-                    // khiến $qty luôn = 0 và toàn bộ dòng bị bỏ qua (continue) —
-                    // hàng KHÔNG được trừ tồn dù phiếu vẫn chuyển Completed thành công.
                     $actualQty = (float) $detail->actual_qty;
                     $qty = $actualQty ?: (float) $line->expected_qty;
                     if ($qty <= 0) continue;
 
-                    // Bỏ giữ chỗ đã đặt lúc Draft cho đúng dòng stock này —
-                    // PHẢI dùng đúng cơ sở đã reserve() (reserveLines()): hàng
-                    // Sê-ri theo actual_qty=1/detail, hàng không Sê-ri theo
-                    // expected_qty của line, KHÔNG phải $qty ở trên (có thể
-                    // khác expected_qty nếu actual_qty được sửa trước Complete).
                     $reservedQty = $isSerialTracked
                         ? (float) ($detail->actual_qty ?: 1)
                         : (float) $line->expected_qty;
                     $this->releaseDetail($issue, $line, $detail, $reservedQty);
 
-                    $remaining   = $qty;
-                    $suggestions = $this->stockService->suggestStockForIssue(
-                        $line->product_id,
-                        $remaining,
-                        $detail->location_id
-                    );
-
-                    foreach ($suggestions as $s) {
-                        if ($remaining <= 0.0001) break;
-
-                        $take = min($s['qty_suggest'], $remaining);
-
-                        $this->stockService->decrease([
-                            'warehouse_id' => $issue->warehouse_id,
-                            'product_id'   => $line->product_id,
-                            'location_id'  => $s['location_id'],
-                            'quantity'     => $take,
-                            'lot_id'       => $s['lot_id'],
-                            'serial_id'    => $s['serial_id'],
-                        ]);
-
-                        $remaining -= $take;
+                    // Trừ tồn thật ĐÚNG theo Lô/Vị trí/Serial người dùng đã chọn
+                    // (và đã giữ chỗ ở bước reserveLines() lúc Draft) — KHÔNG
+                    // dùng suggestStockForIssue() ở đây, vì hàm đó tự chọn Lô
+                    // theo FEFO/FIFO trên toàn Vị trí, bỏ qua lot_id cụ thể của
+                    // dòng. Với 2 dòng cùng Vật tư nhưng khác Lô, dùng gợi ý sẽ
+                    // khiến cả 2 dòng cùng bị gom về 1 Lô (thường là Lô có hạn
+                    // dùng/received_date sớm nhất), trừ sai/trừ đúp 1 Lô và bỏ
+                    // sót Lô còn lại — đúng bug đã gặp trên môi trường thật.
+                    if (! $detail->lot_id) {
+                        $product = $line->product;
+                        $productLabel = $product ? "{$product->code} - {$product->name}" : "ID {$line->product_id}";
+                        throw new \DomainException(
+                            "Dòng vật tư {$productLabel} chưa xác định Lô để trừ tồn."
+                        );
                     }
 
-                if ($remaining > 0.001) {
-                    $product = $line->product;
-                    $productLabel = $product ? "{$product->code} - {$product->name}" : "ID {$line->product_id}";
-
-                    throw new \DomainException(
-                        "Không đủ tồn kho để xuất vật tư {$productLabel}. Còn thiếu: {$remaining}."
-                    );
-                }
+                    $this->stockService->decrease([
+                        'warehouse_id' => $issue->warehouse_id,
+                        'product_id'   => $line->product_id,
+                        'location_id'  => $detail->location_id,
+                        'quantity'     => $qty,
+                        'lot_id'       => $detail->lot_id,
+                        'serial_id'    => $detail->serial_id,
+                    ]);
 
                     $this->issueRepository->updateDetailActualQty($detail, $qty);
                 }
@@ -422,7 +386,7 @@ class StockIssueService
         return $rows;
     }
 
-    /**
+/**
      * Tồn khả dụng (vị trí + lô + serial) của 1 sản phẩm, dùng cho AJAX gợi ý
      * Vị trí -> Lô -> Sê-ri ở form Phiếu xuất (StockIssueController::stockLocations()).
      *
@@ -430,6 +394,20 @@ class StockIssueService
      * nhiều dòng theo từng Sê-ri, dựa trên tracking_type của sản phẩm), nên
      * đặt ở Service Layer — Controller chỉ gọi và trả JSON, không tự xử lý
      * (Rule #3: mọi nghiệp vụ phải đi qua Service Layer).
+     *
+     * LƯU Ý QUAN TRỌNG về own_reserved: đây là đại lượng THEO NHÓM
+     * (location_id, lot_id) — lượng mà CHÍNH phiếu đang sửa ($issueId) đang
+     * giữ chỗ ở nhóm đó, cần cộng lại vào available_qty để không tự chặn
+     * chính mình. Với sản phẩm Lô+Sê-ri, 1 nhóm (location, lot) có thể gồm
+     * NHIỀU dòng Stock con (1 dòng/serial). own_reserved PHẢI được cộng
+     * ĐÚNG 1 LẦN vào tổng của cả nhóm — TUYỆT ĐỐI không cộng vào từng dòng
+     * Stock con rồi sum lại, vì sẽ bị nhân lên N lần (N = số serial trong
+     * nhóm), gây hiển thị sai available_qty (BUG ĐÃ GẶP: Khu C tồn thực 13
+     * nhưng hiển thị 17 khi sửa phiếu, do own_reserved=1 của phiếu bị cộng
+     * lặp vào từng dòng serial trước khi gộp tổng Lô).
+     * Cách khắc phục: tính riêng $rawTotals (SUM quantity-reserved theo
+     * nhóm, CHƯA có own_reserved), rồi cộng own_reserved đúng 1 lần theo
+     * key nhóm để ra $lotTotals — không dùng closure per-row cho việc này.
      *
      * @return Collection<int, array{
      *     location_id:int, location_code:string, location_name:string,
@@ -442,10 +420,36 @@ class StockIssueService
         $product  = $this->productRepository->findById($productId);
         $tracking = (int) ($product?->tracking_type?->value ?? TrackingType::Lot->value);
 
-        $stocks = $this->stockRepository->availableForIssue($productId, $issueId);
+        // own_reserved: lượng CHÍNH phiếu đang sửa ($issueId) đang giữ chỗ,
+        // gộp theo (location_id, lot_id) — dữ liệu thô do Repository trả về,
+        // Service quyết định cách áp dụng (Rule #3).
+        $ownReserved = $issueId
+            ? $this->stockRepository->ownReservedByLotLocation($issueId, $productId)
+            : [];
+
+        $groupKey = fn ($s) => $s->current_location_id . ':' . $s->lot_id;
+        $rawQty   = fn ($s) => (float) $s->quantity - (float) $s->reserved_qty;
+
+        $allStocks = $this->stockRepository->availableForIssue($productId);
+
+        // Tổng RAW (quantity - reserved) theo từng NHÓM (location, lot) —
+        // CHƯA cộng own_reserved. Tính theo nhóm để tránh nhân own_reserved
+        // lên nhiều lần khi nhóm có nhiều dòng con (nhiều serial).
+        $rawTotals = $allStocks->groupBy($groupKey)->map(fn ($group) => $group->sum($rawQty));
+
+        // available_qty THẬT của từng nhóm = raw total + own_reserved,
+        // own_reserved cộng ĐÚNG 1 LẦN cho cả nhóm (không theo từng dòng con).
+        $lotTotals = $rawTotals->map(fn ($raw, $key) => $raw + ($ownReserved[$key] ?? 0));
+
+        $stocks = $allStocks
+            ->filter(fn ($s) => ($lotTotals[$groupKey($s)] ?? 0) > 0)
+            ->values();
+
         $result = collect();
 
         foreach ($stocks as $s) {
+            $lotKey = $groupKey($s);
+
             $baseRow = [
                 'location_id'   => $s->current_location_id,
                 'location_code' => $s->currentLocation?->code ?? '?',
@@ -455,13 +459,17 @@ class StockIssueService
                 'expiry_date'   => $s->lot?->expiry_date?->format('Y-m-d'),
                 'serial_id'     => $s->serial_id,
                 'serial_number' => $s->serial?->serial_number,
-                // available_qty = quantity - reserved_qty + phần chính phiếu này đang
-                // giữ chỗ (sẽ được release và reserve lại đúng số mới khi Lưu) — để
-                // người sửa phiếu thấy đúng "khả dụng thật nếu bỏ giữ chỗ cũ", tránh
-                // báo "vượt khả dụng" sai với chính giá trị đã lưu trước đó.
-                'available_qty' => (float) $s->quantity - (float) $s->reserved_qty + (float) ($s->own_reserved ?? 0),
+                // Lô+Sê-ri: available_qty là tổng CHUNG của cả nhóm
+                // (location+lot), gán như nhau cho mọi dòng serial "bung"
+                // ra từ Lô đó. Lô-only (không serial): dùng giá trị riêng
+                // của chính dòng đó (raw + own_reserved của nhóm).
+                'available_qty' => $tracking === TrackingType::LotAndSerial->value && $s->lot_id
+                    ? ($lotTotals[$lotKey] ?? 0)
+                    : $rawQty($s) + ($ownReserved[$lotKey] ?? 0),
             ];
 
+            // Trường hợp legacy: 1 dòng Lô gộp (serial_id NULL) cần bung ra
+            // nhiều dòng serial ảo — giữ lại để tương thích dữ liệu cũ.
             if ($tracking === TrackingType::LotAndSerial->value && $s->lot_id && ! $s->serial_id) {
                 $serials = $this->stockRepository->serialsInStock($productId, $s->lot_id);
                 if ($serials->isNotEmpty()) {

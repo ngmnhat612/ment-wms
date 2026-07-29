@@ -116,8 +116,21 @@ $fmt = fn($n) => rtrim(rtrim(number_format((float)$n, 3, '.', ','), '0'), '.');
                         $actualQty = $tracking === 2
                             ? $line->details->count()
                             : ($firstDetail->actual_qty ?? 0);
-                        $serialNumbers = $line->details->pluck('serial.serial_number')->filter()->implode(' ');
-                        $lotNumber = $firstDetail->lot?->lot_number ?? '-';
+
+                        // Ưu tiên đọc snapshot (serial_number_snapshot/lot_number_snapshot) —
+                        // không phụ thuộc serial_id/lot_id còn tồn tại hay không, nên vẫn hiển
+                        // thị đúng cho cả phiếu Đã hủy (Serial/Lot của phiếu Cancelled có thể
+                        // đã bị dọn dẹp, cột serial_id/lot_id trên detail lúc đó tự động về
+                        // NULL nhờ FK ON DELETE SET NULL). Fallback về join Serial/Lot cho các
+                        // detail cũ được tạo TRƯỚC khi thêm 2 cột snapshot này.
+                        $serialNumbers = $line->details
+                            ->map(fn ($d) => $d->serial_number_snapshot ?: $d->serial?->serial_number)
+                            ->filter()
+                            ->implode(' ');
+
+                        $lotNumber = $firstDetail->lot_number_snapshot
+                            ?? $firstDetail->lot?->lot_number
+                            ?? '-';
                     @endphp
                     <tr>
                         <td class="text-center text-body-secondary">{{ $li + 1 }}</td>

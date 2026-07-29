@@ -107,20 +107,6 @@ class StockIssueController extends Controller
             ->with('success', "Đã cập nhật phiếu {$issue->code} thành công.");
     }
 
-    public function destroy(StockIssue $issue)
-    {
-        Gate::authorize('delete', $issue);
-
-        try {
-            $code = $issue->code;
-            $this->issueService->delete($issue);
-        } catch (\DomainException $e) {
-            return redirect()->route('stock-movements.index')->with('error', $e->getMessage());
-        }
-
-        return redirect()->route('stock-movements.index')->with('success', "Đã xóa phiếu {$code} thành công.");
-    }
-
     public function complete(StockIssue $issue)
     {
         Gate::authorize('complete', $issue);
@@ -166,6 +152,8 @@ class StockIssueController extends Controller
      */
     public function stockLocations(Request $request, int $productId)
     {
+        Gate::authorize('create', StockIssue::class);
+        
         $issueId = $request->integer('issue_id') ?: null;
 
         return response()->json($this->issueService->getAvailableStockForIssue($productId, $issueId));

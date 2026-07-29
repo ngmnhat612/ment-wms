@@ -69,7 +69,7 @@
                 <span class="input-group-text">
                 <svg class="icon"><use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-search') }}"></use></svg>
                 </span>
-                <input type="text" class="form-control" name="search"
+                <input type="text" class="form-control" name="search" maxlength="50"
                     value="{{ request('search') }}" placeholder="Tìm kiếm theo Mã phiếu">
             </div>
             </div>
@@ -94,11 +94,13 @@
             <div class="d-flex gap-2">
                 <div class="input-group">
                 <span class="input-group-text">Từ</span>
-                <input type="date" class="form-control" name="date_from" value="{{ request('date_from') }}" title="Từ ngày">
+                <input type="date" class="form-control" name="date_from" value="{{ request('date_from') }}" 
+                      title="Từ ngày" onchange="this.form.submit()">
                 </div>
                 <div class="input-group">
                 <span class="input-group-text">Đến</span>
-                <input type="date" class="form-control" name="date_to" value="{{ request('date_to') }}" title="Đến ngày">
+                <input type="date" class="form-control" name="date_to" value="{{ request('date_to') }}" 
+                      title="Đến ngày" onchange="this.form.submit()">
                 </div>
             </div>
             </div>
@@ -180,7 +182,6 @@
                   $status = $movement->status;
                   $isReceipt = $movement->movement_type === 'receipt';
                   $showRoute = $isReceipt ? 'receipts.show' : 'issues.show';
-                  $deleteUrl = $isReceipt ? "/receipts/{$movement->id}" : "/issues/{$movement->id}";
                   $linkedRoute = $isReceipt ? 'stock-in-requests.show' : 'stock-out-requests.show';
               @endphp
               <tr>
@@ -242,13 +243,6 @@
                      class="btn btn-sm btn-outline-primary me-1" title="Xem chi tiết">
                     <svg class="icon"><use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-list-rich') }}"></use></svg>
                   </a>
-                  @if ($status === \App\Enums\DocumentStatus::Draft)
-                    <button class="btn btn-sm btn-outline-danger"
-                            onclick="confirmDelete('{{ $deleteUrl }}', '{{ addslashes($movement->code) }}')"
-                            title="Xóa">
-                      <svg class="icon"><use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-trash') }}"></use></svg>
-                    </button>
-                  @endif
                 </td>
               </tr>
             @empty
@@ -278,44 +272,9 @@
     </div>
   </div>
 
-  {{-- MODAL XÁC NHẬN XÓA --}}
-  <div class="modal fade" id="deleteModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered modal-sm">
-      <div class="modal-content">
-        <div class="modal-header border-0 pb-0">
-          <button type="button" class="btn-close" data-coreui-dismiss="modal"></button>
-        </div>
-        <div class="modal-body text-center px-4 pb-2">
-          <svg class="icon icon-3xl text-danger mb-3">
-            <use xlink:href="{{ asset('vendor/coreui/icons/sprites/free.svg#cil-warning') }}"></use>
-          </svg>
-          <h6 class="fw-semibold mb-1">Xác nhận xóa</h6>
-          <p class="text-body-secondary small mb-0">
-            Bạn có chắc muốn xóa phiếu<br>
-            <strong id="deleteCode" class="text-body"></strong>?
-          </p>
-          <p class="text-danger small mt-1">Thao tác này không thể hoàn tác.</p>
-        </div>
-        <div class="modal-footer border-0 pt-0 justify-content-center gap-2">
-          <button type="button" class="btn btn-outline-secondary btn-sm" data-coreui-dismiss="modal">Hủy</button>
-          <form id="deleteForm" method="POST" class="d-inline">
-            @csrf
-            @method('DELETE')
-            <button type="submit" class="btn btn-danger btn-sm">Xóa</button>
-          </form>
-        </div>
-      </div>
-    </div>
-  </div>
-
 @endsection
 
 @push('scripts')
 <script>
-  function confirmDelete(deleteUrl, code) {
-    document.getElementById('deleteCode').textContent = code;
-    document.getElementById('deleteForm').action = deleteUrl;
-    new coreui.Modal(document.getElementById('deleteModal')).show();
-  }
 </script>
 @endpush

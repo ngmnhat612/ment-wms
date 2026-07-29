@@ -20,8 +20,6 @@ interface StockIssueRepositoryInterface
 
     public function update(StockIssue $issue, array $headerData): StockIssue;
 
-    public function delete(StockIssue $issue): bool;
-
     /**
      * Xóa toàn bộ lines (+ details con qua cascade) và tạo lại từ $lineRows.
      * Mỗi phần tử của $lineRows là 1 line (product_id/uom_id/sn_id/expected_qty/note)

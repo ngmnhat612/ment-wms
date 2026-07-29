@@ -163,7 +163,7 @@ $typeLabels = [1 => 'Sản xuất', 2 => 'Bảo trì', 3 => 'Mượn', 4 => 'Tr�
                             <td class="small">{{ $line->sn?->code ?? '-' }}</td>
                             <td>
                                 @if($tracking === 2)
-                                    <span class="text-danger">{{ $lotNumber === '-' ? 'Chưa có lot' : $lotNumber }}</span>
+                                    <span>{{ $lotNumber === '-' ? 'Chưa có lot' : $lotNumber }}</span>
                                 @else
                                     {{ $lotNumber }}
                                 @endif

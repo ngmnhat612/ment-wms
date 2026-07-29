@@ -180,18 +180,32 @@ class ProductService
     /**
      * Xóa sản phẩm.
      * Ném exception nếu đang được tham chiếu bởi bất kỳ bảng nào khác
-     * (bao gồm cả tồn kho — stocks.product_id có khai báo khóa ngoại nên
-     * được tự động phát hiện qua guardNotInUse, không cần kiểm tra riêng).
-     * Xóa ReorderRule tương ứng trước khi xóa sản phẩm.
+     * NGOẠI TRỪ reorder_rules và putaway_rules — 2 bảng này là quy tắc phụ thuộc
+     * riêng của sản phẩm, sẽ được xóa tự động cùng lúc nên không tính là ràng buộc.
+     * (stocks vẫn được guard vì có khóa ngoại products.id -> stocks.product_id,
+     * tự động phát hiện qua guardNotInUse, không cần kiểm tra riêng).
+     *
+     * Thứ tự bắt buộc: guard TRƯỚC, xóa rule + ảnh + product SAU — để tránh
+     * trường hợp bị chặn xóa nhưng đã lỡ xóa mất ReorderRule/PutawayRule
+     * (gây mất đồng bộ dữ liệu).
      *
      * @throws \RuntimeException
      */
     public function delete(Product $product): void
     {
+        $this->guardNotInUse(
+            'products',
+            'id',
+            $product->id,
+            'Vật tư',
+            $product->name,
+            ignoreTables: ['reorder_rules', 'putaway_rules'],
+        );
+
         $this->reorderRuleService->deleteForProduct($product->id);
         $this->putawayRuleService->deleteForProduct($product->id);
 
-        $this->guardNotInUse('products', 'id', $product->id, 'Vật tư', $product->name);
+        $this->deleteImage($product->image_path);
 
         $this->productRepository->delete($product);
     }
