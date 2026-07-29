@@ -26,8 +26,6 @@ class ReorderRuleController extends Controller
 
         $filters = $request->only(['search', 'status', 'sort', 'dir']);
 
-        // Chặn input tìm kiếm quá dài (phòng trường hợp gọi trực tiếp qua URL,
-        // bỏ qua giới hạn maxlength phía frontend)
         foreach (['search'] as $key) {
             if (isset($filters[$key])) {
                 $filters[$key] = mb_substr($filters[$key], 0, 200);
@@ -38,13 +36,20 @@ class ReorderRuleController extends Controller
         $totalCount  = $this->reorderRuleService->totalCount();
         $activeCount = $this->reorderRuleService->activeCount();
 
-        $products         = $this->reorderRuleService->activeProducts();
-        $employees        = $this->reorderRuleService->activeNonAdminEmployees();
+        // Active-only: dùng cho TẠO MỚI
+        $products  = $this->reorderRuleService->activeProducts();
+        $employees = $this->reorderRuleService->activeNonAdminEmployees();
+
+        // Tất cả (kể cả Ngưng hoạt động): dùng cho CHỈNH SỬA, tránh mất lựa chọn
+        // khi vật tư/người phụ trách của rule cũ đã bị Ngưng hoạt động.
+        $allProducts  = $this->reorderRuleService->allProducts();
+        $allEmployees = $this->reorderRuleService->allNonAdminEmployees();
+
         $defaultWarehouse = $this->reorderRuleService->defaultWarehouse();
 
         return view('master.reorder-rule.index', compact(
             'rules', 'totalCount', 'activeCount',
-            'products', 'employees', 'defaultWarehouse'
+            'products', 'employees', 'allProducts', 'allEmployees', 'defaultWarehouse'
         ));
     }
 

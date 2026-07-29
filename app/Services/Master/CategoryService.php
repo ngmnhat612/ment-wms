@@ -46,7 +46,7 @@ class CategoryService
     }
 
     /**
-     * Lấy TẤT CẢ danh mục (kể cả Ngừng hoạt động) — dùng cho dropdown ở chế độ
+     * Lấy TẤT CẢ danh mục (kể cả Ngưng hoạt động) — dùng cho dropdown ở chế độ
      * chỉnh sửa Product, để category đã inactive nhưng đang được product tham
      * chiếu vẫn hiển thị đúng tên thay vì bị mất do không có trong option active.
      */

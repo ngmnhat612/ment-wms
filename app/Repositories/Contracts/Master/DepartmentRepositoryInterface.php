@@ -19,7 +19,7 @@ interface DepartmentRepositoryInterface
     public function allActive(): Collection;
 
     /**
-     * Lấy TẤT CẢ bộ phận (kể cả Ngừng hoạt động) — dùng cho dropdown ở chế độ
+     * Lấy TẤT CẢ bộ phận (kể cả Ngưng hoạt động) — dùng cho dropdown ở chế độ
      * chỉnh sửa Employee, để Bộ phận đã inactive nhưng đang được nhân viên tham
      * chiếu vẫn hiển thị đúng tên.
      */

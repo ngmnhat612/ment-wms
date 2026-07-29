@@ -210,21 +210,24 @@
           <div class="modal-body">
 
             <div class="mb-3">
-              <label class="form-label fw-medium">Vật tư <span class="text-danger">*</span></label>
-                <input type="text" class="form-control" id="rProductText"
-                      placeholder="Nhập hoặc chọn"
-                      list="productDatalist" autocomplete="off" onblur="resolveProduct(true)">
-                <datalist id="productDatalist">
-                  @foreach ($products as $p)
-                    <option value="{{ $p->code }} - {{ $p->name }}"></option>
-                  @endforeach
-                </datalist>
-                <input type="hidden" id="rProduct" name="product_id"
-                      value="{{ old('product_id') }}">
-                <div class="invalid-feedback" id="rProductError"></div>
-              @error('product_id')
-                <div class="invalid-feedback">{{ $message }}</div>
-              @enderror
+                <label class="form-label fw-medium">Vật tư <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="rProductText"
+                        placeholder="Nhập hoặc chọn"
+                        list="productDatalist" autocomplete="off" onblur="resolveProduct(true)">
+                    {{-- Datalist render sẵn (chỉ active) — JS sẽ ghi đè nội dung
+                        động qua refreshDatalists() mỗi khi mở modal, thêm đúng 1
+                        option Ngưng hoạt động nếu đó là giá trị hiện tại của rule --}}
+                    <datalist id="productDatalist">
+                        @foreach ($products as $p)
+                            <option value="{{ $p->code }} - {{ $p->name }}"></option>
+                        @endforeach
+                    </datalist>
+                    <input type="hidden" id="rProduct" name="product_id"
+                        value="{{ old('product_id') }}">
+                    <div class="invalid-feedback" id="rProductError"></div>
+                @error('product_id')
+                    <div class="invalid-feedback">{{ $message }}</div>
+                @enderror
             </div>
 
             <div class="row g-3 mb-3">
@@ -259,21 +262,23 @@
             </div>
 
             <div class="mb-3">
-              <label class="form-label fw-medium">Người phụ trách <span class="text-danger">*</span></label>
-                <input type="text" class="form-control" id="rEmployeeText"
-                      placeholder="Nhập hoặc chọn"
-                      list="employeeDatalist" autocomplete="off" onblur="resolveEmployee(true)">
-                <datalist id="employeeDatalist">
-                  @foreach ($employees as $emp)
-                    <option value="{{ $emp->name }} ({{ $emp->code }})"></option>
-                  @endforeach
-                </datalist>
-                <input type="hidden" id="rEmployee" name="employee_id"
-                      value="{{ old('employee_id') }}">
-                <div class="invalid-feedback" id="rEmployeeError"></div>
-              @error('employee_id')
-                <div class="invalid-feedback">{{ $message }}</div>
-              @enderror
+                <label class="form-label fw-medium">Người phụ trách <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="rEmployeeText"
+                        placeholder="Nhập hoặc chọn"
+                        list="employeeDatalist" autocomplete="off" onblur="resolveEmployee(true)">
+                    {{-- Datalist render sẵn (chỉ active) — JS sẽ ghi đè nội dung
+                        động qua refreshDatalists() mỗi khi mở modal --}}
+                    <datalist id="employeeDatalist">
+                        @foreach ($employees as $emp)
+                            <option value="{{ $emp->name }} ({{ $emp->code }})"></option>
+                        @endforeach
+                    </datalist>
+                    <input type="hidden" id="rEmployee" name="employee_id"
+                        value="{{ old('employee_id') }}">
+                    <div class="invalid-feedback" id="rEmployeeError"></div>
+                @error('employee_id')
+                    <div class="invalid-feedback">{{ $message }}</div>
+                @enderror
             </div>
 
             <div class="mb-3">
@@ -349,22 +354,90 @@
 
 @endsection
 
+@php
+  // Tính trước dữ liệu JS cho datalist "Chỉnh sửa" (active + inactive) ở đây,
+  // vì @json() trải trên 1 dòng dài với toán tử ?-> lồng trong closure khiến
+  // Blade's directive parser (paren-counter, không phải tokenizer PHP thật)
+  // bị lệch khi đếm ngoặc và báo lỗi "Unclosed '[' does not match ')'".
+  $allProductsJs = $allProducts->map(function ($p) {
+      return [
+          'id'       => $p->id,
+          'code'     => $p->code,
+          'name'     => $p->name,
+          'inactive' => $p->status?->value !== \App\Enums\ActiveStatus::Active->value,
+      ];
+  });
+
+  $allEmployeesJs = $allEmployees->map(function ($e) {
+      return [
+          'id'       => $e->id,
+          'code'     => $e->code,
+          'name'     => $e->name,
+          'inactive' => $e->status?->value !== \App\Enums\ActiveStatus::Active->value,
+      ];
+  });
+@endphp
+
 @push('scripts')
 <script>
   const routeStore = '{{ route('master.reorder-rule.store') }}';
   const routeBase  = '{{ url('master/reorder-rule') }}';
 
+  // Danh sách gốc — chỉ active. Đây là những gì được phép chọn khi TẠO MỚI,
+  // và cũng là nền cho danh sách được phép chọn khi CHỈNH SỬA.
   const products  = @json($products->map(fn($p) => ['id' => $p->id, 'code' => $p->code, 'name' => $p->name]));
   const employees = @json($employees->map(fn($e) => ['id' => $e->id, 'code' => $e->code, 'name' => $e->name]));
 
+  // Danh sách đầy đủ (kể cả Ngưng hoạt động) — CHỈ dùng để tra cứu tên/mã của
+  // 1 item cụ thể (item đang được gán sẵn cho rule khi mở form Chỉnh sửa).
+  // Không dùng để hiển thị toàn bộ lựa chọn, để tránh cho phép gán MỚI một
+  // vật tư/người phụ trách khác đang Ngưng hoạt động.
+  const allProducts  = @json($allProductsJs);
+  const allEmployees = @json($allEmployeesJs);
+
   const hasServerErrors = {{ $errors->any() ? 'true' : 'false' }};
+
+  // ID của vật tư / người phụ trách hiện đang gán cho rule đang mở (nếu đang
+  // Ngưng hoạt động) — item DUY NHẤT được phép giữ nguyên trong lựa chọn dù
+  // đã Ngưng hoạt động. Reset về null mỗi khi mở modal.
+  let currentInactiveProductId  = null;
+  let currentInactiveEmployeeId = null;
+
+  function productLabel(p, inactive = false) {
+    const base = `${p.code} - ${p.name}`;
+    return inactive ? `${base} (Ngưng hoạt động)` : base;
+  }
+
+  function employeeLabel(e, inactive = false) {
+    const base = `${e.name} (${e.code})`;
+    return inactive ? `${base} - Ngưng hoạt động` : base;
+  }
+
+  // Pool được phép CHỌN cho vật tư: active-only, cộng thêm đúng 1 item đang
+  // Ngưng hoạt động nếu đó là item hiện tại của rule (để không mất lựa chọn
+  // đang có sẵn khi mở form Chỉnh sửa).
+  function allowedProductPool() {
+    if (currentInactiveProductId == null) return products;
+    const extra = allProducts.find(p => p.id == currentInactiveProductId);
+    return extra ? [...products, extra] : products;
+  }
+
+  function allowedEmployeePool() {
+    if (currentInactiveEmployeeId == null) return employees;
+    const extra = allEmployees.find(e => e.id == currentInactiveEmployeeId);
+    return extra ? [...employees, extra] : employees;
+  }
 
   function resolveProduct(strict = false) {
     const text  = document.getElementById('rProductText').value.trim();
     const el    = document.getElementById('rProductText');
     const hid   = document.getElementById('rProduct');
     const err   = document.getElementById('rProductError');
-    const match = products.find(p => `${p.code} - ${p.name}` === text);
+    const pool  = allowedProductPool();
+    const match = pool.find(p => {
+      const inactive = p.id == currentInactiveProductId;
+      return productLabel(p, inactive) === text;
+    });
 
     if (match) {
       hid.value = match.id;
@@ -386,7 +459,11 @@
     const el    = document.getElementById('rEmployeeText');
     const hid   = document.getElementById('rEmployee');
     const err   = document.getElementById('rEmployeeError');
-    const match = employees.find(e => `${e.name} (${e.code})` === text);
+    const pool  = allowedEmployeePool();
+    const match = pool.find(e => {
+      const inactive = e.id == currentInactiveEmployeeId;
+      return employeeLabel(e, inactive) === text;
+    });
 
     if (match) {
       hid.value = match.id;
@@ -411,21 +488,40 @@
     document.getElementById('rEmployeeError').textContent = '';
   }
 
-  // ─── Xóa lỗi tương ứng khi người dùng tương tác ──────────────────────────
+  // Cập nhật lại nội dung datalist theo pool được phép chọn hiện tại — chạy
+  // lại mỗi khi mở modal, vì "item inactive được phép" thay đổi theo rule.
+  function refreshDatalists() {
+    const prodDatalist = document.getElementById('productDatalist');
+    prodDatalist.innerHTML = allowedProductPool().map(p => {
+      const inactive = p.id == currentInactiveProductId;
+      const opt = document.createElement('option');
+      opt.value = productLabel(p, inactive);
+      return opt.outerHTML;
+    }).join('');
+
+    const empDatalist = document.getElementById('employeeDatalist');
+    empDatalist.innerHTML = allowedEmployeePool().map(e => {
+      const inactive = e.id == currentInactiveEmployeeId;
+      const opt = document.createElement('option');
+      opt.value = employeeLabel(e, inactive);
+      return opt.outerHTML;
+    }).join('');
+  }
+
   document.getElementById('rProductText').addEventListener('input', function () {
     this.classList.remove('is-invalid');
     document.getElementById('rProductError').textContent = '';
     resolveProduct(false);
   });
 
-    document.getElementById('rEmployeeText').addEventListener('input', function () {
+  document.getElementById('rEmployeeText').addEventListener('input', function () {
     this.classList.remove('is-invalid');
     document.getElementById('rEmployeeError').textContent = '';
     resolveEmployee(false);
   });
 
   function openModal(id = null, productId = null, employeeId = null,
-                    minQty = 0, maxQty = 0, note = '', status = 1) {
+                minQty = 0, maxQty = 0, note = '', status = 1) {
     const modal  = new coreui.Modal(document.getElementById('ruleModal'));
     const form   = document.getElementById('ruleForm');
     const title  = document.getElementById('ruleModalLabel');
@@ -433,27 +529,39 @@
 
     clearValidation();
 
-    document.getElementById('rId').value = id ?? ''; // <-- thêm dòng này
+    document.getElementById('rId').value = id ?? '';
+
+    // Xác định vật tư/người phụ trách hiện tại của rule có đang Ngưng hoạt
+    // động không — nếu có, đây là item DUY NHẤT được "mở khoá" tạm thời để
+    // vẫn hiển thị đúng, các item inactive khác vẫn không được chọn.
+    const isProductInactive  = productId != null && !products.some(p => p.id == productId);
+    const isEmployeeInactive = employeeId != null && !employees.some(e => e.id == employeeId);
+    currentInactiveProductId  = isProductInactive  ? productId  : null;
+    currentInactiveEmployeeId = isEmployeeInactive ? employeeId : null;
+
+    refreshDatalists();
 
     if (id) {
-        title.textContent = 'Chỉnh sửa quy tắc';
-        form.action       = `${routeBase}/${id}`;
-        method.value      = 'PUT';
-        document.getElementById('rProductText').setAttribute('disabled', true);
+      title.textContent = 'Chỉnh sửa quy tắc';
+      form.action       = `${routeBase}/${id}`;
+      method.value      = 'PUT';
+      document.getElementById('rProductText').setAttribute('disabled', true);
     } else {
-        title.textContent = 'Thêm quy tắc';
-        form.action       = routeStore;
-        method.value      = 'POST';
-        if (!hasServerErrors) form.reset();
-        document.getElementById('rProductText').removeAttribute('disabled');
+      title.textContent = 'Thêm quy tắc';
+      form.action       = routeStore;
+      method.value      = 'POST';
+      if (!hasServerErrors) form.reset();
+      document.getElementById('rProductText').removeAttribute('disabled');
     }
 
-    const prod = products.find(p => p.id == productId);
-    document.getElementById('rProductText').value = prod ? `${prod.code} - ${prod.name}` : '';
+    const pool = allowedProductPool();
+    const prod = pool.find(p => p.id == productId);
+    document.getElementById('rProductText').value = prod ? productLabel(prod, prod.id == currentInactiveProductId) : '';
     document.getElementById('rProduct').value     = productId ?? '';
 
-    const emp = employees.find(e => e.id == employeeId);
-    document.getElementById('rEmployeeText').value = emp ? `${emp.name} (${emp.code})` : '';
+    const empPool = allowedEmployeePool();
+    const emp = empPool.find(e => e.id == employeeId);
+    document.getElementById('rEmployeeText').value = emp ? employeeLabel(emp, emp.id == currentInactiveEmployeeId) : '';
     document.getElementById('rEmployee').value     = employeeId ?? '';
 
     document.getElementById('rMinQty').value  = minQty;

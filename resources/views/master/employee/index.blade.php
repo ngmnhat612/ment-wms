@@ -310,12 +310,12 @@
                   @endforeach
                   {{-- Các bộ phận KHÔNG active: ẩn mặc định, chỉ hiện khi JS
                        cần gán cho nhân viên đang chỉnh sửa có bộ phận đã
-                       ngừng hoạt động. --}}
+                       ngưng hoạt động. --}}
                   @foreach ($departmentsAllIds as $dept)
                     @if ($dept->status?->value !== \App\Enums\ActiveStatus::Active->value)
                       <option value="{{ $dept->id }}" class="d-none" data-inactive="1"
                               {{ (string) old('department_id') === (string) $dept->id ? 'selected' : '' }}>
-                        {{ $dept->name }} (Ngừng hoạt động)
+                        {{ $dept->name }} (Ngưng hoạt động)
                       </option>
                     @endif
                   @endforeach
@@ -563,8 +563,8 @@
 
     document.getElementById('empName').value       = name;
     document.getElementById('empPhone').value      = phone;
-    
-    // Nếu department_id khớp option đang ẩn (Bộ phận đã Ngừng hoạt động),
+
+    // Nếu department_id khớp option đang ẩn (Bộ phận đã Ngưng hoạt động),
     // hiện tạm option đó để vẫn hiển thị đúng tên thay vì rơi về rỗng.
     const deptSelect = document.getElementById('empDepartment');
     const deptMatched = departmentId ? deptSelect.querySelector(`option[value="${departmentId}"]`) : null;

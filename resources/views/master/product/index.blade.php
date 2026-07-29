@@ -342,7 +342,7 @@
             @foreach ($categoriesAllIds as $cat)
               @if ($cat->status?->value !== \App\Enums\ActiveStatus::Active->value)
                 <option value="{{ $cat->id }}" class="d-none" data-inactive="1">
-                  {{ $cat->name }} (Ngừng hoạt động)
+                  {{ $cat->name }} (Ngưng hoạt động)
                 </option>
               @endif
             @endforeach
@@ -359,11 +359,11 @@
               <option value="{{ $uom->id }}">{{ $uom->name }}</option>
             @endforeach
             {{-- Các ĐVT KHÔNG active: ẩn mặc định, chỉ hiện khi JS cần gán
-                 cho product đang chỉnh sửa có ĐVT đã ngừng hoạt động. --}}
+                 cho product đang chỉnh sửa có ĐVT đã ngưng hoạt động. --}}
             @foreach ($uomsAllIds as $uom)
               @if ($uom->status?->value !== \App\Enums\ActiveStatus::Active->value)
                 <option value="{{ $uom->id }}" class="d-none" data-inactive="1">
-                  {{ $uom->name }} (Ngừng hoạt động)
+                  {{ $uom->name }} (Ngưng hoạt động)
                 </option>
               @endif
             @endforeach
@@ -649,7 +649,7 @@
     const catSelect = document.getElementById('pCategory');
     const catHidden = document.getElementById('pCategoryHidden');
 
-    // Ẩn lại toàn bộ option Ngừng hoạt động khi chuyển sang chế độ Tạo mới,
+    // Ẩn lại toàn bộ option Ngưng hoạt động khi chuyển sang chế độ Tạo mới,
     // đảm bảo Tạo mới chỉ có thể chọn category active.
     catSelect.querySelectorAll('option[data-inactive="1"]').forEach(opt => {
       opt.classList.add('d-none');
@@ -664,7 +664,7 @@
   // Set giá trị cho <select>, fallback về '' (option mặc định "- Chọn ... -")
   // nếu giá trị không khớp option nào tồn tại — tránh hiển thị rỗng "lạ".
   // Nếu option khớp nhưng đang bị ẩn (data-inactive="1", tức option của một
-  // bản ghi đã Ngừng hoạt động), hiện tạm option đó lên để vẫn hiển thị đúng
+  // bản ghi đã Ngưng hoạt động), hiện tạm option đó lên để vẫn hiển thị đúng
   // giá trị đang chọn thay vì rơi về rỗng.
   function setSelectValueSafe(selectId, value) {
     const select  = document.getElementById(selectId);

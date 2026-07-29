@@ -29,7 +29,7 @@ interface UomRepositoryInterface
     public function allActive(): Collection;
 
     /**
-     * Lấy TẤT CẢ đơn vị tính (kể cả Ngừng hoạt động) — dùng cho dropdown ở chế
+     * Lấy TẤT CẢ đơn vị tính (kể cả Ngưng hoạt động) — dùng cho dropdown ở chế
      * độ chỉnh sửa Product, để ĐVT đã inactive nhưng đang được product tham
      * chiếu vẫn hiển thị đúng tên.
      */

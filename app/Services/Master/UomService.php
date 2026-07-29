@@ -44,7 +44,7 @@ class UomService
     }
 
     /**
-     * Lấy TẤT CẢ đơn vị tính (kể cả Ngừng hoạt động) — dùng cho dropdown chỉnh
+     * Lấy TẤT CẢ đơn vị tính (kể cả Ngưng hoạt động) — dùng cho dropdown chỉnh
      * sửa Product.
      */
     public function getAllIncludingInactive(): Collection

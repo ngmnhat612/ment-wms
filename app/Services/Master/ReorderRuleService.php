@@ -40,9 +40,27 @@ class ReorderRuleService
         return $this->formDataRepository->activeProducts();
     }
 
+    /**
+     * TẤT CẢ vật tư (kể cả Ngưng hoạt động) — dùng cho dropdown "Vật tư" khi
+     * CHỈNH SỬA rule đã có, tránh mất lựa chọn nếu vật tư đó đã bị Ngưng hoạt động.
+     */
+    public function allProducts(): Collection
+    {
+        return $this->formDataRepository->allProducts();
+    }
+
     public function activeNonAdminEmployees(): Collection
     {
         return $this->formDataRepository->activeNonAdminEmployees();
+    }
+
+    /**
+     * TẤT CẢ nhân viên (kể cả Ngưng hoạt động), loại trừ Admin — dùng cho
+     * dropdown "Người phụ trách" khi CHỈNH SỬA rule đã có.
+     */
+    public function allNonAdminEmployees(): Collection
+    {
+        return $this->formDataRepository->allNonAdminEmployees();
     }
 
     public function defaultWarehouse(): ?Warehouse

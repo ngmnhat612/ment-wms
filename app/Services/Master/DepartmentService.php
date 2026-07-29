@@ -34,7 +34,7 @@ class DepartmentService
     }
 
     /**
-     * Lấy TẤT CẢ bộ phận (kể cả Ngừng hoạt động) — dùng cho dropdown chỉnh sửa
+     * Lấy TẤT CẢ bộ phận (kể cả Ngưng hoạt động) — dùng cho dropdown chỉnh sửa
      * Employee.
      */
     public function getAllIncludingInactive(): Collection
