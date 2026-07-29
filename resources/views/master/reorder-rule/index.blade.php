@@ -240,7 +240,8 @@
                         onpaste="blockInvalidNumberPaste(event)"
                         oninput="sanitizeNumberInput(this)"
                         data-max="99999999"
-                        value="{{ old('min_qty', 0) }}" required>
+                        value="{{ old('min_qty', 0) }}">
+                <div class="invalid-feedback" id="rMinQtyError"></div>
                 @error('min_qty')
                     <div class="invalid-feedback">{{ $message }}</div>
                 @enderror
@@ -254,7 +255,8 @@
                         onpaste="blockInvalidNumberPaste(event)"
                         oninput="sanitizeNumberInput(this)"
                         data-max="99999999"
-                        value="{{ old('max_qty', 0) }}" required>
+                        value="{{ old('max_qty', 0) }}">
+                <div class="invalid-feedback" id="rMaxQtyError"></div>
                 @error('max_qty')
                     <div class="invalid-feedback">{{ $message }}</div>
                 @enderror
@@ -486,6 +488,8 @@
     });
     document.getElementById('rProductError').textContent  = '';
     document.getElementById('rEmployeeError').textContent = '';
+    document.getElementById('rMinQtyError').textContent   = '';
+    document.getElementById('rMaxQtyError').textContent   = '';
   }
 
   // Cập nhật lại nội dung datalist theo pool được phép chọn hiện tại — chạy
@@ -519,6 +523,19 @@
     document.getElementById('rEmployeeError').textContent = '';
     resolveEmployee(false);
   });
+
+  // ─── Validate Min/Max khi TẠO MỚI: chỉ cần 1 trong 2 ô có giá trị khác 0
+  // là được lưu. Báo lỗi CHỈ khi submit và CẢ HAI ô cùng bằng 0 (mặc định);
+  // nhập lại bất kỳ ô nào (Min hoặc Max) đều xoá lỗi ở cả 2 ô ngay lập tức.
+  function clearMinMaxValidation() {
+    document.getElementById('rMinQty').classList.remove('is-invalid');
+    document.getElementById('rMaxQty').classList.remove('is-invalid');
+    document.getElementById('rMinQtyError').textContent = '';
+    document.getElementById('rMaxQtyError').textContent = '';
+  }
+
+  document.getElementById('rMinQty').addEventListener('input', clearMinMaxValidation);
+  document.getElementById('rMaxQty').addEventListener('input', clearMinMaxValidation);
 
   function openModal(id = null, productId = null, employeeId = null,
                 minQty = 0, maxQty = 0, note = '', status = 1) {
@@ -614,6 +631,26 @@
     if (!document.getElementById('rEmployee').value) {
         e.preventDefault();
         return;
+    }
+
+    // Chỉ bắt buộc Min/Max khác 0 khi TẠO MỚI (rId rỗng). Khi CHỈNH SỬA
+    // không áp dụng ràng buộc này.
+    const isCreate = !document.getElementById('rId').value;
+    if (isCreate) {
+      const minEl = document.getElementById('rMinQty');
+      const maxEl = document.getElementById('rMaxQty');
+      const minVal = Number(minEl.value) || 0;
+      const maxVal = Number(maxEl.value) || 0;
+
+      if (minVal === 0 && maxVal === 0) {
+        minEl.classList.add('is-invalid');
+        maxEl.classList.add('is-invalid');
+        document.getElementById('rMinQtyError').textContent = 'Vui lòng nhập Min hoặc Max.';
+        document.getElementById('rMaxQtyError').textContent = 'Vui lòng nhập Min hoặc Max.';
+        e.preventDefault();
+        minEl.focus();
+        return;
+      }
     }
 
     const btn     = document.getElementById('rSubmitBtn');
