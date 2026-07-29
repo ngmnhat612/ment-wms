@@ -253,6 +253,17 @@
                   @foreach ($categories as $c)
                     <option value="{{ $c->id }}" {{ old('category_id') == $c->id ? 'selected' : '' }}>{{ $c->name }}</option>
                   @endforeach
+                  {{-- Các danh mục KHÔNG active: ẩn mặc định (d-none), chỉ hiện
+                       khi JS cần gán cho rule đang chỉnh sửa có danh mục đã
+                       ngưng hoạt động (tránh mất lựa chọn khi mở form edit).
+                       Không hiện khi tạo mới. --}}
+                  @foreach ($allCategories as $c)
+                    @if ($c->status?->value !== \App\Enums\ActiveStatus::Active->value)
+                      <option value="{{ $c->id }}" class="d-none" data-inactive="1">
+                        {{ $c->name }} (Ngưng hoạt động)
+                      </option>
+                    @endif
+                  @endforeach
                 </select>
                 <input type="hidden" id="rCategoryHidden" name="category_id" value="{{ old('category_id') }}">
               @error('category_id')
@@ -271,8 +282,17 @@
                     [{{ $loc->code }}] {{ $loc->name }}
                   </option>
                 @endforeach
+                {{-- Các vị trí KHÔNG active: ẩn mặc định, chỉ hiện khi JS cần
+                     gán cho rule đang chỉnh sửa có vị trí đã ngưng hoạt động. --}}
+                @foreach ($allLocations as $loc)
+                  @if ($loc->status?->value !== \App\Enums\ActiveStatus::Active->value)
+                    <option value="{{ $loc->id }}" class="d-none" data-inactive="1">
+                      [{{ $loc->code }}] {{ $loc->name }} (Ngưng hoạt động)
+                    </option>
+                  @endif
+                @endforeach
               </select>
-              <div class="invalid-feedback" id="rLocationError"></div>  {{-- thêm dòng này --}}
+              <div class="invalid-feedback" id="rLocationError"></div>
               @error('location_id')
                 <div class="invalid-feedback d-block">{{ $message }}</div>
               @enderror
@@ -353,13 +373,90 @@
 
 @endsection
 
+@php
+  // Tính trước dữ liệu JS cho pool "Vật tư" khi Chỉnh sửa (active + đúng 1
+  // item inactive hiện tại) ở đây, vì @json() trên 1 dòng dài với toán tử
+  // ?-> lồng trong closure khiến Blade's directive parser (paren-counter,
+  // không phải tokenizer PHP thật) bị lệch khi đếm ngoặc và báo lỗi
+  // "Unclosed '[' does not match ')'".
+  $allProductsJs = $allProducts->map(function ($p) {
+      return [
+          'id'       => $p->id,
+          'code'     => $p->code,
+          'name'     => $p->name,
+          'inactive' => $p->status?->value !== \App\Enums\ActiveStatus::Active->value,
+      ];
+  });
+@endphp
+
 @push('scripts')
 <script>
   const routeStore = '{{ route('master.putaway-rule.store') }}';
   const routeBase  = '{{ url('master/putaway-rule') }}';
 
-  const products   = @json($products->map(fn($p) => ['id' => $p->id, 'code' => $p->code, 'name' => $p->name]));
+  // Danh sách gốc — chỉ active. Đây là những gì được phép chọn khi TẠO MỚI,
+  // và cũng là nền cho danh sách được phép chọn khi CHỈNH SỬA.
+  const products = @json($products->map(fn($p) => ['id' => $p->id, 'code' => $p->code, 'name' => $p->name]));
+
+  // Danh sách đầy đủ (kể cả Ngưng hoạt động) — CHỈ dùng để tra cứu tên/mã của
+  // 1 vật tư cụ thể (vật tư đang được gán sẵn cho rule khi mở form Chỉnh sửa).
+  // Không dùng để hiển thị toàn bộ lựa chọn, để tránh cho phép gán MỚI một
+  // vật tư khác đang Ngưng hoạt động.
+  const allProducts = @json($allProductsJs);
+
   const hasServerErrors = {{ $errors->any() ? 'true' : 'false' }};
+
+  // ID của vật tư hiện đang gán cho rule đang mở (nếu đang Ngưng hoạt động) —
+  // item DUY NHẤT được phép giữ nguyên trong lựa chọn dù đã Ngưng hoạt động.
+  // Reset về null mỗi khi mở modal.
+  let currentInactiveProductId = null;
+
+  function productLabel(p, inactive = false) {
+    const base = `${p.code} - ${p.name}`;
+    return inactive ? `${base} (Ngưng hoạt động)` : base;
+  }
+
+  // Pool được phép CHỌN cho vật tư: active-only, cộng thêm đúng 1 vật tư đang
+  // Ngưng hoạt động nếu đó là vật tư hiện tại của rule (để không mất lựa chọn
+  // đang có sẵn khi mở form Chỉnh sửa).
+  function allowedProductPool() {
+    if (currentInactiveProductId == null) return products;
+    const extra = allProducts.find(p => p.id == currentInactiveProductId);
+    return extra ? [...products, extra] : products;
+  }
+
+  // Cập nhật lại nội dung datalist Vật tư theo pool được phép chọn hiện tại —
+  // chạy lại mỗi khi mở modal, vì "vật tư inactive được phép" thay đổi theo rule.
+  function refreshProductDatalist() {
+    const datalist = document.getElementById('productDatalist');
+    datalist.innerHTML = allowedProductPool().map(p => {
+      const inactive = p.id == currentInactiveProductId;
+      const opt = document.createElement('option');
+      opt.value = productLabel(p, inactive);
+      return opt.outerHTML;
+    }).join('');
+  }
+
+  // ─── Helper KHOÁ/MỞ cho <select> Danh mục & Vị trí ─────────────────────────
+  // Dùng chung pattern với module Product: option Ngưng hoạt động được render
+  // sẵn trong DOM với class d-none + data-inactive="1"; hàm này chỉ hiện tạm
+  // đúng 1 option khi giá trị hiện tại của rule trỏ tới nó.
+  function revealInactiveOptionIfNeeded(selectId, value) {
+    const select = document.getElementById(selectId);
+    if (value === null || value === undefined || value === '') return;
+    const matched = select.querySelector(`option[value="${value}"]`);
+    if (matched && matched.dataset.inactive === '1') {
+      matched.classList.remove('d-none');
+    }
+  }
+
+  // Ẩn lại toàn bộ option Ngưng hoạt động của 1 <select> — dùng khi chuyển
+  // sang chế độ Tạo mới, đảm bảo Tạo mới chỉ có thể chọn giá trị active.
+  function hideAllInactiveOptions(selectId) {
+    document.getElementById(selectId)
+      .querySelectorAll('option[data-inactive="1"]')
+      .forEach(opt => opt.classList.add('d-none'));
+  }
 
   // ─── Toggle product / category field ──────────────────────────────────────
   function toggleApplyOn(type) {
@@ -386,7 +483,11 @@
     const el    = document.getElementById('rProductText');
     const hid   = document.getElementById('rProduct');
     const err   = document.getElementById('rProductError');
-    const match = products.find(p => `${p.code} - ${p.name}` === text);
+    const pool  = allowedProductPool();
+    const match = pool.find(p => {
+      const inactive = p.id == currentInactiveProductId;
+      return productLabel(p, inactive) === text;
+    });
 
     if (match) {
       hid.value = match.id;
@@ -436,6 +537,13 @@
 
     clearValidation();
 
+    // Xác định vật tư hiện tại của rule có đang Ngưng hoạt động không — nếu
+    // có, đây là vật tư DUY NHẤT được "mở khoá" tạm thời để vẫn hiển thị
+    // đúng, các vật tư inactive khác vẫn không được chọn.
+    const isProductInactive = productId != null && !products.some(p => p.id == productId);
+    currentInactiveProductId = isProductInactive ? productId : null;
+    refreshProductDatalist();
+
   if (id) {
     title.textContent = 'Chỉnh sửa quy tắc';
     form.action       = `${routeBase}/${id}`;
@@ -446,6 +554,11 @@
     document.getElementById('rProductText').setAttribute('disabled', true);
     document.getElementById('rCategory').setAttribute('disabled', true);
     document.querySelectorAll('#ruleForm .invalid-feedback.d-block').forEach(el => el.remove());
+
+    // Chỉnh sửa: chỉ mở khoá đúng option Danh mục / Vị trí đang được rule
+    // này gán (nếu đang Ngưng hoạt động), không hiện các item inactive khác.
+    revealInactiveOptionIfNeeded('rCategory', categoryId);
+    revealInactiveOptionIfNeeded('rLocation', locationId);
   } else {
     title.textContent = 'Thêm quy tắc';
     form.action       = routeStore;
@@ -456,6 +569,10 @@
     document.getElementById('applyCategory').disabled = false;
     document.getElementById('rProductText').removeAttribute('disabled');
     document.getElementById('rCategory').removeAttribute('disabled');
+
+    // Tạo mới: luôn chỉ cho phép chọn giá trị active.
+    hideAllInactiveOptions('rCategory');
+    hideAllInactiveOptions('rLocation');
   }
 
     // Apply on
@@ -464,8 +581,9 @@
     toggleApplyOn(type);
 
     // Vật tư
-    const prod = products.find(p => p.id == productId);
-    document.getElementById('rProductText').value = prod ? `${prod.code} - ${prod.name}` : '';
+    const prodPool = allowedProductPool();
+    const prod = prodPool.find(p => p.id == productId);
+    document.getElementById('rProductText').value = prod ? productLabel(prod, prod.id == currentInactiveProductId) : '';
     document.getElementById('rProduct').value     = productId ?? '';
 
     // Danh mục

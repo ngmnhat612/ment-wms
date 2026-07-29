@@ -40,14 +40,40 @@ class PutawayRuleService
         return $this->formDataRepository->activeProducts();
     }
 
+    /**
+     * TẤT CẢ vật tư (kể cả Ngưng hoạt động) — dùng khi CHỈNH SỬA rule đã có,
+     * tránh mất lựa chọn nếu vật tư đó đã bị Ngưng hoạt động.
+     */
+    public function allProducts(): Collection
+    {
+        return $this->formDataRepository->allProducts();
+    }
+
     public function activeCategories(): Collection
     {
         return $this->formDataRepository->activeCategories();
     }
 
+    /**
+     * TẤT CẢ danh mục (kể cả Ngưng hoạt động) — dùng khi CHỈNH SỬA rule đã có.
+     */
+    public function allCategories(): Collection
+    {
+        return $this->formDataRepository->allCategories();
+    }
+
     public function activeInternalLocations(): Collection
     {
         return $this->formDataRepository->activeInternalLocations();
+    }
+
+    /**
+     * TẤT CẢ vị trí Internal (kể cả Ngưng hoạt động) — dùng khi CHỈNH SỬA rule
+     * đã có.
+     */
+    public function allInternalLocations(): Collection
+    {
+        return $this->formDataRepository->allInternalLocations();
     }
 
     public function defaultWarehouse(): ?Warehouse

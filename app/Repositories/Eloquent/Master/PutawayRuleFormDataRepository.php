@@ -16,9 +16,19 @@ class PutawayRuleFormDataRepository implements PutawayRuleFormDataRepositoryInte
         return Product::where('status', 1)->orderBy('code')->get(['id', 'code', 'name']);
     }
 
+    public function allProducts(): Collection
+    {
+        return Product::orderBy('code')->get(['id', 'code', 'name', 'status']);
+    }
+
     public function activeCategories(): Collection
     {
         return Category::where('status', 1)->orderBy('name')->get(['id', 'name']);
+    }
+
+    public function allCategories(): Collection
+    {
+        return Category::orderBy('name')->get(['id', 'name', 'status']);
     }
 
     public function activeInternalLocations(): Collection
@@ -27,6 +37,13 @@ class PutawayRuleFormDataRepository implements PutawayRuleFormDataRepositoryInte
             ->internal()
             ->orderBy('code')
             ->get(['id', 'code', 'name']);
+    }
+
+    public function allInternalLocations(): Collection
+    {
+        return Location::internal()
+            ->orderBy('code')
+            ->get(['id', 'code', 'name', 'status']);
     }
 
     public function defaultWarehouse(): ?Warehouse

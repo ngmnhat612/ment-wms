@@ -26,8 +26,6 @@ class PutawayRuleController extends Controller
 
         $filters = $request->only(['search', 'apply_on', 'status', 'sort', 'dir']);
 
-        // Chặn input tìm kiếm quá dài (phòng trường hợp gọi trực tiếp qua URL,
-        // bỏ qua giới hạn maxlength phía frontend)
         foreach (['search'] as $key) {
             if (isset($filters[$key])) {
                 $filters[$key] = mb_substr($filters[$key], 0, 200);
@@ -38,14 +36,24 @@ class PutawayRuleController extends Controller
         $totalCount  = $this->putawayRuleService->totalCount();
         $activeCount = $this->putawayRuleService->activeCount();
 
-        $products         = $this->putawayRuleService->activeProducts();
-        $categories       = $this->putawayRuleService->activeCategories();
-        $locations        = $this->putawayRuleService->activeInternalLocations();
+        // Active-only: dùng cho TẠO MỚI
+        $products  = $this->putawayRuleService->activeProducts();
+        $categories = $this->putawayRuleService->activeCategories();
+        $locations  = $this->putawayRuleService->activeInternalLocations();
+
+        // Tất cả (kể cả Ngừng hoạt động): dùng cho CHỈNH SỬA, tránh mất lựa chọn
+        // khi vật tư/danh mục/vị trí của rule cũ đã bị Ngừng hoạt động.
+        $allProducts   = $this->putawayRuleService->allProducts();
+        $allCategories = $this->putawayRuleService->allCategories();
+        $allLocations  = $this->putawayRuleService->allInternalLocations();
+
         $defaultWarehouse = $this->putawayRuleService->defaultWarehouse();
 
         return view('master.putaway-rule.index', compact(
             'rules', 'totalCount', 'activeCount',
-            'products', 'categories', 'locations', 'defaultWarehouse'
+            'products', 'categories', 'locations',
+            'allProducts', 'allCategories', 'allLocations',
+            'defaultWarehouse'
         ));
     }
 
