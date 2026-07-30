@@ -159,6 +159,10 @@ class ProductController extends Controller
         return response()->json([
             'category_id'    => $product->category_id,
             'uom_id'         => $product->uom_id,
+            // uom_name: ô ĐVT ở form biến thể giờ chỉ hiển thị (readonly, kế
+            // thừa từ cha) dưới dạng text thay vì select — cần tên hiển thị,
+            // không chỉ id.
+            'uom_name'       => $product->uom?->name ?? '',
             'tracking_type'  => $product->tracking_type->value,
             'stock_rotation' => $product->stock_rotation->value,
             'name'           => $product->name,

@@ -32,7 +32,10 @@ class UpdateProductRequest extends FormRequest
             'code'                => "nullable|string|max:20|unique:products,code,{$productId}", // ignore current;
             'name'                => 'required|string|max:200',
             'category_id'         => 'required|exists:categories,id',
-            'uom_id'              => 'required|exists:uoms,id',
+            // uom_id không còn validate ở đây: ĐVT giờ là ô nhập tự do
+            // (datalist gợi nhớ) — xem uom_name bên dưới. Service sẽ tự
+            // resolve/tạo Uom theo tên rồi gán uom_id trước khi lưu Product.
+            'uom_name'            => 'required|string|max:50',
             'specification'       => 'nullable|string|max:500',
             'alert_before_expiry' => Rule::when(
                 fn() => (int) $this->input('stock_rotation') === 2,
@@ -54,8 +57,8 @@ class UpdateProductRequest extends FormRequest
         return [
             'name.required'                   => 'Vui lòng nhập tên vật tư.',
             'name.max'                        => 'Tên vật tư không được vượt quá 200 ký tự.',
-            'uom_id.required'                 => 'Vui lòng chọn đơn vị tính.',
-            'uom_id.exists'                   => 'Đơn vị tính không hợp lệ.',
+            'uom_name.required'               => 'Vui lòng nhập đơn vị tính.',
+            'uom_name.max'                    => 'Đơn vị tính không được vượt quá 50 ký tự.',
             'specification.max'               => 'Thông số kỹ thuật không được vượt quá 500 ký tự.',
             'alert_before_expiry.required'    => 'Vui lòng nhập số ngày cảnh báo trước hết hạn khi dùng FEFO.',
             'alert_before_expiry.integer'     => 'Số ngày cảnh báo phải là số nguyên.',
@@ -73,7 +76,6 @@ class UpdateProductRequest extends FormRequest
             'min_qty.max'                     => 'Ngưỡng tối thiểu phải bé hơn 99999999.',
             'max_qty.max'                     => 'Ngưỡng tối đa phải bé hơn 99999999.',
             'location_id'                     => 'nullable|exists:locations,id',
-            'status.required'                 => 'Vui lòng chọn trạng thái.',
         ];
     }
 

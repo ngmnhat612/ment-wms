@@ -59,4 +59,13 @@ interface UomRepositoryInterface
      * Kiểm tra mã đã tồn tại chưa — dùng cho validate AJAX (blur) ở form Thêm.
      */
     public function codeExists(string $code, ?int $excludeId = null): bool;
+
+    /**
+     * Tìm ĐVT theo tên (khớp chính xác, không phân biệt hoa/thường) — nếu
+     * chưa tồn tại thì tự tạo mới với mã tự sinh (DVT0001, DVT0002, ...) và
+     * trạng thái Hoạt động. Dùng khi người dùng gõ tự do vào ô ĐVT ở form
+     * Product/ProductVariant (datalist gợi nhớ) thay vì chọn từ danh sách
+     * có sẵn — tương tự cơ chế "gõ mã cha tự resolve" ở biến thể.
+     */
+    public function findOrCreateByName(string $name): Uom;
 }

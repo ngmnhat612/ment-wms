@@ -5,11 +5,16 @@ namespace App\Repositories\Eloquent\Master;
 use App\Enums\ActiveStatus;
 use App\Models\Master\Uom;
 use App\Repositories\Contracts\Master\UomRepositoryInterface;
+use App\Services\Concerns\CodeGeneratorService;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
 
 class UomRepository implements UomRepositoryInterface
 {
+    public function __construct(
+        private readonly CodeGeneratorService $codeGeneratorService,
+    ) {}
+
     public function search(array $filters, int $perPage = 15): LengthAwarePaginator
     {
         $query = Uom::query();
@@ -79,5 +84,28 @@ class UomRepository implements UomRepositoryInterface
         return Uom::where('code', $code)
             ->when($excludeId, fn($q) => $q->where('id', '!=', $excludeId))
             ->exists();
+    }
+
+    /**
+     * Khớp tên KHÔNG phân biệt hoa/thường + đã trim, giống cách người dùng
+     * gõ tự do vào ô ĐVT (datalist chỉ gợi ý, không ép chọn đúng chữ hoa/thường).
+     * Nếu chưa có -> tạo mới, mã tự sinh theo cùng quy tắc với UomService::create()
+     * (prefix 'DVT', 4 chữ số) để nhất quán với ĐVT tạo qua màn hình master/uom.
+     */
+    public function findOrCreateByName(string $name): Uom
+    {
+        $name = trim($name);
+
+        $existing = Uom::whereRaw('LOWER(name) = ?', [mb_strtolower($name)])->first();
+        if ($existing) {
+            return $existing;
+        }
+
+        return Uom::create([
+            'code'   => $this->codeGeneratorService->generateCode('uoms', 'code', 'DVT', 4),
+            'name'   => $name,
+            'note'   => null,
+            'status' => ActiveStatus::Active->value,
+        ]);
     }
 }

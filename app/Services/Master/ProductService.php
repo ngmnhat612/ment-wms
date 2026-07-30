@@ -4,6 +4,7 @@ namespace App\Services\Master;
 
 use App\Models\Master\Product;
 use App\Repositories\Contracts\Master\ProductRepositoryInterface;
+use App\Repositories\Contracts\Master\UomRepositoryInterface;
 use App\Services\Concerns\ChecksForeignKeyUsage;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\UploadedFile;
@@ -20,6 +21,7 @@ class ProductService
 
     public function __construct(
         protected ProductRepositoryInterface $productRepository,
+        protected UomRepositoryInterface $uomRepository,
         protected CodeGeneratorService $codeGeneratorService,
         protected ReorderRuleService $reorderRuleService,
         protected PutawayRuleService $putawayRuleService,
@@ -61,6 +63,8 @@ class ProductService
      */
     public function create(array $data, ?UploadedFile $image = null): Product
     {
+        $data = $this->resolveUom($data);
+
         if (empty($data['code'])) {
             $category     = Category::findOrFail($data['category_id']);
             $prefix       = strtoupper(substr($category->code, 0, 2));
@@ -150,6 +154,8 @@ class ProductService
      */
     public function update(Product $product, array $data, ?UploadedFile $image = null, bool $removeImage = false): void
     {
+        $data = $this->resolveUom($data);
+
         // Readonly fields — không cho phép thay đổi
         unset($data['code'], $data['barcode']);
 
@@ -212,6 +218,28 @@ class ProductService
     }
 
     // ===== PRIVATE HELPERS =====
+
+    /**
+     * Resolve 'uom_name' (ô nhập tự do ở form, datalist gợi nhớ) thành
+     * 'uom_id' thật — tìm ĐVT trùng tên (không phân biệt hoa/thường), nếu
+     * chưa có thì tự tạo mới (giống cơ chế "gõ mã cha tự resolve" ở biến
+     * thể). Chỉ áp dụng khi request thực sự gửi uom_name (form Product
+     * thường) — StoreProductVariantRequest không có field này vì biến thể
+     * luôn kế thừa uom_id thẳng từ cha, không cần resolve lại.
+     */
+    private function resolveUom(array $data): array
+    {
+        if (array_key_exists('uom_name', $data)) {
+            $uomName = trim((string) $data['uom_name']);
+            unset($data['uom_name']);
+
+            if ($uomName !== '') {
+                $data['uom_id'] = $this->uomRepository->findOrCreateByName($uomName)->id;
+            }
+        }
+
+        return $data;
+    }
 
     private function storeImage(UploadedFile $file, string $productName, string $productCode): string
     {

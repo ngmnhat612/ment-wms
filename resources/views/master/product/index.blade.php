@@ -352,23 +352,20 @@
         </div>
         <div class="mb-3">
           <label class="form-label">ĐVT <span class="text-danger" id="uomRequired">*</span></label>
-          <select class="form-select" id="pUom" name="uom_id"
-                  onchange="this.classList.remove('is-invalid')">
-            <option value="">- Chọn ĐVT -</option>
-            @foreach ($uoms as $uom)
-              <option value="{{ $uom->id }}">{{ $uom->name }}</option>
-            @endforeach
-            {{-- Các ĐVT KHÔNG active: ẩn mặc định, chỉ hiện khi JS cần gán
-                 cho product đang chỉnh sửa có ĐVT đã ngưng hoạt động. --}}
+          <input type="text" class="form-control" id="pUomText"
+                placeholder="Nhập hoặc chọn ĐVT"
+                list="uomDatalist" autocomplete="off"
+                maxlength="50"
+                oninput="this.classList.remove('is-invalid'); resolveUom()"
+                onblur="resolveUom()">
+          <datalist id="uomDatalist">
             @foreach ($uomsAllIds as $uom)
-              @if ($uom->status?->value !== \App\Enums\ActiveStatus::Active->value)
-                <option value="{{ $uom->id }}" class="d-none" data-inactive="1">
-                  {{ $uom->name }} (Ngưng hoạt động)
-                </option>
-              @endif
+              <option value="{{ $uom->name }}"></option>
             @endforeach
-          </select>
+          </datalist>
+          <input type="hidden" id="pUom" name="uom_name" value="">
           <div class="invalid-feedback" id="pUomError"></div>
+          <div class="form-text">Gõ tên ĐVT đã có để chọn nhanh, hoặc nhập tên mới để tự động tạo.</div>
         </div>
 
         {{-- Ảnh --}}
@@ -600,6 +597,7 @@
               'name'               => $p->name,
               'category_id'        => $p->category_id,
               'uom_id'             => $p->uom_id,
+              'uom_name'           => $p->uom?->name ?? '',
               'specification'      => $p->specification ?? '',
               'tracking_type'      => $p->tracking_type?->value ?? 1,
               'stock_rotation'     => $p->stock_rotation?->value ?? 1,
@@ -622,6 +620,7 @@
   const productsMap = @json($productsMapData);
 
   const locations = @json($locations->map(fn($l) => ['id' => $l->id, 'code' => $l->code, 'name' => $l->name]));
+  const uoms      = @json($uomsAllIds->map(fn($u) => ['id' => $u->id, 'name' => $u->name]));
 
   // ===== HELPER: KHOÁ / MỞ DANH MỤC =====
   // Dùng chung cho cả openForm() và nhánh khôi phục lỗi validate (update:)
@@ -677,6 +676,16 @@
     select.value = matched ? value : '';
   }
 
+  // Gán giá trị cho ô ĐVT (text + datalist) khi mở form edit hoặc khôi phục
+  // old input: hiển thị TÊN vào ô text, giữ nguyên tên đó trong hidden field
+  // (name="uom_name") — không cần resolve id ở đây, Service sẽ tự làm khi
+  // submit. Cho phép hiển thị cả tên ĐVT đã Ngưng hoạt động (vẫn đang được
+  // product tham chiếu) vì $uomsAllIds đã bao gồm toàn bộ ĐVT.
+  function setUomText(name) {
+    document.getElementById('pUomText').value = name ?? '';
+    document.getElementById('pUom').value      = name ?? '';
+  }
+
   // Hiện ghi chú nhỏ khi ô "Gợi ý vị trí" đang hiển thị giá trị KẾ THỪA từ
   // danh mục (product chưa có PutawayRule riêng) — sửa và Lưu sẽ tạo rule
   // riêng theo product, ghi đè giá trị kế thừa này.
@@ -722,7 +731,7 @@
 
       codeInput.value                             = p.code;
       document.getElementById('pName').value     = p.name;
-      setSelectValueSafe('pUom', p.uom_id ?? '');
+      setUomText(p.uom_name ?? '');
       document.getElementById('pSpec').value      = p.specification;
       document.getElementById('pTracking').value  = p.tracking_type;
       document.getElementById('pRotation').value  = p.stock_rotation;
@@ -907,7 +916,7 @@
       const oldLoc2 = locations.find(l => l.id == @json(old('location_id', 'null')));
       document.getElementById('pLocationText').value = oldLoc2 ? `[${oldLoc2.code}] ${oldLoc2.name}` : '';
 
-      setSelectValueSafe('pUom', @json(old('uom_id', '')));
+      setUomText(@json(old('uom_name', '')));
 
       const categoryId = p ? (p.category_id ?? '') : @json(old('category_id', ''));
       lockCategoryForEdit(categoryId);
@@ -928,7 +937,7 @@
       document.getElementById('pCode').value      = @json(old('code', '')).toUpperCase().replace(/[^A-Z0-9]/g, '');
       document.getElementById('pName').value      = @json(old('name', ''));
       setSelectValueSafe('pCategory', @json(old('category_id', '')));
-      setSelectValueSafe('pUom', @json(old('uom_id', '')));
+      setUomText(@json(old('uom_name', '')));
       document.getElementById('pSpec').value      = @json(old('specification', ''));
       document.getElementById('pTracking').value  = @json(old('tracking_type', 1));
       document.getElementById('pRotation').value  = @json(old('stock_rotation', 1));
@@ -968,7 +977,7 @@
     // document.getElementById('pName').required        = !isVariant;
     // document.getElementById('pNameVariant').required =  isVariant;
 
-    const lock = ['pCategory', 'pUom', 'pTracking', 'pRotation'];
+    const lock = ['pCategory', 'pUomText', 'pTracking', 'pRotation'];
     lock.forEach(id => {
       const el = document.getElementById(id);
       if (el) el.disabled = isVariant;
@@ -1004,7 +1013,7 @@
       }
 
       setSelectValueSafe('pCategory', data.category_id ?? '');
-      setSelectValueSafe('pUom', data.uom_id ?? '');
+      setUomText(data.uom_name ?? '');
       document.getElementById('pTracking').value      = data.tracking_type;
       document.getElementById('pRotation').value      = data.stock_rotation;
 
@@ -1084,6 +1093,7 @@
   // ===== CHẶN SUBMIT LIÊN TỤC =====
   document.getElementById('productForm').addEventListener('submit', function (e) {
     resolveLocation();
+    resolveUom();
 
     // ===== VALIDATE THỦ CÔNG (form dùng novalidate để đồng bộ 1 kiểu message
     // tiếng Việt cho mọi field, khớp với rule thật trong StoreProductRequest /
@@ -1115,13 +1125,13 @@
         markInvalid(nameEl, 'pNameVariantError', 'Vui lòng nhập tên biến thể.');
       }
     } else {
-      const nameEl = document.getElementById('pName');
-      const catEl  = document.getElementById('pCategory');
-      const uomEl  = document.getElementById('pUom');
+      const nameEl    = document.getElementById('pName');
+      const catEl     = document.getElementById('pCategory');
+      const uomTextEl = document.getElementById('pUomText');
 
       clearInvalid(nameEl, 'pNameError');
       clearInvalid(catEl, 'pCategoryError');
-      clearInvalid(uomEl, 'pUomError');
+      clearInvalid(uomTextEl, 'pUomError');
 
       if (!nameEl.value.trim()) {
         markInvalid(nameEl, 'pNameError', 'Vui lòng nhập tên vật tư.');
@@ -1129,8 +1139,8 @@
       if (!catEl.disabled && !catEl.value) {
         markInvalid(catEl, 'pCategoryError', 'Vui lòng chọn danh mục vật tư.');
       }
-      if (!uomEl.disabled && !uomEl.value) {
-        markInvalid(uomEl, 'pUomError', 'Vui lòng chọn đơn vị tính.');
+      if (!uomTextEl.disabled && !uomTextEl.value.trim()) {
+        markInvalid(uomTextEl, 'pUomError', 'Vui lòng nhập đơn vị tính.');
       }
 
       // Cảnh báo trước hết hạn: chỉ bắt buộc khi chọn FEFO (đọc lại thuộc tính
@@ -1219,6 +1229,15 @@
       document.getElementById('imgPreviewPopup').style.display = 'none';
     });
   });
+
+  // Đồng bộ giá trị gõ tay (pUomText) vào hidden field name="uom_name" gửi
+  // lên server. KHÁC resolveLocation(): không cần kiểm tra "tồn tại hay
+  // không" — ĐVT cho phép nhập tên MỚI, Service sẽ tự tạo khi lưu (giống
+  // cơ chế mã cha ở biến thể), nên tên nào cũng hợp lệ miễn không rỗng.
+  function resolveUom() {
+    const text = document.getElementById('pUomText').value.trim();
+    document.getElementById('pUom').value = text;
+  }
 
   function resolveLocation() {
     const text  = document.getElementById('pLocationText').value.trim();
