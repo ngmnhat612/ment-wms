@@ -79,7 +79,7 @@ class ProductService
 
         $product = $this->productRepository->create($data);
 
-        $this->reorderRuleService->syncForProduct(
+        $this->reorderRuleService->syncForNewProduct(
             $product->id,
             $this->reorderRuleService->defaultWarehouseId(),
             (int) ($data['min_qty'] ?? 0),
@@ -130,7 +130,7 @@ class ProductService
         // Toàn bộ mã trong cùng gia đình (gốc + mọi biến thể) tự động chuyển sang Ngưng hoạt động
         $this->deactivateFamily($parent, $variant->id);
 
-        $this->reorderRuleService->syncForProduct(
+        $this->reorderRuleService->syncForNewProduct(
             $variant->id,
             $this->reorderRuleService->defaultWarehouseId(),
             (int) ($data['min_qty'] ?? 0),

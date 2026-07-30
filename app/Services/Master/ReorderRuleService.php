@@ -118,6 +118,25 @@ class ReorderRuleService
     }
 
     /**
+     * Đồng bộ ReorderRule tự động khi TẠO MỚI vật tư (create/createVariant).
+     *
+     * Khác với syncForProduct(): nếu Min VÀ Max đều = 0 (không nhập ngưỡng),
+     * KHÔNG tạo rule — tránh sinh dòng "min=0, max=0" vô nghĩa trong danh sách
+     * master/reorder-rule. Rule chỉ được tạo khi thực sự có ít nhất 1 ngưỡng
+     * khác 0.
+     *
+     * Có Min hoặc Max khác 0 -> vẫn tạo rule như syncForProduct() bình thường.
+     */
+    public function syncForNewProduct(int $productId, int $warehouseId, int $minQty, int $maxQty): void
+    {
+        if ($minQty === 0 && $maxQty === 0) {
+            return;
+        }
+
+        $this->syncForProduct($productId, $warehouseId, $minQty, $maxQty);
+    }
+
+    /**
      * Xóa ReorderRule khi vật tư bị xóa.
      */
     public function deleteForProduct(int $productId): void
