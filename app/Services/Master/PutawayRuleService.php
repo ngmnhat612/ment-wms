@@ -187,6 +187,25 @@ class PutawayRuleService
     }
 
     /**
+     * Đồng bộ PutawayRule (theo category) khi TẠO MỚI danh mục.
+     *
+     * Khác với syncForCategory(): nếu người dùng KHÔNG gán vị trí
+     * ($locationId === null), thì KHÔNG tạo rule — tránh sinh thêm 1 dòng
+     * "Theo danh mục" vô nghĩa (location_id = null) trong danh sách
+     * master/putaway-rule. Rule sẽ chỉ được tạo khi thực sự có vị trí gán.
+     *
+     * Mọi trường hợp có gán vị trí vẫn tạo rule như syncForCategory() bình thường.
+     */
+    public function syncForNewCategory(int $categoryId, int $warehouseId, ?int $locationId): void
+    {
+        if ($locationId === null) {
+            return;
+        }
+
+        $this->syncForCategory($categoryId, $warehouseId, $locationId);
+    }
+
+    /**
      * Xóa PutawayRule khi danh mục bị xóa.
      */
     public function deleteForCategory(int $categoryId): void

@@ -93,7 +93,7 @@ class CategoryService
             'status'    => $data['status'],
         ]);
 
-        $this->putawayRuleService->syncForCategory(
+        $this->putawayRuleService->syncForNewCategory(
             $category->id,
             $this->defaultWarehouseId(),
             isset($data['location_id']) ? (int) $data['location_id'] : null,
