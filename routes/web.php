@@ -148,7 +148,7 @@ Route::middleware('auth')->group(function () {
         ->name('stock-movements.index');
 
     // ── NHẬP KHO ─────────────────────────────────────────────────────────────
-    Route::resource('receipts', StockReceiptController::class)->except(['index']);
+    Route::resource('receipts', StockReceiptController::class)->except(['index', 'destroy']);
     Route::get('receipts/{receipt}/print', [StockReceiptController::class, 'printPdf'])
         ->name('receipts.print');
     Route::post('receipts/{receipt}/approve', [StockReceiptController::class, 'approve'])
@@ -161,7 +161,7 @@ Route::middleware('auth')->group(function () {
     // ── XUẤT KHO ─────────────────────────────────────────────────────────────
     Route::get('issues/stock-locations/{product}', [StockIssueController::class, 'stockLocations'])
         ->name('issues.stock-locations');
-    Route::resource('issues', StockIssueController::class)->except(['index']);
+    Route::resource('issues', StockIssueController::class)->except(['index', 'destroy']);
     Route::get('issues/{issue}/print', [StockIssueController::class, 'printPdf'])
         ->name('issues.print');
     Route::post('issues/{issue}/complete', [StockIssueController::class, 'complete'])

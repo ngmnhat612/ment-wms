@@ -4,7 +4,7 @@ namespace App\Http\Requests\Master\Account;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rules\Password;
-use Illuminate\Support\Facades\Log;
+
 use Illuminate\Contracts\Validation\Validator;
 
 class StoreAccountRequest extends FormRequest

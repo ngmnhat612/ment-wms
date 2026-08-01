@@ -22,8 +22,6 @@ interface StockReceiptRepositoryInterface
 
     public function update(StockReceipt $receipt, array $headerData): StockReceipt;
 
-    public function delete(StockReceipt $receipt): bool;
-
     public function replaceDetails(StockReceipt $receipt, array $detailRows): void;
 
     public function countByStatus(int $status): int;

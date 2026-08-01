@@ -7,7 +7,7 @@ use Illuminate\Validation\Rule;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use App\Models\Master\Product;
-use Illuminate\Support\Facades\Log;
+
 
 class UpdateProductRequest extends FormRequest
 {

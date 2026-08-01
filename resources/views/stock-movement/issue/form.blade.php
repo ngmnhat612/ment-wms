@@ -113,11 +113,11 @@ $action = $isEdit ? route('issues.update', $issue->id) : route('issues.store');
         Vị trí giờ phụ thuộc vào vật tư đã chọn ở từng dòng (chỉ hiển thị
         vị trí mà vật tư đó đang có tồn kho khả dụng), nên mỗi dòng có
         datalist riêng (class="location-datalist"), được nạp bằng AJAX
-        khi người dùng chọn vật tư — xem hàm loadLocationsForRow() bên dưới.
+        khi người dùng chọn vật tư - xem hàm loadLocationsForRow() bên dưới.
 
         Luồng phụ thuộc đầy đủ: Vật tư -> Vị trí -> Lô (bắt buộc) -> Sê-ri
         (nếu có). Chỉ khi đã chọn ĐẾN Lô thì dòng mới được "giữ chỗ"
-        (reserved_qty) khi Lưu — xem StockIssueService::reserveLines() và
+        (reserved_qty) khi Lưu - xem StockIssueService::reserveLines() và
         StockIssueRequest::withValidator() ở backend.
     --}}
     <datalist id="employeeDatalist">
@@ -179,7 +179,7 @@ $action = $isEdit ? route('issues.update', $issue->id) : route('issues.store');
                         @foreach($rows as $i => $lineRow)
                         @php
                         if (is_array($lineRow)) {
-                            // Dữ liệu cũ (old input) sau khi validate lỗi — đã là FLAT lines[i]
+                            // Dữ liệu cũ (old input) sau khi validate lỗi - đã là FLAT lines[i]
                             $productId = $lineRow['product_id'] ?? '';
                             $product = $products->firstWhere('id', (int) $productId);
                             $tracking = (int) ($product?->tracking_type?->value ?? 1);
@@ -298,17 +298,17 @@ $action = $isEdit ? route('issues.update', $issue->id) : route('issues.store');
                                     oninput="onLotInput(this)" required>
                                 <datalist id="lotDatalist-{{ $i }}" class="lot-datalist"></datalist>
                             </td>
-                            {{-- Serial field: multi-select kiểu badge, giá trị thật vẫn là
-                                 chuỗi "SN0001 SN0002 ..." lưu trong input hidden .serial-input
-                                 (đồng bộ format với receipt/form.blade.php). Danh sách gợi ý
-                                 phụ thuộc Lô đã chọn (Lô -> Sê-ri), chỉ được chọn mã có thật. --}}
                             <td>
+                                @php
+                                    $hasLotSelected = $tracking !== 1 && $lotId;
+                                    $serialPlaceholder = $hasLotSelected ? 'Chọn sê-ri, nhấn <space> để thêm' : '-';
+                                @endphp
                                 <div class="chip-input chip-input-sm {{ $tracking === 1 ? 'disabled' : '' }}"
                                     id="serialChip-{{ $i }}"
                                     data-coreui-chip-input
                                     data-coreui-name="lines[{{ $i }}][serial_numbers]"
                                     data-coreui-separator=" "
-                                    data-coreui-placeholder="{{ $tracking === 1 ? '-' : 'Chọn lô trước' }}"
+                                    data-coreui-placeholder="{{ $serialPlaceholder }}"
                                     data-coreui-disabled="{{ $tracking === 1 ? 'true' : 'false' }}">
                                     @foreach(explode(' ', trim($serialNumbers)) as $sn)
                                         @continue(!$sn)
@@ -399,7 +399,7 @@ function countSerials(str) {
 }
 
 // ══════════════════════════════════════════════════════════════════
-// CHIP INPUT (Sê-ri) — dùng CoreUI ChipInput thay cho .serial-tag-box
+// CHIP INPUT (Sê-ri) - dùng CoreUI ChipInput thay cho .serial-tag-box
 // ══════════════════════════════════════════════════════════════════
 
 // ── Lấy instance ChipInput đã khởi tạo trên 1 dòng ─────────────────
@@ -425,6 +425,10 @@ function setupChipInput(tr, { disabled, placeholder }) {
     if (existing) existing.dispose();
 
     chipEl.classList.toggle('disabled', disabled);
+    // Đồng bộ luôn thuộc tính data-* trên chính div gốc - phòng trường hợp
+    // dispose() không dọn sạch input con cũ, component đọc lại placeholder
+    // từ đây khi re-init.
+    chipEl.dataset.coreuiPlaceholder = placeholder;
 
     const ci = new coreui.ChipInput(chipEl, {
         name: chipEl.dataset.coreuiName,
@@ -433,7 +437,7 @@ function setupChipInput(tr, { disabled, placeholder }) {
         placeholder
     });
 
-    // ChipInput không có cơ chế gợi ý sẵn có — gắn thủ công thuộc tính
+    // ChipInput không có cơ chế gợi ý sẵn có - gắn thủ công thuộc tính
     // "list" vào input con (là <input> DOM chuẩn) để trỏ tới <datalist>
     // chứa các mã sê-ri hợp lệ, giúp trình duyệt hiển thị dropdown gợi ý
     // khi người dùng click/gõ vào ô.
@@ -441,6 +445,13 @@ function setupChipInput(tr, { disabled, placeholder }) {
     const inputEl = chipEl.querySelector('.chip-input-field');
     if (inputEl && datalist) {
         inputEl.setAttribute('list', datalist.id);
+        // BUG ĐÃ GẶP: option "placeholder" của coreui.ChipInput chỉ áp dụng
+        // lúc field con được TẠO MỚI hoàn toàn; nếu dispose() không gỡ sạch
+        // input cũ (re-init trên cùng DOM), placeholder cũ ("-") bị giữ lại
+        // trên input con dù đã truyền placeholder mới vào constructor. Ghi
+        // đè trực tiếp lên input con để đảm bảo luôn đúng, bất kể component
+        // có tái sử dụng DOM cũ hay không.
+        inputEl.setAttribute('placeholder', placeholder);
     }
 
     return ci;
@@ -525,11 +536,10 @@ function applyTracking(tr, tracking) {
             break;
 
         case TRACKING_LOT_AND_SERIAL:
-            // Serial chỉ mở khi đã có Lô (Lô -> Sê-ri); nếu chưa có Lô, giữ khóa với gợi ý phù hợp.
             lotInput.placeholder = hasLocation ? 'Nhập hoặc chọn' : 'Chọn vị trí trước';
             setupChipInput(tr, {
                 disabled: !hasLot,
-                placeholder: hasLot ? 'Chọn mã, Enter để thêm' : 'Chọn lô trước'
+                placeholder: hasLot ? 'Chọn sê-ri, nhấn <space> để thêm' : '-'
             });
             bindChipInputEvents(tr);
             if (actualInput) {
@@ -586,11 +596,20 @@ async function loadLocationsForRow(tr, productId) {
 
     const rows = await fetchStockRows(productId);
 
-    // Cộng dồn available_qty theo location_id (1 vị trí có thể có nhiều
-    // dòng lô/serial trong rows, mỗi dòng đóng góp 1 phần tồn khả dụng).
+    // Cộng dồn available_qty theo location_id - CHỈ TÍNH 1 LẦN cho mỗi cặp
+    // (location_id, lot_id), vì khi sản phẩm là Lô+Sê-ri, API trả về NHIỀU
+    // dòng cho CÙNG 1 Lô (mỗi Serial 1 dòng), nhưng available_qty ở mỗi dòng
+    // là giá trị CHUNG của cả Lô (StockIssueService::getAvailableStockForIssue()
+    // gán available_qty của Lô cho mọi dòng serial "bung" ra từ Lô đó) - nếu
+    // cộng theo từng dòng sẽ bị nhân available_qty lên N lần (N = số serial).
     const availableByLocation = {};
+    const seenLotKeys = new Set();
     rows.forEach(row => {
         if (!row.location_id) return;
+        const dedupeKey = `${row.location_id}:${row.lot_id ?? 'null'}`;
+        if (seenLotKeys.has(dedupeKey)) return;
+        seenLotKeys.add(dedupeKey);
+
         const qty = Number(row.available_qty) || 0;
         availableByLocation[row.location_id] = (availableByLocation[row.location_id] || 0) + qty;
     });
@@ -644,34 +663,40 @@ function checkAvailableQtyForRow(tr) {
     const locationId = locationHidden.value;
     const lotId = lotHidden?.value;
 
-    // Chỉ giữ chỗ được khi đã xác định đủ Vị trí + Lô (khớp với
-    // StockIssueService::reserveLines() ở backend — chỉ reserve() được
-    // dòng có đủ location_id + lot_id). Thiếu Lô -> chưa thể kiểm tra
-    // tồn khả dụng theo Lô, bỏ qua cảnh báo (lỗi "required" của input
-    // Lô sẽ tự chặn submit).
     if (!locationId || !lotId || expectedQty <= 0) {
         warningEl?.classList.add('d-none');
         expectedInput.classList.remove('is-invalid');
         return true;
     }
 
-    // Tồn khả dụng theo TỪNG LÔ tại Vị trí đã chọn, lấy từ bảng đã cộng
-    // dồn sẵn khi loadLotsForRow() nạp datalist Lô (không còn cộng dồn cả
-    // Vị trí), vì reserve() giữ chỗ đúng theo lot_id.
     let availableByLot = {};
     try {
         availableByLot = JSON.parse(tr.dataset.availableByLot || '{}');
     } catch (e) { /* ignore */ }
 
-    const available = availableByLot[lotId];
+    const rawAvailable = availableByLot[lotId];
 
-    // Chưa có dữ liệu tồn cho lô này (chưa load xong AJAX) -> bỏ qua,
-    // không báo lỗi giả.
-    if (available === undefined) {
+    if (rawAvailable === undefined) {
         warningEl?.classList.add('d-none');
         expectedInput.classList.remove('is-invalid');
         return true;
     }
+
+    // Trừ đi phần các DÒNG KHÁC trong CÙNG phiếu đã giữ chỗ trên cùng
+    // Lô này - vì availableByLot lấy nguyên từ API (tồn kho thật trong
+    // DB), chưa biết các dòng khác trên form đang "định" xuất bao nhiêu
+    // từ chính Lô đó. Nếu không trừ, 2 dòng cùng Vật tư + cùng Lô sẽ mỗi
+    // dòng đều thấy "còn đủ" dù cộng lại đã vượt tồn thật.
+    let usedByOtherRows = 0;
+    document.querySelectorAll('#detailBody tr').forEach(otherTr => {
+        if (otherTr === tr) return;
+        const otherLotId = otherTr.querySelector('.lot-id-hidden')?.value;
+        if (otherLotId !== lotId) return;
+        const otherQty = parseFloat(otherTr.querySelector('input[name$="[expected_qty]"]')?.value) || 0;
+        usedByOtherRows += otherQty;
+    });
+
+    const available = rawAvailable - usedByOtherRows;
 
     const insufficient = expectedQty > available;
     expectedInput.classList.toggle('is-invalid', insufficient);
@@ -679,11 +704,15 @@ function checkAvailableQtyForRow(tr) {
     if (warningEl) {
         warningEl.classList.toggle('d-none', !insufficient);
         if (insufficient) {
-            warningEl.textContent = `Lô đã chọn chỉ còn ${available.toLocaleString('vi-VN', { maximumFractionDigits: 3 })} khả dụng.`;
+            warningEl.textContent = `Lô đã chọn chỉ còn ${available.toLocaleString('vi-VN', { maximumFractionDigits: 3 })} khả dụng (đã trừ các dòng khác cùng Lô).`;
         }
     }
 
     return !insufficient;
+}
+
+function checkAvailableQtyForAllRows() {
+    document.querySelectorAll('#detailBody tr').forEach(tr => checkAvailableQtyForRow(tr));
 }
 
 function bindAvailableQtyWatchers(tr) {
@@ -691,16 +720,11 @@ function bindAvailableQtyWatchers(tr) {
     const locInput = tr.querySelector('.location-input');
     const lotInput = tr.querySelector('.lot-input');
 
-    expectedInput?.addEventListener('input', () => checkAvailableQtyForRow(tr));
-    // onLocationInput()/onLotInput() (đã có sẵn trong file gốc) tự cập nhật
-    // location-id-hidden/lot-id-hidden; ta chỉ cần theo dõi thêm sự kiện
-    // 'input' trên các ô hiển thị để bắt đúng thời điểm người dùng chọn xong
-    // (datalist chọn -> input event). Giữ chỗ giờ phụ thuộc CẢ Vị trí LẪN Lô,
-    // nên phải theo dõi cả hai.
-    locInput?.addEventListener('input', () => checkAvailableQtyForRow(tr));
-    locInput?.addEventListener('change', () => checkAvailableQtyForRow(tr));
-    lotInput?.addEventListener('input', () => checkAvailableQtyForRow(tr));
-    lotInput?.addEventListener('change', () => checkAvailableQtyForRow(tr));
+    expectedInput?.addEventListener('input', checkAvailableQtyForAllRows);
+    locInput?.addEventListener('input', checkAvailableQtyForAllRows);
+    locInput?.addEventListener('change', checkAvailableQtyForAllRows);
+    lotInput?.addEventListener('input', checkAvailableQtyForAllRows);
+    lotInput?.addEventListener('change', checkAvailableQtyForAllRows);
 }
 
 // ── Nạp danh sách Lô có tồn tại 1 Vị trí cụ thể (Vị trí -> Lô) ─────
@@ -723,11 +747,19 @@ async function loadLotsForRow(tr, productId, locationId) {
 
     const rows = await fetchStockRows(productId);
 
-    // Cộng dồn available_qty theo lot_id trong ĐÚNG Vị trí đã chọn (1 lô có
-    // thể có nhiều dòng serial trong rows, mỗi dòng đóng góp 1 phần tồn khả dụng).
+    // Cộng dồn available_qty theo lot_id trong ĐÚNG Vị trí đã chọn - CHỈ
+    // TÍNH 1 LẦN mỗi lot_id, vì 1 Lô có thể "bung" thành nhiều dòng serial
+    // trong rows nhưng available_qty ở mỗi dòng là giá trị CHUNG của cả Lô,
+    // không phải phần đóng góp riêng của từng serial (xem giải thích ở
+    // loadLocationsForRow()). Cộng theo từng dòng sẽ nhân available_qty lên
+    // N lần (N = số serial của Lô đó).
     const availableByLot = {};
+    const seenSerialRows = new Set();
     rows.forEach(row => {
         if (String(row.location_id) !== String(locationId) || !row.lot_id) return;
+        if (seenSerialRows.has(row.lot_id)) return;
+        seenSerialRows.add(row.lot_id);
+
         const qty = Number(row.available_qty) || 0;
         availableByLot[row.lot_id] = (availableByLot[row.lot_id] || 0) + qty;
     });
@@ -745,7 +777,7 @@ async function loadLotsForRow(tr, productId, locationId) {
         // Hiện sẵn tồn khả dụng trong gợi ý, giúp người dùng chọn đúng Lô
         // có đủ hàng ngay từ đầu, không phải thử-sai (giống cách Vị trí
         // đang làm). Value gộp chung "(còn X)" chỉ tồn tại lúc chọn từ
-        // dropdown — onLotInput() sẽ tách lại về số Lô sạch (dataset.label)
+        // dropdown - onLotInput() sẽ tách lại về số Lô sạch (dataset.label)
         // trước khi ghi vào input, nên không submit nhầm chuỗi có hậu tố.
         opt.value = `${row.lot_number} (còn ${avail.toLocaleString('vi-VN', { maximumFractionDigits: 3 })})`;
         opt.dataset.id = row.lot_id;
@@ -881,7 +913,7 @@ function onLotInput(input) {
         hidden.value = opt.dataset.id;
         input.classList.remove('is-invalid');
         // opt.value gộp chung "(còn X)" để hiện trong gợi ý dropdown, nhưng
-        // giá trị THẬT submit làm lot_number phải sạch — ghi lại đúng số Lô
+        // giá trị THẬT submit làm lot_number phải sạch - ghi lại đúng số Lô
         // (dataset.label) vào ô input ngay khi người dùng vừa chọn xong.
         input.value = opt.dataset.label;
     } else {
@@ -895,7 +927,7 @@ function onLotInput(input) {
     if (tracking === TRACKING_LOT_AND_SERIAL) {
         setupChipInput(tr, {
             disabled: !hidden.value,
-            placeholder: hidden.value ? 'Chọn mã, Enter để thêm' : 'Chọn lô trước'
+            placeholder: hidden.value ? 'Chọn sê-ri, nhấn <space> để thêm' : '-'
         });
         bindChipInputEvents(tr);
     }
@@ -930,7 +962,7 @@ function clearLotSelection(tr) {
 
     const tracking = parseInt(tr.querySelector('.product-input')?.dataset?.tracking) || TRACKING_LOT;
     if (tracking === TRACKING_LOT_AND_SERIAL) {
-        setupChipInput(tr, { disabled: true, placeholder: 'Chọn lô trước' });
+        setupChipInput(tr, { disabled: true, placeholder: '-' });
         bindChipInputEvents(tr);
     }
 }
@@ -1006,12 +1038,12 @@ function rowTemplate(i) {
     <datalist id="lotDatalist-${i}" class="lot-datalist"></datalist>
   </td>
 <td>
-  <div class="chip-input chip-input-sm disabled" id="serialChip-${i}"
-       data-coreui-chip-input
-       data-coreui-name="lines[${i}][serial_numbers]"
-       data-coreui-separator=" "
-       data-coreui-placeholder="-"
-       data-coreui-disabled="true"></div>
+<div class="chip-input chip-input-sm disabled" id="serialChip-${i}"
+     data-coreui-chip-input
+     data-coreui-name="lines[${i}][serial_numbers]"
+     data-coreui-separator=" "
+     data-coreui-placeholder="-"
+     data-coreui-disabled="true"></div>
   <datalist id="serialSuggest-${i}" class="serial-suggest-datalist"></datalist>
 </td>
   <td>
@@ -1104,7 +1136,7 @@ function validateLotSerial() {
 
         if (serials.length === 0) {
             chipEl.classList.add('is-invalid');
-            errors.push(`Dòng ${i+1}: Hàng theo <strong>Lô+Sê-ri</strong> — chưa chọn Mã Serial.`);
+            errors.push(`Dòng ${i+1}: Hàng theo <strong>Lô+Sê-ri</strong> - chưa chọn Mã Serial.`);
         }
         // Lưu ý: trùng mã trong cùng dòng đã được chặn ngay tại lúc thêm
         // (bindChipInputEvents -> add.coreui.chip-input), không cần kiểm tra lại ở đây.
@@ -1225,7 +1257,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 const tracking = parseInt(productInput?.dataset?.tracking) || TRACKING_LOT;
                 if (tracking === TRACKING_LOT_AND_SERIAL) {
-                    setupChipInput(tr, { disabled: false, placeholder: 'Chọn mã, Enter để thêm' });
+                    setupChipInput(tr, { disabled: false, placeholder: 'Chọn sê-ri, nhấn <space> để thêm' });
                     bindChipInputEvents(tr);
 
                     const chipEl = tr.querySelector('.chip-input');

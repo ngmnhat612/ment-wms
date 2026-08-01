@@ -10,6 +10,7 @@ class Serial extends Model
     protected $table = 'serials';
 
     protected $fillable = [
+        'product_id',
         'lot_id',
         'serial_number',
         'status',
@@ -24,6 +25,11 @@ class Serial extends Model
     }
 
     // ===== RELATIONSHIPS =====
+
+    public function product()
+    {
+        return $this->belongsTo(\App\Models\Master\Product::class, 'product_id');
+    }
 
     public function lot()
     {

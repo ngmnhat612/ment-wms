@@ -94,9 +94,14 @@ class CodeGeneratorService
      *
      * @return array{code: string, number: int} vd ['code' => 'LO10', 'number' => 10]
      */
-    public function generateLotCode(int $productId, string $prefix = 'LO'): array
+    public function generateLotCode(int $productId, string $prefix = 'LO', array $excludeLotIds = []): array
     {
-        $maxNumber = (int) (DB::table('lots')->where('product_id', $productId)->max('lot_number') ?? 0);
+        $maxNumber = (int) (
+            DB::table('lots')
+                ->where('product_id', $productId)
+                ->when(!empty($excludeLotIds), fn ($q) => $q->whereNotIn('id', $excludeLotIds))
+                ->max('lot_number') ?? 0
+        );
         $nextNumber = $maxNumber + 1;
 
         return [

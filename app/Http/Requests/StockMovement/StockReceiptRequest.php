@@ -5,16 +5,13 @@ namespace App\Http\Requests\StockMovement;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Validator;
 use Illuminate\Validation\Rule;
-use App\Models\Inventory\Lot;
 use App\Models\Inventory\Serial;
-use App\Repositories\Contracts\Inventory\LotRepositoryInterface;
 use App\Repositories\Contracts\Inventory\SerialRepositoryInterface;
 use App\Repositories\Contracts\Master\ProductRepositoryInterface;
 
 class StockReceiptRequest extends FormRequest
 {
     public function __construct(
-        private LotRepositoryInterface $lotRepository,
         private SerialRepositoryInterface $serialRepository,
         private ProductRepositoryInterface $productRepository,
     ) {
@@ -38,7 +35,7 @@ class StockReceiptRequest extends FormRequest
 
         $lines = collect($this->input('lines'))->map(function ($line) {
             if (! isset($line['actual_qty']) || $line['actual_qty'] === '' || $line['actual_qty'] === null) {
-                $line['actual_qty'] = 0;
+                $line['actual_qty'] = is_numeric($line['expected_qty'] ?? null) ? $line['expected_qty'] : 0;
             }
 
             return $line;
@@ -110,8 +107,8 @@ class StockReceiptRequest extends FormRequest
      *  - actual_qty PHẢI khớp đúng số serial đếm được trong chuỗi
      *    (khi tracking = Lô+Sê-ri) — theo yêu cầu nghiệp vụ mới nhất
      *  - chặn serial trùng trong cùng phiếu (kể cả trùng trong cùng 1 dòng)
-     *  - chặn lot_number trùng (cả trong cùng phiếu lẫn với các Lô đã tồn
-     *    tại trong hệ thống)
+     *  - chặn lot_number trùng NGAY TRONG CÙNG PHIẾU (không còn chặn trùng
+     *    với Lô đã tồn tại trong hệ thống — cho phép nhập bổ sung vào Lô cũ)
      * Đây là validate INPUT (dữ liệu người dùng nhập) — khác với việc
      * resolve lot_id/serial_id thật, vốn thuộc về StockReceiptService.
      *
@@ -136,12 +133,6 @@ class StockReceiptRequest extends FormRequest
             $excludedLotIds = $currentReceipt
                 ? $currentReceipt->details()->whereNotNull('lot_id')->pluck('lot_id')->all()
                 : [];
-
-            \Illuminate\Support\Facades\Log::info('[stock-receipt][validate] bắt đầu', [
-                'receipt_id'      => $currentReceipt?->id,
-                'excludedLotIds'  => $excludedLotIds,
-                'lines_raw'       => $lines,
-            ]);
 
             foreach ($lines as $i => $row) {
                 if (empty($row['product_id'])) continue;
@@ -208,10 +199,12 @@ class StockReceiptRequest extends FormRequest
                 }
 
                 // ── Serial trùng với Serial ĐÃ TỒN TẠI trong hệ thống (bảng serials) ──
-                // trừ các serial đang gán cho chính phiếu này (khi update).
+                // CHỈ trong phạm vi CÙNG sản phẩm — 2 sản phẩm khác nhau được
+                // phép trùng số Sê-ri (unique constraint là (product_id, serial_number)).
+                // Trừ các serial đang gán cho chính phiếu này (khi update).
                 if ($serialNumbers->isNotEmpty()) {
                     $existingSerials = $this->serialRepository
-                        ->findExistingSerialNumbers($serialNumbers->all(), $excludedLotIds);
+                        ->findExistingSerialNumbers((int) $row['product_id'], $serialNumbers->all(), $excludedLotIds);
 
                     foreach ($existingSerials as $existingSerial) {
                         $validator->errors()->add(
@@ -247,28 +240,11 @@ class StockReceiptRequest extends FormRequest
                         $lotNumberSeen[$lotSeenKey] = ['line' => $line];
                     }
 
-                    $existingLot = $this->lotRepository->findByLotNumber(
-                        $lotNumberInt,
-                        (int) $row['product_id']
-                    );
-
-                    \Illuminate\Support\Facades\Log::info('[stock-receipt][validate] check trùng lô', [
-                        'row_index'       => $i,
-                        'lot_number_input'=> $lotNumberInt,
-                        'product_id'      => $row['product_id'],
-                        'existingLot_id'  => $existingLot?->id,
-                        'existingLot_code'=> $existingLot?->lot_code,
-                        'excludedLotIds'  => $excludedLotIds,
-                        'is_excluded'     => $existingLot ? in_array($existingLot->id, $excludedLotIds) : null,
-                        'will_error'      => $existingLot && ! in_array($existingLot->id, $excludedLotIds),
-                    ]);
-
-                    if ($existingLot && ! in_array($existingLot->id, $excludedLotIds)) {
-                        $validator->errors()->add(
-                            "lines.{$i}.lot_number",
-                            "Dòng {$line}: Số Lô \"{$lotNumberInt}\" đã tồn tại trong hệ thống. Vui lòng để trống để tự sinh hoặc chọn số khác."
-                        );
-                    }
+                    // ── Cho phép nhập thêm vào Lô đã tồn tại (kể cả đã có tồn kho) ──
+                    // Ràng buộc "1 Lô chỉ thuộc 1 Vật tư" đã đảm bảo ở tầng khác:
+                    //   - DB: unique(product_id, lot_code) ở bảng lots
+                    //   - Service: LotRepository::firstOrCreate() tìm theo đúng
+                    //     (product_id, lot_code), tự trả về Lô cũ khi đã có.
                 }
             }
         });

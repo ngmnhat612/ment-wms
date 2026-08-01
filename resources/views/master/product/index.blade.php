@@ -173,7 +173,7 @@
                     <img src="{{ Storage::url($product->image_path) }}"
                         class="img-zoomable"
                         style="width:50px; height:50px; object-fit:contain; cursor:zoom-in;"
-                        alt="{{ $product->name }}"
+                        alt=""
                         data-preview="{{ Storage::url($product->image_path) }}">
                   @else
                     <div class="rounded bg-body-secondary d-flex align-items-center justify-content-center"

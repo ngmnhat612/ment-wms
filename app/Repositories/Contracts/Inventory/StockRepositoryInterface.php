@@ -11,7 +11,15 @@ interface StockRepositoryInterface
      * Tồn khả dụng theo sản phẩm, kèm vị trí/lô/serial — dùng cho AJAX
      * gợi ý vị trí khi tạo Phiếu xuất (StockIssueService::getAvailableStockForIssue()).
      */
-        public function availableForIssue(int $productId, ?int $excludeIssueId = null): Collection;
+    public function availableForIssue(int $productId): Collection;
+
+    /**
+     * Tổng reserved_qty mà CHÍNH phiếu $issueId (đang sửa, Draft) đang giữ chỗ,
+     * gộp theo (location_id, lot_id). Dữ liệu thô — Service quyết định dùng thế nào.
+     *
+     * @return array<string, float> key = "{location_id}:{lot_id}"
+     */
+    public function ownReservedByLotLocation(int $issueId, int $productId): array;
 
     /**
      * Danh sách serial đang tồn kho (status = InStock) của 1 Lô cụ thể —

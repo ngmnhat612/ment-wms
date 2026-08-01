@@ -7,6 +7,7 @@ use App\Enums\LocationType;
 use App\Models\Inventory\Serial;
 use App\Models\Inventory\Stock;
 use App\Models\Master\Location;
+use App\Models\StockMovement\StockIssueDetail;
 use App\Repositories\Contracts\Inventory\StockRepositoryInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
@@ -15,44 +16,23 @@ use Illuminate\Database\Eloquent\Builder;
 
 class StockRepository implements StockRepositoryInterface
 {
-    public function availableForIssue(int $productId, ?int $excludeIssueId = null): Collection
+    /**
+     * Danh sách Stock thô của 1 sản phẩm tại các vị trí thực (Internal),
+     * KHÔNG lọc theo available/reserved, KHÔNG tính toán gì thêm — Repository
+     * chỉ truy cập dữ liệu, mọi nghiệp vụ (lọc adjusted qty, offset own-reserved)
+     * do Service Layer quyết định (Rule #3).
+     */
+    public function availableForIssue(int $productId): Collection
     {
-        $ownReserved = $excludeIssueId
-            ? $this->ownReservedByLotLocation($excludeIssueId, $productId)
-            : [];
-
-        $stocks = Stock::with(['currentLocation', 'lot', 'serial'])
+        return Stock::with(['currentLocation', 'lot', 'serial'])
             ->where('product_id', $productId)
             ->whereHas('currentLocation', fn ($q) => $q->where('type', LocationType::Internal->value))
             ->get();
-
-        return $stocks->filter(function ($s) use ($ownReserved) {
-            $key = $s->current_location_id . ':' . $s->lot_id;
-            $adjusted = (float) $s->quantity - (float) $s->reserved_qty + ($ownReserved[$key] ?? 0);
-
-            return $adjusted > 0;
-        })->map(function ($s) use ($ownReserved) {
-            // Gắn tạm thuộc tính own_reserved lên từng model để Service phía
-            // trên dùng khi tính available_qty hiển thị — tránh phải query lại
-            // ownReservedByLotLocation() lần thứ 2 ở tầng Service.
-            $key = $s->current_location_id . ':' . $s->lot_id;
-            $s->own_reserved = $ownReserved[$key] ?? 0;
-
-            return $s;
-        })->values();
     }
 
-    /**
-     * Tổng reserved_qty mà CHÍNH phiếu $issueId (đang sửa, Draft) đang giữ
-     * chỗ, gộp theo (location_id, lot_id) — dùng để cộng lại vào available_qty
-     * khi lọc, tránh loại bỏ nhầm Vị trí/Lô mà chính phiếu đang dùng (giá trị
-     * khả dụng thật lúc này bằng 0 chỉ vì tự giữ hết, không phải hết hàng).
-     *
-     * @return array<string, float> key = "{location_id}:{lot_id}"
-     */
-    private function ownReservedByLotLocation(int $issueId, int $productId): array
+    public function ownReservedByLotLocation(int $issueId, int $productId): array
     {
-        $details = \App\Models\StockMovement\StockIssueDetail::query()
+        $details = StockIssueDetail::query()
             ->whereHas('line', fn ($q) => $q->where('stock_issue_id', $issueId)->where('product_id', $productId))
             ->with('line')
             ->get();
@@ -268,14 +248,11 @@ class StockRepository implements StockRepositoryInterface
                 'products.id as product_id',
                 'stocks.current_location_id',
                 'stocks.lot_id',
-                'stocks.previous_location_id',
                 'products.code as product_code',
                 'products.name as product_name',
                 'categories.code as category_code',
                 'locations.code as location_code',
                 'locations.name as location_name',
-                'prev_locations.code as prev_location_code',
-                'prev_locations.name as prev_location_name',
                 'uoms.name as uom_name',
                 'lots.lot_number',
                 'lots.expiry_date',
@@ -287,13 +264,19 @@ class StockRepository implements StockRepositoryInterface
             ->selectRaw('COUNT(stocks.serial_id) as serial_count')
             ->selectRaw("{$statusExpr} as status", $statusExprBindings)
             ->selectRaw('MAX(stocks.created_at) as created_at')
+            // previous_location lấy giá trị đại diện của nhóm (không dùng để gộp
+            // nhóm) — MAX() vô hại vì đây chỉ là dữ liệu hiển thị "vị trí trước",
+            // không phải khóa nghiệp vụ. Ưu tiên bản ghi mới nhất bằng cách join
+            // theo stocks.id lớn nhất nếu cần độ chính xác cao hơn, còn ở mức
+            // hiển thị hiện tại MAX(previous_location_id) là đủ.
+            ->selectRaw('MAX(stocks.previous_location_id) as previous_location_id')
+            ->selectRaw('MAX(prev_locations.code) as prev_location_code')
+            ->selectRaw('MAX(prev_locations.name) as prev_location_name')
             ->groupBy([
                 'products.id', 'stocks.current_location_id', 'stocks.lot_id',
-                'stocks.previous_location_id',
                 'products.code', 'products.name',
                 'categories.code',
                 'locations.code', 'locations.name',
-                'prev_locations.code', 'prev_locations.name',
                 'uoms.name', 'lots.lot_number', 'lots.expiry_date',
                 'reorder_rules.min_qty',
             ]);
